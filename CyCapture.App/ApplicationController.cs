@@ -22,6 +22,7 @@ internal sealed class ApplicationController
     private readonly PostProcessingService _postProcessing = new();
     private readonly HistoryService _history = new();
     private readonly DispatcherTimer _recordingTimer;
+    private readonly DispatcherTimer _printScreenHoldTimer;
     private readonly CancellationTokenSource _shutdown = new();
     private readonly EventWaitHandle _existingInstanceSignal;
     private readonly Dictionary<string, NativeMenuItem> _pluginTrayItems = new(StringComparer.OrdinalIgnoreCase);
@@ -36,6 +37,7 @@ internal sealed class ApplicationController
     private SettingsWindow? _settingsWindow;
     private ToastWindow? _toast;
     private bool _captureFlowActive;
+    private bool _printScreenHybridPending;
     private bool _testMode;
     private bool _quitting;
 
@@ -46,6 +48,8 @@ internal sealed class ApplicationController
         _postProcessing.PluginsChanged += (_, _) => Dispatcher.UIThread.Post(UpdatePluginTrayItems);
         _recordingTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
         _recordingTimer.Tick += (_, _) => UpdateRecordingTimer();
+        _printScreenHoldTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(300) };
+        _printScreenHoldTimer.Tick += PrintScreenHoldElapsed;
         _existingInstanceSignal = new EventWaitHandle(false, EventResetMode.AutoReset, NativeMethods.ExistingInstanceEventName);
     }
 
@@ -70,6 +74,8 @@ internal sealed class ApplicationController
         }
 
         _preferences = await Preferences.LoadAsync();
+        if (_preferences.StartWithWindows)
+            WindowsStartup.TrySetEnabled(true, out _);
         var testOutputIndex = Array.FindIndex(_desktop.Args ?? [], argument =>
             argument.Equals("--test-output", StringComparison.OrdinalIgnoreCase));
         if (testOutputIndex >= 0 && testOutputIndex + 1 < (_desktop.Args?.Length ?? 0))
@@ -86,6 +92,7 @@ internal sealed class ApplicationController
         _ = _postProcessing.PrepareAsync(_shutdown.Token);
         _printScreenHook = new PrintScreenHook();
         _printScreenHook.Pressed += PrintScreenPressed;
+        _printScreenHook.Released += PrintScreenReleased;
         try
         {
             _printScreenHook.Start();
@@ -123,6 +130,7 @@ internal sealed class ApplicationController
                 new NativeMenuItem { Header = "Capturer une image", Command = new ActionCommand(() => StartDirectCapture(CaptureMode.Image)) },
                 new NativeMenuItem { Header = "Démarrer une capture vidéo", Command = new ActionCommand(() => StartDirectCapture(CaptureMode.Video)) },
                 new NativeMenuItem { Header = "Créer un GIF", Command = new ActionCommand(() => StartDirectCapture(CaptureMode.Gif)) },
+                new NativeMenuItem { Header = "Démarrer une capture audio", Command = new ActionCommand(() => StartDirectCapture(CaptureMode.Audio)) },
                 new NativeMenuItemSeparator(),
                 _recordingMenuItem,
                 new NativeMenuItemSeparator(),
@@ -134,7 +142,7 @@ internal sealed class ApplicationController
                 new NativeMenuItem { Header = "Quitter CyCapture", Command = new ActionCommand(Quit) }
             }
         };
-        var pluginInsertIndex = 5;
+        var pluginInsertIndex = 6;
         var quickAccessPlugins = _postProcessing.GetPlugins()
             .Where(plugin => !string.IsNullOrWhiteSpace(plugin.QuickAccessLabel))
             .ToList();
@@ -170,13 +178,25 @@ internal sealed class ApplicationController
         if (_quitting) return;
         if (_recording.IsActive)
         {
+            CancelPendingPrintScreenGesture();
             await StopRecordingAsync();
             return;
         }
         if (_recording.IsFinishing) return;
         if (_selection.IsSelecting)
         {
+            CancelPendingPrintScreenGesture();
             _selection.CancelSelection();
+            return;
+        }
+
+        if (_preferences.PrintScreenBehavior == PrintScreenBehavior.QuickImageHoldSelection)
+        {
+            if (_captureFlowActive || _printScreenHybridPending) return;
+            _printScreenHybridPending = true;
+            _printScreenHoldTimer.Stop();
+            _printScreenHoldTimer.Interval = TimeSpan.FromMilliseconds(_preferences.PrintScreenHoldDelayMilliseconds);
+            _printScreenHoldTimer.Start();
             return;
         }
 
@@ -191,10 +211,35 @@ internal sealed class ApplicationController
             case PrintScreenBehavior.CaptureGif:
                 await BeginCaptureAsync(CaptureMode.Gif);
                 break;
+            case PrintScreenBehavior.CaptureAudio:
+                await BeginCaptureAsync(CaptureMode.Audio);
+                break;
             default:
                 ShowQuickMenu();
                 break;
         }
+    }
+
+    private async void PrintScreenReleased(object? sender, EventArgs args)
+    {
+        if (!_printScreenHybridPending) return;
+        _printScreenHoldTimer.Stop();
+        _printScreenHybridPending = false;
+        await BeginCaptureAsync(CaptureMode.Image, CaptureSelectionMode.Smart);
+    }
+
+    private void PrintScreenHoldElapsed(object? sender, EventArgs args)
+    {
+        if (!_printScreenHybridPending) return;
+        _printScreenHoldTimer.Stop();
+        _printScreenHybridPending = false;
+        ShowQuickMenu();
+    }
+
+    private void CancelPendingPrintScreenGesture()
+    {
+        _printScreenHoldTimer.Stop();
+        _printScreenHybridPending = false;
     }
 
     private void StartDirectCapture(CaptureMode mode)
@@ -244,6 +289,11 @@ internal sealed class ApplicationController
 
     private async Task BeginCaptureAsync(CaptureMode mode, CaptureSelectionMode? selectionMode = null)
     {
+        if (mode == CaptureMode.Audio)
+        {
+            await BeginAudioCaptureAsync();
+            return;
+        }
         if (_captureFlowActive || _recording.IsActive || _recording.IsFinishing) return;
         _captureFlowActive = true;
         try
@@ -274,6 +324,35 @@ internal sealed class ApplicationController
         }
     }
 
+    private async Task BeginAudioCaptureAsync()
+    {
+        if (_captureFlowActive || _recording.IsActive || _recording.IsFinishing) return;
+        _captureFlowActive = true;
+        try
+        {
+            var monitors = NativeMethods.GetMonitors();
+            if (monitors.Count == 0) throw new InvalidOperationException("Aucun écran Windows n’a été détecté.");
+            var monitor = NativeMethods.GetCursorPos(out var cursor)
+                ? NativeMethods.MonitorAt(cursor.X, cursor.Y)
+                : monitors.FirstOrDefault(item => item.IsPrimary) ?? monitors[0];
+            var selection = new CaptureSelection(
+                new PixelBounds(0, 0, 0, 0),
+                monitor,
+                SelectionKind.Region,
+                "Audio");
+            await _recording.StartAsync(CaptureMode.Audio, selection, _preferences);
+            UpdateTrayState();
+        }
+        catch (Exception error)
+        {
+            ShowToast("Capture impossible", error.Message, true);
+        }
+        finally
+        {
+            _captureFlowActive = false;
+        }
+    }
+
     private async Task StopRecordingAsync()
     {
         if (!_recording.IsActive) return;
@@ -289,7 +368,12 @@ internal sealed class ApplicationController
             }
             await CompleteArtifactAsync(artifact);
             ShowToast(
-                artifact.Mode == CaptureMode.Gif ? "GIF enregistré" : "Vidéo enregistrée",
+                artifact.Mode switch
+                {
+                    CaptureMode.Gif => "GIF enregistré",
+                    CaptureMode.Audio => "Audio enregistré",
+                    _ => "Vidéo enregistrée"
+                },
                 Path.GetFileName(artifact.Path),
                 false,
                 artifact.Path);
@@ -345,7 +429,12 @@ internal sealed class ApplicationController
         if (!_recording.IsActive || _tray is null || _recordingMenuItem is null) return;
         var elapsed = DateTimeOffset.Now - _recording.StartedAt;
         var time = $"{(int)elapsed.TotalMinutes:00}:{elapsed.Seconds:00}";
-        var kind = _recording.ActiveMode == CaptureMode.Gif ? "GIF" : "VIDÉO";
+        var kind = _recording.ActiveMode switch
+        {
+            CaptureMode.Gif => "GIF",
+            CaptureMode.Audio => "AUDIO",
+            _ => "VIDÉO"
+        };
         _tray.ToolTipText = $"CyCapture — ● REC {time} · Impr écran pour arrêter";
         _recordingMenuItem.Header = $"■ Arrêter {kind} · {time}";
         _indicator.UpdateElapsed(elapsed);
@@ -487,6 +576,7 @@ internal sealed class ApplicationController
         _quitting = true;
         _shutdown.Cancel();
         _recordingTimer.Stop();
+        CancelPendingPrintScreenGesture();
         _indicator.Hide();
         _printScreenHook?.Dispose();
         _recording.Dispose();

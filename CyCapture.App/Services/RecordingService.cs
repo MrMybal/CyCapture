@@ -8,6 +8,7 @@ internal sealed class RecordingService : IDisposable
 {
     private readonly object _sync = new();
     private Recorder? _recorder;
+    private AudioRecordingSession? _audioSession;
     private TaskCompletionSource<RecordingCompleteEventArgs>? _completion;
     private TaskCompletionSource<string>? _failure;
     private Task<CaptureArtifact>? _stopTask;
@@ -29,14 +30,34 @@ internal sealed class RecordingService : IDisposable
         lock (_sync)
         {
             if (IsActive || IsFinishing) throw new InvalidOperationException("Un enregistrement est déjà en cours.");
-            Directory.CreateDirectory(preferences.EffectiveOutputDirectory);
             _selection = selection;
             _preferences = preferences;
             ActiveMode = mode;
             StartedAt = DateTimeOffset.Now;
+            var outputDirectory = CaptureStorage.GetDirectory(preferences, mode, StartedAt);
+            Directory.CreateDirectory(outputDirectory);
             _completion = new TaskCompletionSource<RecordingCompleteEventArgs>(TaskCreationOptions.RunContinuationsAsynchronously);
             _failure = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
             _stopTask = null;
+
+            if (mode == CaptureMode.Audio)
+            {
+                _outputPath = Path.Combine(outputDirectory, FileNames.Create("audio", "mp3"));
+                _audioSession = new AudioRecordingSession();
+                try
+                {
+                    _audioSession.Start(preferences.IncludeSystemAudio, preferences.IncludeMicrophone);
+                }
+                catch
+                {
+                    CleanupAudioSession();
+                    ActiveMode = null;
+                    throw;
+                }
+                IsActive = true;
+                StateChanged?.Invoke(this, EventArgs.Empty);
+                return Task.CompletedTask;
+            }
 
             var options = BuildOptions(mode, selection, preferences);
             _recorder = Recorder.CreateRecorder(options);
@@ -46,14 +67,14 @@ internal sealed class RecordingService : IDisposable
 
             if (mode == CaptureMode.Video)
             {
-                _outputPath = Path.Combine(preferences.EffectiveOutputDirectory, FileNames.Create("video", "mp4"));
+                _outputPath = Path.Combine(outputDirectory, FileNames.Create("video", "mp4"));
                 _recorder.Record(_outputPath);
             }
             else
             {
                 _temporaryGifDirectory = Path.Combine(Path.GetTempPath(), "CyCapture", "gif-" + Guid.NewGuid().ToString("N"));
                 Directory.CreateDirectory(_temporaryGifDirectory);
-                _outputPath = Path.Combine(preferences.EffectiveOutputDirectory, FileNames.Create("animation", "gif"));
+                _outputPath = Path.Combine(outputDirectory, FileNames.Create("animation", "gif"));
                 _recorder.Record(_temporaryGifDirectory + Path.DirectorySeparatorChar);
             }
 
@@ -68,14 +89,45 @@ internal sealed class RecordingService : IDisposable
         lock (_sync)
         {
             if (_stopTask is not null) return _stopTask;
-            if (!IsActive || _recorder is null || _selection is null || _outputPath is null || ActiveMode is null)
+            if (!IsActive || _selection is null || _outputPath is null || ActiveMode is null)
                 throw new InvalidOperationException("Aucun enregistrement n’est en cours.");
             IsActive = false;
             IsFinishing = true;
             StateChanged?.Invoke(this, EventArgs.Empty);
-            _recorder.Stop();
-            _stopTask = FinishAsync();
+            if (ActiveMode == CaptureMode.Audio)
+            {
+                if (_audioSession is null) throw new InvalidOperationException("La session audio a été perdue.");
+                _stopTask = FinishAudioAsync();
+            }
+            else
+            {
+                if (_recorder is null) throw new InvalidOperationException("La session vidéo a été perdue.");
+                _recorder.Stop();
+                _stopTask = FinishAsync();
+            }
             return _stopTask;
+        }
+    }
+
+    private async Task<CaptureArtifact> FinishAudioAsync()
+    {
+        try
+        {
+            if (_audioSession is null || _preferences is null || _selection is null || _outputPath is null)
+                throw new InvalidOperationException("La session audio a été perdue.");
+            var result = await _audioSession.StopAsync(_outputPath, _preferences.AudioEncodingQuality);
+            _outputPath = result.Path;
+            var finishedAt = StartedAt + result.Duration;
+            if (!File.Exists(_outputPath) || new FileInfo(_outputPath).Length == 0)
+                throw new InvalidOperationException("Le fichier audio est vide.");
+            return new CaptureArtifact(_outputPath, CaptureMode.Audio, _selection, StartedAt, finishedAt);
+        }
+        finally
+        {
+            CleanupAudioSession();
+            IsFinishing = false;
+            ActiveMode = null;
+            StateChanged?.Invoke(this, EventArgs.Empty);
         }
     }
 
@@ -117,6 +169,7 @@ internal sealed class RecordingService : IDisposable
 
     private static RecorderOptions BuildOptions(CaptureMode mode, CaptureSelection selection, Preferences preferences)
     {
+        if (mode == CaptureMode.Audio) throw new ArgumentException("Le mode audio utilise le moteur WASAPI dédié.", nameof(mode));
         var local = selection.LocalBounds;
         var source = new DisplayRecordingSource(selection.Monitor.DeviceName)
         {
@@ -382,6 +435,12 @@ internal sealed class RecordingService : IDisposable
         _recorder = null;
     }
 
+    private void CleanupAudioSession()
+    {
+        _audioSession?.Dispose();
+        _audioSession = null;
+    }
+
     private void CleanupTemporaryGifDirectory()
     {
         if (string.IsNullOrWhiteSpace(_temporaryGifDirectory)) return;
@@ -394,8 +453,9 @@ internal sealed class RecordingService : IDisposable
 
     public void Dispose()
     {
-        try { if (IsActive) _recorder?.Stop(); }
+        try { if (IsActive && ActiveMode != CaptureMode.Audio) _recorder?.Stop(); }
         catch { }
+        CleanupAudioSession();
         CleanupRecorder();
     }
 }

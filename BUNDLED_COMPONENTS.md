@@ -1,13 +1,25 @@
 # Composants embarqués
 
-## CyAnnota 0.3.6
+## NAudio 2.3.0
 
-Les builds Windows Release de CyCapture embarquent la distribution Windows **CyAnnota 0.3.6** afin que le post-traitement fonctionne sans installation séparée ni association de protocole Windows. La distribution unpacked est privilégiée : elle est extraite une seule fois en arrière-plan, puis CyCapture lance directement `CyAnnota.exe`.
+CyCapture utilise NAudio pour la capture audio WASAPI (son système et microphone) et l’encodage MP3 via Media Foundation sous Windows.
 
-- Projet et code source correspondant : <https://github.com/MrMybal/CyAnnota/tree/v0.3.6>
-- Release utilisée : <https://github.com/MrMybal/CyAnnota/releases/tag/v0.3.6>
-- Distribution de référence : `CyAnnota-0.3.6-portable.exe`
-- SHA-256 de la distribution portable officielle : `60A07568B71EB98F2F86EBA8869F61392548BDA7EC3FFD78274245351E4A93F2`
+- Projet et code source : <https://github.com/naudio/NAudio/tree/2.3.0>
+- Licence : MIT
+- Copyright © Mark Heath et les contributeurs NAudio
+
+Le paquet NuGet et ses bibliothèques nécessaires sont inclus dans les builds autonomes de CyCapture.
+
+---
+
+## CyAnnota 0.3.7
+
+Les builds Windows Release de CyCapture embarquent la distribution Windows **CyAnnota 0.3.7** afin que le post-traitement fonctionne sans installation séparée ni association de protocole Windows. La distribution unpacked est privilégiée : elle est extraite une seule fois en arrière-plan, puis CyCapture lance directement `CyAnnota.exe`.
+
+- Projet et code source correspondant : <https://github.com/MrMybal/CyAnnota/tree/v0.3.7>
+- Release utilisée : <https://github.com/MrMybal/CyAnnota/releases/tag/v0.3.7>
+- Distribution de référence : `CyAnnota-0.3.7-portable.exe`
+- SHA-256 de la distribution portable officielle : `A07452E00BB463B63D6ED68092A3119033471A7B04A808D00ECD9B493FC93C02`
 - Licence : GNU Affero General Public License v3.0 uniquement (`AGPL-3.0-only`)
 - Copyright © 2026 CyberAlien
 
@@ -17,14 +29,26 @@ CyAnnota conserve dans sa distribution ses propres textes de licence et mentions
 
 # Bundled components
 
-## CyAnnota 0.3.6
+## NAudio 2.3.0
 
-Windows Release builds of CyCapture bundle the **CyAnnota 0.3.6** Windows distribution so that post-processing works without a separate installation or a Windows protocol association. The unpacked distribution is preferred: it is extracted once in the background, after which CyCapture starts `CyAnnota.exe` directly.
+CyCapture uses NAudio for WASAPI audio capture (system audio and microphone) and Media Foundation MP3 encoding on Windows.
 
-- Project and corresponding source code: <https://github.com/MrMybal/CyAnnota/tree/v0.3.6>
-- Source release: <https://github.com/MrMybal/CyAnnota/releases/tag/v0.3.6>
-- Reference distribution: `CyAnnota-0.3.6-portable.exe`
-- Official portable distribution SHA-256: `60A07568B71EB98F2F86EBA8869F61392548BDA7EC3FFD78274245351E4A93F2`
+- Project and source code: <https://github.com/naudio/NAudio/tree/2.3.0>
+- License: MIT
+- Copyright © Mark Heath and NAudio contributors
+
+The NuGet package and its required libraries are included in CyCapture self-contained builds.
+
+---
+
+## CyAnnota 0.3.7
+
+Windows Release builds of CyCapture bundle the **CyAnnota 0.3.7** Windows distribution so that post-processing works without a separate installation or a Windows protocol association. The unpacked distribution is preferred: it is extracted once in the background, after which CyCapture starts `CyAnnota.exe` directly.
+
+- Project and corresponding source code: <https://github.com/MrMybal/CyAnnota/tree/v0.3.7>
+- Source release: <https://github.com/MrMybal/CyAnnota/releases/tag/v0.3.7>
+- Reference distribution: `CyAnnota-0.3.7-portable.exe`
+- Official portable distribution SHA-256: `A07452E00BB463B63D6ED68092A3119033471A7B04A808D00ECD9B493FC93C02`
 - License: GNU Affero General Public License v3.0 only (`AGPL-3.0-only`)
 - Copyright © 2026 CyberAlien
 

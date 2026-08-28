@@ -319,7 +319,7 @@ internal sealed class ManifestPostProcessor : ICapturePostProcessor, ICapturePlu
             manifest["finishedAt"] = artifact.FinishedAt;
             manifest["durationMs"] = Math.Max(0, (artifact.FinishedAt - artifact.StartedAt).TotalMilliseconds);
         }
-        if (_includeSelection)
+        if (_includeSelection && artifact.Mode != CaptureMode.Audio)
         {
             manifest["selection"] = new
             {

@@ -4,7 +4,8 @@ public enum CaptureMode
 {
     Image,
     Video,
-    Gif
+    Gif,
+    Audio
 }
 
 public enum CaptureSelectionMode

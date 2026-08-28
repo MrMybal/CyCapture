@@ -14,7 +14,7 @@
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
     <AssemblyName>CyCapture</AssemblyName>
     <RootNamespace>CyCapture</RootNamespace>
-    <Version>1.4.2</Version>
+    <Version>1.4.3</Version>
     <Authors>CyberAlien</Authors>
     <Copyright>Copyright © 2026 CyberAlien</Copyright>
     <Product>CyCapture</Product>
@@ -27,10 +27,10 @@
     <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
     <IncludeAllContentForSelfExtract>true</IncludeAllContentForSelfExtract>
     <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
-    <CyAnnotaBundleVersion>0.3.6</CyAnnotaBundleVersion>
+    <CyAnnotaBundleVersion>0.3.7</CyAnnotaBundleVersion>
     <CyAnnotaBundleFileName>CyAnnota-$(CyAnnotaBundleVersion)-portable.exe</CyAnnotaBundleFileName>
     <CyAnnotaBundleUrl>https://github.com/MrMybal/CyAnnota/releases/download/v$(CyAnnotaBundleVersion)/$(CyAnnotaBundleFileName)</CyAnnotaBundleUrl>
-    <CyAnnotaBundleSha256>60A07568B71EB98F2F86EBA8869F61392548BDA7EC3FFD78274245351E4A93F2</CyAnnotaBundleSha256>
+    <CyAnnotaBundleSha256>A07452E00BB463B63D6ED68092A3119033471A7B04A808D00ECD9B493FC93C02</CyAnnotaBundleSha256>
     <CyAnnotaBundleCacheDirectory>$(BaseIntermediateOutputPath)cyannota</CyAnnotaBundleCacheDirectory>
     <CyAnnotaBundlePath>$(CyAnnotaBundleCacheDirectory)\$(CyAnnotaBundleFileName)</CyAnnotaBundlePath>
     <CyAnnotaUnpackedArchiveFileName>CyAnnota-$(CyAnnotaBundleVersion)-win-x64.zip</CyAnnotaUnpackedArchiveFileName>
@@ -48,6 +48,7 @@
     <PackageReference Include="Avalonia.Desktop" Version="12.1.1" />
     <PackageReference Include="Avalonia.Fonts.Inter" Version="12.1.1" />
     <PackageReference Include="Avalonia.Themes.Fluent" Version="12.1.1" />
+    <PackageReference Include="NAudio" Version="2.3.0" />
     <PackageReference Include="ScreenRecorderLib" Version="6.6.0" />
     <PackageReference Include="System.Drawing.Common" Version="8.0.20" />
   </ItemGroup>

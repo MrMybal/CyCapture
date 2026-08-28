@@ -13,6 +13,10 @@ internal sealed class HistoryService
     {
         ".mp4", ".mov", ".mkv", ".avi", ".webm"
     };
+    private static readonly HashSet<string> AudioExtensions = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ".mp3", ".wav", ".m4a", ".aac", ".flac", ".wma", ".ogg"
+    };
     private readonly SemaphoreSlim _gate = new(1, 1);
     private string PathName => Path.Combine(Preferences.DataDirectory, "history.json");
 
@@ -63,7 +67,13 @@ internal sealed class HistoryService
         try
         {
             Directory.CreateDirectory(outputDirectory);
-            foreach (var file in Directory.EnumerateFiles(outputDirectory, "*", SearchOption.TopDirectoryOnly))
+            var options = new EnumerationOptions
+            {
+                RecurseSubdirectories = true,
+                IgnoreInaccessible = true,
+                AttributesToSkip = FileAttributes.ReparsePoint
+            };
+            foreach (var file in Directory.EnumerateFiles(outputDirectory, "*", options))
             {
                 var mode = GetMode(file);
                 if (mode is null) continue;
@@ -93,6 +103,7 @@ internal sealed class HistoryService
     {
         var extension = Path.GetExtension(path);
         if (extension.Equals(".gif", StringComparison.OrdinalIgnoreCase)) return CaptureMode.Gif;
+        if (AudioExtensions.Contains(extension)) return CaptureMode.Audio;
         if (VideoExtensions.Contains(extension)) return CaptureMode.Video;
         return ImageExtensions.Contains(extension) ? CaptureMode.Image : null;
     }

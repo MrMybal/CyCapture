@@ -112,6 +112,7 @@ public sealed partial class QuickCaptureWindow : Window
     private async void ImageClick(object? sender, RoutedEventArgs args) => await SelectAsync(CaptureMode.Image);
     private async void VideoClick(object? sender, RoutedEventArgs args) => await SelectAsync(CaptureMode.Video);
     private async void GifClick(object? sender, RoutedEventArgs args) => await SelectAsync(CaptureMode.Gif);
+    private async void AudioClick(object? sender, RoutedEventArgs args) => await SelectAsync(CaptureMode.Audio);
     private void CloseClick(object? sender, RoutedEventArgs args) => Close();
 
     private void PopulatePluginOptions()

@@ -24,6 +24,7 @@ internal sealed class PrintScreenHook : IDisposable
     }
 
     internal event EventHandler? Pressed;
+    internal event EventHandler? Released;
 
     internal void Start()
     {
@@ -55,7 +56,11 @@ internal sealed class PrintScreenHook : IDisposable
 
                 if (messageId is WmKeyUp or WmSysKeyUp)
                 {
-                    _isDown = false;
+                    if (_isDown)
+                    {
+                        _isDown = false;
+                        Dispatcher.UIThread.Post(() => Released?.Invoke(this, EventArgs.Empty));
+                    }
                     return 1;
                 }
             }
@@ -69,6 +74,7 @@ internal sealed class PrintScreenHook : IDisposable
         if (_hook == 0) return;
         NativeMethods.UnhookWindowsHookEx(_hook);
         _hook = 0;
+        _isDown = false;
         GC.SuppressFinalize(this);
     }
 }

@@ -42,7 +42,8 @@ public sealed class ExamplePostProcessor : ICapturePostProcessor, ICapturePlugin
 
 - l’état activé et les valeurs sont stockés dans `%LOCALAPPDATA%\CyCapture\plugin-settings.json` ;
 - les réglages `Text`, `Boolean` et `Choice` sont générés automatiquement dans la fenêtre Réglages ;
-- `QuickAccessLabel` ajoute une case synchronisée dans le menu tray et la palette Image/Vidéo/GIF ;
+- `QuickAccessLabel` ajoute une case synchronisée dans le menu tray et la palette Image/Vidéo/GIF/Audio ;
+- `CaptureArtifact.Mode` indique `Image`, `Video`, `Gif` ou `Audio` ; un plugin peut ignorer explicitement les formats qu’il ne sait pas traiter ;
 - une exception de chargement ou de configuration désactive uniquement le plugin concerné et est écrite dans `Plugins\plugin-errors.log` ;
 - une exception pendant le post-traitement n’annule pas la capture et est écrite dans `cycapture-plugin-errors.log` à côté du média.
 

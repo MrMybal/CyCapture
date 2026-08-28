@@ -7,6 +7,7 @@ using Avalonia.Markup.Xaml;
 using Avalonia.Media;
 using Avalonia.Platform.Storage;
 using CyCapture.Models;
+using CyCapture.Platform.Windows;
 using CyCapture.Services;
 
 namespace CyCapture.Views;
@@ -24,11 +25,17 @@ public sealed partial class SettingsWindow : Window
     private readonly ComboBox _gifQualityCombo;
     private readonly ComboBox _selectionModeCombo;
     private readonly ComboBox _printScreenBehaviorCombo;
+    private readonly ComboBox _printScreenHoldDelayCombo;
     private readonly CheckBox _systemAudioCheck;
     private readonly CheckBox _microphoneCheck;
     private readonly CheckBox _clipboardCheck;
     private readonly CheckBox _videoClipboardCheck;
     private readonly CheckBox _frameCheck;
+    private readonly CheckBox _separateCaptureTypesCheck;
+    private readonly CheckBox _dailyFoldersCheck;
+    private readonly CheckBox _startupCheck;
+    private readonly TextBlock _captureOrganizationPreview;
+    private readonly TextBlock _startupStatusText;
     private readonly StackPanel _pluginsPanel;
     private bool _initializing = true;
     private bool _changingPlugin;
@@ -51,11 +58,17 @@ public sealed partial class SettingsWindow : Window
         _gifQualityCombo = RequireControl<ComboBox>("GifQualityCombo");
         _selectionModeCombo = RequireControl<ComboBox>("SelectionModeCombo");
         _printScreenBehaviorCombo = RequireControl<ComboBox>("PrintScreenBehaviorCombo");
+        _printScreenHoldDelayCombo = RequireControl<ComboBox>("PrintScreenHoldDelayCombo");
         _systemAudioCheck = RequireControl<CheckBox>("SystemAudioCheck");
         _microphoneCheck = RequireControl<CheckBox>("MicrophoneCheck");
         _clipboardCheck = RequireControl<CheckBox>("ClipboardCheck");
         _videoClipboardCheck = RequireControl<CheckBox>("VideoClipboardCheck");
         _frameCheck = RequireControl<CheckBox>("FrameCheck");
+        _separateCaptureTypesCheck = RequireControl<CheckBox>("SeparateCaptureTypesCheck");
+        _dailyFoldersCheck = RequireControl<CheckBox>("DailyFoldersCheck");
+        _startupCheck = RequireControl<CheckBox>("StartupCheck");
+        _captureOrganizationPreview = RequireControl<TextBlock>("CaptureOrganizationPreview");
+        _startupStatusText = RequireControl<TextBlock>("StartupStatusText");
         _pluginsPanel = RequireControl<StackPanel>("PluginsPanel");
         _outputPathText.Text = preferences.EffectiveOutputDirectory;
         SelectByTag(_videoQualityCombo, preferences.VideoQualityLevel.ToString());
@@ -66,11 +79,17 @@ public sealed partial class SettingsWindow : Window
         SelectByTag(_gifQualityCombo, preferences.GifQuality.ToString());
         SelectByTag(_selectionModeCombo, preferences.SelectionMode.ToString());
         SelectByTag(_printScreenBehaviorCombo, preferences.PrintScreenBehavior.ToString());
+        SelectByTag(_printScreenHoldDelayCombo, preferences.PrintScreenHoldDelayMilliseconds.ToString());
         _systemAudioCheck.IsChecked = preferences.IncludeSystemAudio;
         _microphoneCheck.IsChecked = preferences.IncludeMicrophone;
         _clipboardCheck.IsChecked = preferences.CopyScreenshotsToClipboard;
         _videoClipboardCheck.IsChecked = preferences.CopyVideosToClipboard;
         _frameCheck.IsChecked = preferences.ShowRecordingFrame;
+        _separateCaptureTypesCheck.IsChecked = preferences.SeparateCaptureTypes;
+        _dailyFoldersCheck.IsChecked = preferences.CreateDailyCaptureFolders;
+        preferences.StartWithWindows = WindowsStartup.IsEnabled();
+        _startupCheck.IsChecked = preferences.StartWithWindows;
+        UpdateCaptureOrganizationPreview();
         _initializing = false;
         RenderPlugins();
         _postProcessing.PluginsChanged += PluginsChanged;
@@ -82,6 +101,7 @@ public sealed partial class SettingsWindow : Window
     private void ImageClick(object? sender, RoutedEventArgs args) => Request(CaptureMode.Image);
     private void VideoClick(object? sender, RoutedEventArgs args) => Request(CaptureMode.Video);
     private void GifClick(object? sender, RoutedEventArgs args) => Request(CaptureMode.Gif);
+    private void AudioClick(object? sender, RoutedEventArgs args) => Request(CaptureMode.Audio);
 
     private void Request(CaptureMode mode)
     {
@@ -145,13 +165,46 @@ public sealed partial class SettingsWindow : Window
         if (_printScreenBehaviorCombo.SelectedItem is ComboBoxItem printScreenBehavior
             && Enum.TryParse<PrintScreenBehavior>(printScreenBehavior.Tag?.ToString(), out var printScreenBehaviorValue))
             _preferences.PrintScreenBehavior = printScreenBehaviorValue;
+        if (_printScreenHoldDelayCombo.SelectedItem is ComboBoxItem holdDelay
+            && int.TryParse(holdDelay.Tag?.ToString(), out var holdDelayMilliseconds))
+            _preferences.PrintScreenHoldDelayMilliseconds = holdDelayMilliseconds;
         _preferences.IncludeSystemAudio = _systemAudioCheck.IsChecked == true;
         _preferences.IncludeMicrophone = _microphoneCheck.IsChecked == true;
         _preferences.CopyScreenshotsToClipboard = _clipboardCheck.IsChecked == true;
         _preferences.CopyVideosToClipboard = _videoClipboardCheck.IsChecked == true;
         _preferences.ShowRecordingFrame = _frameCheck.IsChecked == true;
+        _preferences.SeparateCaptureTypes = _separateCaptureTypesCheck.IsChecked == true;
+        _preferences.CreateDailyCaptureFolders = _dailyFoldersCheck.IsChecked == true;
+        UpdateCaptureOrganizationPreview();
+
+        var startWithWindows = _startupCheck.IsChecked == true;
+        if (startWithWindows != _preferences.StartWithWindows)
+        {
+            if (WindowsStartup.TrySetEnabled(startWithWindows, out var startupError))
+            {
+                _preferences.StartWithWindows = startWithWindows;
+                _startupStatusText.Text = startWithWindows
+                    ? "CyCapture démarrera directement dans la zone de notification pour l’utilisateur actuel."
+                    : "Le lancement automatique de CyCapture est désactivé.";
+                _startupStatusText.Foreground = new SolidColorBrush(Color.FromRgb(127, 141, 138));
+            }
+            else
+            {
+                _initializing = true;
+                _startupCheck.IsChecked = _preferences.StartWithWindows;
+                _initializing = false;
+                _startupStatusText.Text = $"Impossible de modifier le démarrage Windows : {startupError}";
+                _startupStatusText.Foreground = new SolidColorBrush(Color.FromRgb(255, 101, 115));
+            }
+        }
         _preferences.ApplyEncodingProfiles();
         await _preferences.SaveAsync();
+    }
+
+    private void UpdateCaptureOrganizationPreview()
+    {
+        var example = CaptureStorage.GetDirectory(_preferences, CaptureMode.Image, DateTimeOffset.Now);
+        _captureOrganizationPreview.Text = $"Exemple pour une image : {example}";
     }
 
     private void PluginsChanged(object? sender, EventArgs args)

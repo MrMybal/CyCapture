@@ -43,7 +43,9 @@ public enum PrintScreenBehavior
     ShowModePicker,
     CaptureImage,
     CaptureVideo,
-    CaptureGif
+    CaptureGif,
+    CaptureAudio,
+    QuickImageHoldSelection
 }
 
 public sealed class Preferences
@@ -60,11 +62,15 @@ public sealed class Preferences
     public GifQuality GifQuality { get; set; } = GifQuality.Balanced;
     public CaptureSelectionMode SelectionMode { get; set; } = CaptureSelectionMode.Smart;
     public PrintScreenBehavior PrintScreenBehavior { get; set; } = PrintScreenBehavior.ShowModePicker;
+    public int PrintScreenHoldDelayMilliseconds { get; set; } = 300;
     public bool IncludeSystemAudio { get; set; } = true;
     public bool IncludeMicrophone { get; set; }
     public bool CopyScreenshotsToClipboard { get; set; } = true;
     public bool CopyVideosToClipboard { get; set; }
     public bool ShowRecordingFrame { get; set; } = true;
+    public bool SeparateCaptureTypes { get; set; }
+    public bool CreateDailyCaptureFolders { get; set; }
+    public bool StartWithWindows { get; set; }
 
     public static string DataDirectory => Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
@@ -130,6 +136,8 @@ public sealed class Preferences
         if (!Enum.IsDefined(value.SelectionMode)) value.SelectionMode = CaptureSelectionMode.Smart;
         if (!Enum.IsDefined(value.PrintScreenBehavior))
             value.PrintScreenBehavior = PrintScreenBehavior.ShowModePicker;
+        var clampedHoldDelay = Math.Clamp(value.PrintScreenHoldDelayMilliseconds, 100, 1_000);
+        value.PrintScreenHoldDelayMilliseconds = ((clampedHoldDelay + 50) / 100) * 100;
         if (!string.IsNullOrWhiteSpace(value.OutputDirectory) && !Path.IsPathFullyQualified(value.OutputDirectory))
             value.OutputDirectory = null;
         return value;

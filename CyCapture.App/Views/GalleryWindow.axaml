@@ -34,7 +34,7 @@
               HorizontalAlignment="Stretch" VerticalAlignment="Center">
         <StackPanel Spacing="8" HorizontalAlignment="Center">
           <TextBlock Text="Aucune capture" FontSize="18" FontWeight="Bold" HorizontalAlignment="Center" />
-          <TextBlock Text="Vos prochaines images, vidéos et GIF apparaîtront ici." Foreground="#8E9C99" TextAlignment="Center" />
+          <TextBlock Text="Vos prochaines images, vidéos, GIF et captures audio apparaîtront ici." Foreground="#8E9C99" TextAlignment="Center" />
         </StackPanel>
       </Border>
     </Grid>

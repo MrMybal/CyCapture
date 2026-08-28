@@ -85,6 +85,7 @@ public sealed partial class GalleryWindow : Window
             {
                 CaptureMode.Video => "▶  Lire",
                 CaptureMode.Gif => "▶  Lire le GIF",
+                CaptureMode.Audio => "▶  Écouter",
                 _ => "↗  Ouvrir"
             },
             HorizontalAlignment = HorizontalAlignment.Stretch,
@@ -168,12 +169,21 @@ public sealed partial class GalleryWindow : Window
             {
                 new TextBlock
                 {
-                    Text = entry.Mode == CaptureMode.Video ? "▶" : entry.Mode == CaptureMode.Gif ? "GIF" : "▣",
+                    Text = entry.Mode switch
+                    {
+                        CaptureMode.Video => "▶",
+                        CaptureMode.Gif => "GIF",
+                        CaptureMode.Audio => "♪",
+                        _ => "▣"
+                    },
                     FontSize = entry.Mode == CaptureMode.Gif ? 25 : 36,
                     FontWeight = FontWeight.Bold,
-                    Foreground = new SolidColorBrush(entry.Mode == CaptureMode.Video
-                        ? Color.FromRgb(255, 91, 105)
-                        : Color.FromRgb(155, 255, 40)),
+                    Foreground = new SolidColorBrush(entry.Mode switch
+                    {
+                        CaptureMode.Video => Color.FromRgb(255, 91, 105),
+                        CaptureMode.Audio => Color.FromRgb(197, 140, 255),
+                        _ => Color.FromRgb(155, 255, 40)
+                    }),
                     HorizontalAlignment = HorizontalAlignment.Center
                 },
                 new TextBlock { Text = ModeLabel(entry.Mode), Foreground = new SolidColorBrush(Color.FromRgb(142, 156, 153)), FontSize = 10 }
@@ -224,6 +234,7 @@ public sealed partial class GalleryWindow : Window
     {
         CaptureMode.Video => "VIDÉO",
         CaptureMode.Gif => "GIF",
+        CaptureMode.Audio => "AUDIO",
         _ => "IMAGE"
     };
 

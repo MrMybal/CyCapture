@@ -9,9 +9,10 @@ internal sealed class ImageCaptureService
     internal async Task<CaptureArtifact> CaptureAsync(CaptureSelection selection, Preferences preferences)
     {
         var startedAt = DateTimeOffset.Now;
-        Directory.CreateDirectory(preferences.EffectiveOutputDirectory);
+        var outputDirectory = CaptureStorage.GetDirectory(preferences, CaptureMode.Image, startedAt);
+        Directory.CreateDirectory(outputDirectory);
         var extension = preferences.ImageFormat == "jpeg" ? "jpg" : "png";
-        var path = Path.Combine(preferences.EffectiveOutputDirectory, FileNames.Create("capture", extension));
+        var path = Path.Combine(outputDirectory, FileNames.Create("capture", extension));
 
         using var bitmap = await Task.Run(() => ScreenCapture.Capture(selection.Bounds));
         if (preferences.ImageFormat == "jpeg")

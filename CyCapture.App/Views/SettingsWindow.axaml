@@ -21,11 +21,12 @@
       <Border Padding="16" CornerRadius="12" Background="#111817" BorderBrush="#263331" BorderThickness="1">
         <StackPanel Spacing="12">
           <TextBlock Text="CAPTURE RAPIDE" FontSize="10" FontWeight="Bold" Foreground="#9BFF28" LetterSpacing="1.4" />
-          <TextBlock Text="Lancez immédiatement un mode ici. Pendant une vidéo ou un GIF, Impr écran arrête l’enregistrement." TextWrapping="Wrap" Foreground="#B4C0BD" />
-          <Grid ColumnDefinitions="*,*,*" ColumnSpacing="8">
+          <TextBlock Text="Lancez immédiatement un mode ici. Pendant une vidéo, un GIF ou un audio, Impr écran arrête l’enregistrement." TextWrapping="Wrap" Foreground="#B4C0BD" />
+          <Grid ColumnDefinitions="*,*,*,*" ColumnSpacing="8">
             <Button Grid.Column="0" Content="▣  Image" Click="ImageClick" Height="42" />
             <Button Grid.Column="1" Content="●  Vidéo" Click="VideoClick" Height="42" />
             <Button Grid.Column="2" Content="GIF" Click="GifClick" Height="42" />
+            <Button Grid.Column="3" Content="♪  Audio" Click="AudioClick" Height="42" />
           </Grid>
         </StackPanel>
       </Border>
@@ -33,12 +34,29 @@
       <StackPanel Spacing="8">
         <TextBlock Text="COMPORTEMENT DE LA TOUCHE IMPR ÉCRAN" FontSize="10" FontWeight="Bold" Foreground="#9BFF28" LetterSpacing="1.4" />
         <ComboBox x:Name="PrintScreenBehaviorCombo" SelectionChanged="SelectionPreferenceChanged">
-          <ComboBoxItem Content="Afficher le choix Image / Vidéo / GIF" Tag="ShowModePicker" />
+          <ComboBoxItem Content="Afficher le choix Image / Vidéo / GIF / Audio" Tag="ShowModePicker" />
           <ComboBoxItem Content="Capture d’image directe" Tag="CaptureImage" />
           <ComboBoxItem Content="Capture vidéo directe" Tag="CaptureVideo" />
           <ComboBoxItem Content="Capture GIF directe" Tag="CaptureGif" />
+          <ComboBoxItem Content="Capture audio directe" Tag="CaptureAudio" />
+          <ComboBoxItem Content="Appui court : sélection image · maintien réglable : modes" Tag="QuickImageHoldSelection" />
         </ComboBox>
-        <TextBlock Text="Les modes directs sautent la palette, puis ouvrent immédiatement la sélection intelligente." TextWrapping="Wrap" Foreground="#7F8D8A" FontSize="11" />
+        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
+          <TextBlock Text="Délai du maintien" VerticalAlignment="Center" Foreground="#B4C0BD" />
+          <ComboBox x:Name="PrintScreenHoldDelayCombo" Grid.Column="1" Width="130" HorizontalAlignment="Left" SelectionChanged="SelectionPreferenceChanged">
+            <ComboBoxItem Content="0,1 seconde" Tag="100" />
+            <ComboBoxItem Content="0,2 seconde" Tag="200" />
+            <ComboBoxItem Content="0,3 seconde" Tag="300" />
+            <ComboBoxItem Content="0,4 seconde" Tag="400" />
+            <ComboBoxItem Content="0,5 seconde" Tag="500" />
+            <ComboBoxItem Content="0,6 seconde" Tag="600" />
+            <ComboBoxItem Content="0,7 seconde" Tag="700" />
+            <ComboBoxItem Content="0,8 seconde" Tag="800" />
+            <ComboBoxItem Content="0,9 seconde" Tag="900" />
+            <ComboBoxItem Content="1 seconde" Tag="1000" />
+          </ComboBox>
+        </Grid>
+        <TextBlock Text="Les modes directs sautent la palette. Dans le mode hybride, un appui court ouvre la sélection intelligente d’image ; un maintien pendant le délai choisi ouvre la palette Image / Vidéo / GIF / Audio." TextWrapping="Wrap" Foreground="#7F8D8A" FontSize="11" />
       </StackPanel>
 
       <StackPanel Spacing="8">
@@ -49,6 +67,20 @@
             <Button Grid.Column="1" Content="Choisir" Click="ChooseFolderClick" />
             <Button Grid.Column="2" Content="Ouvrir" Click="OpenFolderClick" />
           </Grid>
+        </Border>
+        <Border Padding="12" CornerRadius="10" Background="#111817" BorderBrush="#263331" BorderThickness="1">
+          <StackPanel Spacing="10">
+            <CheckBox x:Name="SeparateCaptureTypesCheck"
+                      Content="Séparer les captures par type (Images, Videos, GIFs et Audio)"
+                      IsCheckedChanged="CheckedPreferenceChanged" />
+            <CheckBox x:Name="DailyFoldersCheck"
+                      Content="Créer automatiquement un sous-dossier par jour"
+                      IsCheckedChanged="CheckedPreferenceChanged" />
+            <TextBlock x:Name="CaptureOrganizationPreview"
+                       TextWrapping="Wrap"
+                       Foreground="#7F8D8A"
+                       FontSize="11" />
+          </StackPanel>
         </Border>
       </StackPanel>
 
@@ -130,6 +162,12 @@
           <CheckBox x:Name="ClipboardCheck" Content="Copier les images dans le presse-papiers" IsCheckedChanged="CheckedPreferenceChanged" />
           <CheckBox x:Name="VideoClipboardCheck" Content="Copier les vidéos dans le presse-papiers comme fichiers" IsCheckedChanged="CheckedPreferenceChanged" />
           <CheckBox x:Name="FrameCheck" Content="Afficher le cadre rouge hors de la zone enregistrée" IsCheckedChanged="CheckedPreferenceChanged" />
+          <CheckBox x:Name="StartupCheck" Content="Lancer CyCapture au démarrage de Windows" IsCheckedChanged="CheckedPreferenceChanged" />
+          <TextBlock x:Name="StartupStatusText"
+                     Text="CyCapture démarrera directement dans la zone de notification pour l’utilisateur actuel."
+                     TextWrapping="Wrap"
+                     Foreground="#7F8D8A"
+                     FontSize="11" />
         </StackPanel>
       </Border>
 

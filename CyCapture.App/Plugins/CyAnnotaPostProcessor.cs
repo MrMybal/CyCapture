@@ -12,10 +12,10 @@ internal sealed class CyAnnotaPostProcessor :
     ICapturePluginHostAware,
     ICapturePluginPreparable
 {
-    internal const string BundledVersion = "0.3.6";
+    internal const string BundledVersion = "0.3.7";
     internal const string BundledPortableFileName = $"CyAnnota-{BundledVersion}-portable.exe";
     internal const string BundledArchiveFileName = $"CyAnnota-{BundledVersion}-win-x64.zip";
-    internal const string BundledPortableSha256 = "60A07568B71EB98F2F86EBA8869F61392548BDA7EC3FFD78274245351E4A93F2";
+    internal const string BundledPortableSha256 = "A07452E00BB463B63D6ED68092A3119033471A7B04A808D00ECD9B493FC93C02";
     private const long BundledPortableLength = 107_917_573;
     private const string BundledPortableResourceName = $"CyCapture.Bundled.{BundledPortableFileName}";
     private const string BundledArchiveResourceName = $"CyCapture.Bundled.{BundledArchiveFileName}";
@@ -79,7 +79,7 @@ internal sealed class CyAnnotaPostProcessor :
     public async ValueTask ProcessAsync(CaptureArtifact artifact, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
-        if (artifact.Mode == CaptureMode.Gif) return;
+        if (artifact.Mode is CaptureMode.Gif or CaptureMode.Audio) return;
         if (artifact.Mode == CaptureMode.Image && !_openImages) return;
         if (artifact.Mode == CaptureMode.Video && !_openVideos) return;
         if (!File.Exists(artifact.Path))

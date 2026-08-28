@@ -5,6 +5,7 @@ using System.Text.Json;
 using CyCapture.Models;
 using CyCapture.Platform.Windows;
 using CyCapture.Plugins;
+using NAudio.Wave;
 
 namespace CyCapture.Services;
 
@@ -13,6 +14,7 @@ internal sealed class SelfTestService
     internal async Task RunAsync(string reportPath)
     {
         var generatedRoot = Path.Combine(Path.GetTempPath(), "CyCapture", "self-test-" + Guid.NewGuid().ToString("N"));
+        var captureRoot = Path.Combine(generatedRoot, "captures");
         Directory.CreateDirectory(generatedRoot);
         var checks = new Dictionary<string, object?>();
         var stopwatch = Stopwatch.StartNew();
@@ -47,7 +49,9 @@ internal sealed class SelfTestService
 
             var preferences = new Preferences
             {
-                OutputDirectory = generatedRoot,
+                OutputDirectory = captureRoot,
+                SeparateCaptureTypes = true,
+                CreateDailyCaptureFolders = true,
                 IncludeSystemAudio = false,
                 IncludeMicrophone = false,
                 CopyScreenshotsToClipboard = false,
@@ -58,6 +62,18 @@ internal sealed class SelfTestService
 
             var image = await new ImageCaptureService().CaptureAsync(selection, preferences);
             checks["imageFile"] = new { bytes = new FileInfo(image.Path).Length };
+            var expectedImageDirectory = CaptureStorage.GetDirectory(preferences, CaptureMode.Image, image.StartedAt);
+            var organizedImagePath = Path.GetDirectoryName(image.Path)
+                                     ?.Equals(expectedImageDirectory, StringComparison.OrdinalIgnoreCase) == true;
+            checks["captureOrganization"] = new
+            {
+                preferences.SeparateCaptureTypes,
+                preferences.CreateDailyCaptureFolders,
+                organizedImagePath,
+                expectedImageDirectory
+            };
+            if (!organizedImagePath)
+                throw new InvalidOperationException("L’organisation quotidienne et par type n’a pas été appliquée.");
 
             var frameRateProfiles = new Dictionary<string, object?>();
             foreach (var quality in Enum.GetValues<VideoQuality>())
@@ -96,11 +112,16 @@ internal sealed class SelfTestService
                 imageEncodingProfiles,
                 audioEncodingProfiles,
                 videoClipboardAsFile = preferences.CopyVideosToClipboard,
-                selectionModes = Enum.GetNames<CaptureSelectionMode>()
+                selectionModes = Enum.GetNames<CaptureSelectionMode>(),
+                printScreenBehaviors = Enum.GetNames<PrintScreenBehavior>(),
+                printScreenHoldDelayMilliseconds = preferences.PrintScreenHoldDelayMilliseconds
             };
             if (videoEncodingProfiles[nameof(VideoEncodingQuality.VeryLow)] != 1_000_000
                 || imageEncodingProfiles[nameof(ImageEncodingQuality.Compact)] != 40
-                || RecordingService.GetAudioProfile(AudioEncodingQuality.Compact).Channels != ScreenRecorderLib.AudioChannels.Mono)
+                || RecordingService.GetAudioProfile(AudioEncodingQuality.Compact).Channels != ScreenRecorderLib.AudioChannels.Mono
+                || !Enum.IsDefined(PrintScreenBehavior.QuickImageHoldSelection)
+                || !Enum.IsDefined(PrintScreenBehavior.CaptureAudio)
+                || preferences.PrintScreenHoldDelayMilliseconds is < 100 or > 1_000)
                 throw new InvalidOperationException("Les profils d’encodage compacts ne sont pas appliqués.");
 
             var pluginData = Path.Combine(generatedRoot, "plugin-state");
@@ -199,14 +220,19 @@ internal sealed class SelfTestService
             var video = await recording.StopAsync();
             await CaptureMetadataWriter.WriteAsync(video.Path, "{\"selfTest\":true}", "Intégré au média", pluginData, default);
             var embeddedVideoMetadata = CaptureMetadataWriter.HasEmbeddedMetadata(video.Path);
+            var organizedVideoPath = Path.GetDirectoryName(video.Path)
+                                     ?.Equals(
+                                         CaptureStorage.GetDirectory(preferences, CaptureMode.Video, video.StartedAt),
+                                         StringComparison.OrdinalIgnoreCase) == true;
             checks["video"] = new
             {
                 bytes = new FileInfo(video.Path).Length,
                 durationMs = (video.FinishedAt - video.StartedAt).TotalMilliseconds,
-                embeddedVideoMetadata
+                embeddedVideoMetadata,
+                organizedVideoPath
             };
-            if (!embeddedVideoMetadata)
-                throw new InvalidOperationException("Les métadonnées MP4 n’ont pas été intégrées.");
+            if (!embeddedVideoMetadata || !organizedVideoPath)
+                throw new InvalidOperationException("La vidéo n’a pas été organisée ou ses métadonnées sont absentes.");
 
             await recording.StartAsync(CaptureMode.Gif, selection, preferences);
             await Task.Delay(1800);
@@ -214,25 +240,75 @@ internal sealed class SelfTestService
             await CaptureMetadataWriter.WriteAsync(gif.Path, "{\"selfTest\":true}", "Intégré au média", pluginData, default);
             var gifInfo = InspectGif(gif.Path);
             var embeddedGifMetadata = CaptureMetadataWriter.HasEmbeddedMetadata(gif.Path);
+            var organizedGifPath = Path.GetDirectoryName(gif.Path)
+                                   ?.Equals(
+                                       CaptureStorage.GetDirectory(preferences, CaptureMode.Gif, gif.StartedAt),
+                                       StringComparison.OrdinalIgnoreCase) == true;
             checks["gif"] = new
             {
                 bytes = new FileInfo(gif.Path).Length,
                 durationMs = (gif.FinishedAt - gif.StartedAt).TotalMilliseconds,
                 gifInfo.FrameCount,
                 gifInfo.EncodedDurationMs,
-                embeddedGifMetadata
+                embeddedGifMetadata,
+                organizedGifPath
             };
-            if (!embeddedGifMetadata || gifInfo.FrameCount == 0)
-                throw new InvalidOperationException("Le GIF n’est plus valide après l’intégration des métadonnées.");
+            if (!embeddedGifMetadata || !organizedGifPath || gifInfo.FrameCount == 0)
+                throw new InvalidOperationException("Le GIF n’est plus valide ou n’a pas été organisé correctement.");
 
-            var galleryEntries = await new HistoryService().ReadAvailableAsync(generatedRoot, false);
+            preferences.IncludeSystemAudio = true;
+            preferences.AudioEncodingQuality = AudioEncodingQuality.Compact;
+            await recording.StartAsync(CaptureMode.Audio, selection, preferences);
+            await Task.Delay(1300);
+            var audio = await recording.StopAsync();
+            double encodedAudioDurationMs;
+            using (var audioReader = new AudioFileReader(audio.Path))
+                encodedAudioDurationMs = audioReader.TotalTime.TotalMilliseconds;
+            var capturedAudioDurationMs = (audio.FinishedAt - audio.StartedAt).TotalMilliseconds;
+            var audioDurationDeltaMs = Math.Abs(encodedAudioDurationMs - capturedAudioDurationMs);
+            var centralMetadataDirectory = Path.Combine(pluginData, "Metadata");
+            var centralMetadataCountBeforeAudio = Directory.Exists(centralMetadataDirectory)
+                ? Directory.EnumerateFiles(centralMetadataDirectory, "*.json").Count()
+                : 0;
+            await CaptureMetadataWriter.WriteAsync(
+                audio.Path,
+                "{\"selfTest\":true,\"mediaType\":\"audio\"}",
+                "Intégré au média",
+                pluginData,
+                default);
+            var centralAudioMetadata = Directory.Exists(centralMetadataDirectory)
+                                       && Directory.EnumerateFiles(centralMetadataDirectory, "*.json").Count()
+                                       == centralMetadataCountBeforeAudio + 1;
+            var adjacentAudioMetadata = File.Exists(audio.Path + ".cycapture.json");
+            var organizedAudioPath = Path.GetDirectoryName(audio.Path)
+                                     ?.Equals(
+                                         CaptureStorage.GetDirectory(preferences, CaptureMode.Audio, audio.StartedAt),
+                                         StringComparison.OrdinalIgnoreCase) == true;
+            checks["audio"] = new
+            {
+                extension = Path.GetExtension(audio.Path),
+                bytes = new FileInfo(audio.Path).Length,
+                durationMs = capturedAudioDurationMs,
+                encodedAudioDurationMs,
+                audioDurationDeltaMs,
+                organizedAudioPath,
+                centralAudioMetadata,
+                adjacentAudioMetadata
+            };
+            if (!organizedAudioPath || encodedAudioDurationMs < 900 || audioDurationDeltaMs > 250
+                || !centralAudioMetadata || adjacentAudioMetadata)
+                throw new InvalidOperationException("L’audio, son organisation ou le stockage central de ses métadonnées n’est plus valide.");
+
+            var galleryEntries = await new HistoryService().ReadAvailableAsync(captureRoot, false);
             checks["gallery"] = new
             {
                 count = galleryEntries.Count,
                 modes = galleryEntries.Select(entry => entry.Mode.ToString()).Order().ToArray()
             };
-            if (galleryEntries.Count != 3)
-                throw new InvalidOperationException($"La galerie devait détecter 3 captures, résultat : {galleryEntries.Count}.");
+            var expectedGalleryModes = Enum.GetValues<CaptureMode>().Order().ToArray();
+            if (galleryEntries.Count != 4
+                || !galleryEntries.Select(entry => entry.Mode).Order().SequenceEqual(expectedGalleryModes))
+                throw new InvalidOperationException($"La galerie devait détecter les 4 modes, résultat : {galleryEntries.Count} capture(s).");
             checks["success"] = true;
         }
         catch (Exception error)
