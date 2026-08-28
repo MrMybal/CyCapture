@@ -4,9 +4,15 @@
   <img src="CyCapture.App/Assets/CyCaptureLogo.png" alt="Logo CyCapture" width="180">
 </p>
 
-CyCapture est un outil de capture discret écrit en **C# avec Avalonia 12** et ciblant Windows en priorité. CyAnnota reste un projet séparé ; son ouverture après capture passe uniquement par un plugin CyCapture facultatif.
+<p align="center">
+  <a href="#français">Français</a> · <a href="#english">English</a>
+</p>
 
-## Utilisation
+## Français
+
+CyCapture est un outil de capture discret écrit en **C# avec Avalonia 12** et ciblant Windows en priorité. [CyAnnota](https://github.com/MrMybal/CyAnnota) reste un projet séparé ; son ouverture après capture passe uniquement par un plugin CyCapture facultatif.
+
+### Utilisation
 
 Au lancement, CyCapture reste dans la zone de notification et n’ouvre pas une grande interface.
 
@@ -22,7 +28,7 @@ Un clic droit sur l’icône du tray permet de lancer directement une capture d�
 
 Le même menu contient maintenant des entrées séparées pour la **Galerie** et les **Réglages**. La galerie affiche les miniatures des images et GIF présents dans le dossier de captures et permet de lire les vidéos avec le lecteur Windows par défaut. Après une capture, la notification reste cliquable pendant six secondes pour ouvrir directement le fichier.
 
-## Fonctions de la version Avalonia
+### Fonctions de la version Avalonia
 
 - application tray-first, sans fenêtre principale imposée ;
 - remplacement natif de `Impr. écran` par un hook clavier Windows intégré au processus C# ;
@@ -49,7 +55,7 @@ Le même menu contient maintenant des entrées séparées pour la **Galerie** et
 - petite fenêtre de réglages accessible depuis le tray ;
 - instance unique : relancer CyCapture ouvre les réglages de l’instance existante.
 
-## Compiler
+### Compiler
 
 Prérequis : SDK .NET 8 ou plus récent et Windows x64.
 
@@ -60,7 +66,7 @@ dotnet restore CyCapture.sln --runtime win-x64
 dotnet build CyCapture.sln -c Release
 ```
 
-## Produire la version portable
+### Produire la version portable
 
 ```powershell
 dotnet publish CyCapture.App/CyCapture.App.csproj `
@@ -70,13 +76,13 @@ dotnet publish CyCapture.App/CyCapture.App.csproj `
 
 Le projet publie un exécutable autonome en fichier unique. ScreenRecorderLib utilise Media Foundation et demande le Media Feature Pack sur une édition Windows N/KN qui ne l’inclut pas.
 
-## Architecture et portabilité
+### Architecture et portabilité
 
 L’interface, les modèles et le pipeline de plugins utilisent Avalonia/C#. Les services `Platform/Windows` contiennent le hook clavier, l’énumération des fenêtres et la capture Windows. Cette séparation permettra d’ajouter plus tard des implémentations macOS et Linux sans refaire l’interface.
 
 Ce dossier de travail contient uniquement la version native Avalonia/C#. Les anciens fichiers Electron sont restés dans le dossier de migration d’origine et ne font pas partie de ce projet.
 
-## Métadonnées et intégration CyAnnota
+### Métadonnées et intégration CyAnnota
 
 Le plugin **Manifeste de capture** permet de choisir son stockage depuis les réglages :
 
@@ -85,12 +91,107 @@ Le plugin **Manifeste de capture** permet de choisir son stockage depuis les ré
 - **JSON adjacent** : conserve le comportement historique `.cycapture.json` ;
 - **Aucune métadonnée** : ne produit aucun manifeste.
 
-Le plugin **CyAnnota Post Edit** est implémenté exclusivement dans CyCapture et ne modifie, ne copie et ne référence à la compilation aucun fichier source de CyAnnota. Il est désactivé par défaut. Une fois activé, sa case **PostEdit with CyAnnota** est synchronisée entre les réglages, le tray et la palette rapide. Le chemin de `CyAnnota.exe`, le mode de lancement et les types de médias à ouvrir sont configurables. Les GIF sont ignorés tant qu’ils ne sont pas pris en charge par CyAnnota.
+Le plugin **CyAnnota Post Edit** est implémenté exclusivement dans CyCapture et ne modifie, ne copie et ne référence à la compilation aucun fichier source de [CyAnnota](https://github.com/MrMybal/CyAnnota). Il est désactivé par défaut. Une fois activé, sa case **PostEdit with CyAnnota** est synchronisée entre les réglages, le tray et la palette rapide. Le chemin de `CyAnnota.exe`, le mode de lancement et les types de médias à ouvrir sont configurables. Les GIF sont ignorés tant qu’ils ne sont pas pris en charge par CyAnnota.
 
 Le contrat générique destiné aux autres plugins est décrit dans [`PLUGIN_API.md`](PLUGIN_API.md).
 
-## Licence
+### Licence
 
 Copyright © 2026 CyberAlien.
 
 CyCapture est distribué sous la **GNU Affero General Public License v3.0 uniquement** (`AGPL-3.0-only`). Le texte complet est disponible dans [`LICENSE`](LICENSE).
+
+---
+
+## English
+
+CyCapture is a discreet screen-capture tool built with **C# and Avalonia 12**, with Windows as its current priority. [CyAnnota](https://github.com/MrMybal/CyAnnota) remains a separate project; opening completed captures in it is handled only by an optional CyCapture plugin.
+
+### Usage
+
+CyCapture starts in the notification area without forcing a large main window to open.
+
+1. Press `Print Screen`.
+2. Choose the video quality, GIF quality and selection style (**Smart**, **Window**, **Screen** or **Free region**) from the palette displayed near the pointer.
+3. Choose **Image**, **Video** or **GIF**. This can be replaced in the settings by a direct Image, Video or GIF mode.
+4. Make the requested selection.
+5. For a video or GIF, press `Print Screen` again to stop recording.
+
+While recording, the tray icon turns red, its tooltip displays `REC` and the elapsed time, and the tray menu also provides a stop command. The red border and its small timer are placed outside the recorded area and marked for exclusion by the Windows capture API.
+
+Right-clicking the tray icon can directly start an image, video or GIF capture. Each command opens the smart selector in the requested mode.
+
+The same menu provides separate **Gallery** and **Settings** entries. The gallery displays thumbnails for images and GIFs from the capture folder and opens videos in the default Windows player. After a capture, the notification remains clickable for six seconds so the saved file can be opened directly.
+
+### Avalonia version features
+
+- tray-first application with no mandatory main window;
+- native `Print Screen` replacement through a Windows keyboard hook running inside the C# process;
+- Image / Video / GIF palette displayed near the pointer;
+- video/GIF quality and selection style controls available directly in the palette;
+- Smart, Window, Screen and Free region selection modes;
+- configurable `Print Screen` behavior: show the palette or directly start an Image, Video or GIF capture;
+- Image/Video/GIF commands directly available from the tray context menu;
+- local gallery with thumbnails, refresh and direct media access;
+- clickable capture-complete notifications;
+- dedicated `Settings…` entry in the tray menu;
+- smart selection of windows, client areas and internal controls;
+- free-region and full-screen selection;
+- support for offset multi-monitor desktops and per-monitor DPI;
+- PNG/JPEG image capture and clipboard copy;
+- H.264 MP4 video through Media Foundation, with optional system audio and microphone recording;
+- direct GIF capture with compact, balanced and high-quality profiles;
+- green idle tray icon and red recording icon with timer;
+- configurable local history and metadata: embedded in the media by default, central database, adjacent JSON or no metadata;
+- C# post-processing plugins through `ICapturePostProcessor` in `%LOCALAPPDATA%\CyCapture\Plugins`;
+- individual plugin activation and configuration from the settings;
+- optional plugin contributions as global toggles in the tray and quick palette;
+- bundled **CyAnnota Post Edit** plugin, disabled by default, for automatically opening completed images and videos;
+- compact settings window accessible from the tray;
+- single-instance behavior: starting CyCapture again opens the settings of the running instance.
+
+### Build
+
+Requirements: .NET 8 SDK or newer and Windows x64.
+
+```powershell
+git clone https://github.com/MrMybal/CyCapture.git
+cd CyCapture
+dotnet restore CyCapture.sln --runtime win-x64
+dotnet build CyCapture.sln -c Release
+```
+
+### Create a portable build
+
+```powershell
+dotnet publish CyCapture.App/CyCapture.App.csproj `
+  -c Release -p:Platform=x64 -r win-x64 --self-contained true `
+  -o dist-native/CyCapture-1.4.1-windows-x64
+```
+
+The project publishes a self-contained, single-file executable. ScreenRecorderLib uses Media Foundation and requires the Media Feature Pack on Windows N/KN editions that do not include it.
+
+### Architecture and portability
+
+The interface, models and plugin pipeline use Avalonia/C#. Services under `Platform/Windows` contain the keyboard hook, window enumeration and Windows capture implementation. This separation will allow macOS and Linux implementations to be added later without rebuilding the user interface.
+
+This working directory contains only the native Avalonia/C# version. The former Electron files remain in the original migration directory and are not part of this project.
+
+### Metadata and CyAnnota integration
+
+The **Capture Manifest** plugin lets users choose its storage mode from the settings:
+
+- **Embedded in media**: writes metadata into PNG, JPEG, GIF or MP4 files without adding JSON files to the capture folder;
+- **Central database**: writes metadata to `%LOCALAPPDATA%\CyCapture\Metadata`;
+- **Adjacent JSON**: preserves the historical `.cycapture.json` behavior;
+- **No metadata**: does not produce a manifest.
+
+The **CyAnnota Post Edit** plugin is implemented exclusively inside CyCapture and does not modify, copy or reference any [CyAnnota](https://github.com/MrMybal/CyAnnota) source file at build time. It is disabled by default. Once enabled, its **PostEdit with CyAnnota** option is synchronized between the settings, tray and quick palette. The `CyAnnota.exe` path, launch behavior and supported media types are configurable. GIF files are ignored until CyAnnota supports them.
+
+The generic contract for other plugins is documented in [`PLUGIN_API.md`](PLUGIN_API.md).
+
+### License
+
+Copyright © 2026 CyberAlien.
+
+CyCapture is distributed under the **GNU Affero General Public License v3.0 only** (`AGPL-3.0-only`). The complete license text is available in [`LICENSE`](LICENSE).
