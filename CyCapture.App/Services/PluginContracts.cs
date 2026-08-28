@@ -28,6 +28,11 @@ internal interface ICapturePluginHostAware
     void InitializeHost(string dataDirectory);
 }
 
+internal interface ICapturePluginPreparable
+{
+    ValueTask PrepareAsync(CancellationToken cancellationToken);
+}
+
 internal sealed record CapturePluginDescriptor(
     string Id,
     string Name,

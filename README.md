@@ -33,7 +33,7 @@ Le même menu contient maintenant des entrées séparées pour la **Galerie** et
 - application tray-first, sans fenêtre principale imposée ;
 - remplacement natif de `Impr. écran` par un hook clavier Windows intégré au processus C# ;
 - palette Image / Vidéo / GIF au niveau de la souris ;
-- qualités vidéo/GIF et style de sélection directement modifiables dans la palette ;
+- fluidité vidéo, débit H.264, encodage audio, format/qualité d’image, qualité GIF et style de sélection directement modifiables dans la palette ;
 - modes de sélection Intelligente, Fenêtre, Écran et Zone libre ;
 - comportement de `Impr. écran` configurable : palette ou capture directe Image/Vidéo/GIF ;
 - commandes Image/Vidéo/GIF directement accessibles par clic droit sur le tray ;
@@ -43,15 +43,17 @@ Le même menu contient maintenant des entrées séparées pour la **Galerie** et
 - sélection intelligente de la fenêtre, de sa zone cliente et de contrôles internes ;
 - sélection libre et sélection d’écran ;
 - prise en charge des bureaux multi-écrans décalés et du DPI par moniteur ;
-- capture image PNG/JPEG et copie dans le presse-papiers ;
-- vidéo MP4 H.264 via Media Foundation, avec son système et microphone optionnels ;
+- capture image PNG sans perte ou JPEG à 40, 70 ou 90 %, avec copie dans le presse-papiers ;
+- vidéo MP4 H.264 via Media Foundation, avec débit indépendant de 1 à 12 Mbit/s, son système et microphone optionnels ;
+- encodage audio configurable de 96 kbit/s mono à 192 kbit/s stéréo ;
+- copie facultative des vidéos dans le presse-papiers Windows comme fichiers, compatible avec l’Explorateur et les logiciels acceptant les pièces jointes ;
 - GIF direct avec profils compact, équilibré et haute qualité ;
 - tray normal vert et tray d’enregistrement rouge avec minuterie ;
 - historique local et métadonnées configurables : intégrées au média par défaut, base centrale, JSON adjacent ou aucune métadonnée ;
 - plugins C# de post-traitement via `ICapturePostProcessor` dans `%LOCALAPPDATA%\CyCapture\Plugins` ;
 - activation et configuration individuelles des plugins depuis les réglages ;
 - contribution facultative des plugins sous forme de case globale dans le tray et la palette rapide ;
-- plugin **CyAnnota Post Edit** fourni, désactivé par défaut, pour ouvrir automatiquement les images et vidéos terminées ;
+- plugin **CyAnnota Post Edit** fourni, désactivé par défaut, avec CyAnnota 0.3.6 directement embarqué dans les builds Release ;
 - petite fenêtre de réglages accessible depuis le tray ;
 - instance unique : relancer CyCapture ouvre les réglages de l’instance existante.
 
@@ -71,7 +73,7 @@ dotnet build CyCapture.sln -c Release
 ```powershell
 dotnet publish CyCapture.App/CyCapture.App.csproj `
   -c Release -p:Platform=x64 -r win-x64 --self-contained true `
-  -o dist-native/CyCapture-1.4.1-windows-x64
+  -o dist-native/CyCapture-1.4.2-windows-x64
 ```
 
 Le projet publie un exécutable autonome en fichier unique. ScreenRecorderLib utilise Media Foundation et demande le Media Feature Pack sur une édition Windows N/KN qui ne l’inclut pas.
@@ -91,9 +93,12 @@ Le plugin **Manifeste de capture** permet de choisir son stockage depuis les ré
 - **JSON adjacent** : conserve le comportement historique `.cycapture.json` ;
 - **Aucune métadonnée** : ne produit aucun manifeste.
 
-Le plugin **CyAnnota Post Edit** est implémenté exclusivement dans CyCapture et ne modifie, ne copie et ne référence à la compilation aucun fichier source de [CyAnnota](https://github.com/MrMybal/CyAnnota). Il est désactivé par défaut. Une fois activé, sa case **PostEdit with CyAnnota** est synchronisée entre les réglages, le tray et la palette rapide. Le chemin de `CyAnnota.exe`, le mode de lancement et les types de médias à ouvrir sont configurables. Les GIF sont ignorés tant qu’ils ne sont pas pris en charge par CyAnnota.
+Le plugin **CyAnnota Post Edit** est implémenté exclusivement dans CyCapture et ne modifie aucun fichier source de [CyAnnota](https://github.com/MrMybal/CyAnnota). Les builds Windows Release embarquent la distribution Windows CyAnnota 0.3.6. CyCapture l’extrait une seule fois dans `%LOCALAPPDATA%\CyCapture\Bundled\CyAnnota` en arrière-plan, puis lance directement `CyAnnota.exe` : aucune installation séparée ni association `cyannota://` n’est nécessaire. Lors d’un premier lancement, CyCapture attend que la fenêtre soit prête avant de lui transmettre le média.
+
+Le plugin reste désactivé par défaut. Une fois activé, sa case **PostEdit with CyAnnota** est synchronisée entre les réglages, le tray et la palette rapide. Un exécutable CyAnnota personnalisé peut toujours être choisi dans les réglages. Les GIF sont ignorés tant qu’ils ne sont pas pris en charge par CyAnnota.
 
 Le contrat générique destiné aux autres plugins est décrit dans [`PLUGIN_API.md`](PLUGIN_API.md).
+Les informations de licence et de provenance du binaire intégré figurent dans [`BUNDLED_COMPONENTS.md`](BUNDLED_COMPONENTS.md).
 
 ### Licence
 
@@ -128,7 +133,7 @@ The same menu provides separate **Gallery** and **Settings** entries. The galler
 - tray-first application with no mandatory main window;
 - native `Print Screen` replacement through a Windows keyboard hook running inside the C# process;
 - Image / Video / GIF palette displayed near the pointer;
-- video/GIF quality and selection style controls available directly in the palette;
+- video frame rate, H.264 bitrate, audio encoding, image format/quality, GIF quality and selection style controls available directly in the palette;
 - Smart, Window, Screen and Free region selection modes;
 - configurable `Print Screen` behavior: show the palette or directly start an Image, Video or GIF capture;
 - Image/Video/GIF commands directly available from the tray context menu;
@@ -138,15 +143,17 @@ The same menu provides separate **Gallery** and **Settings** entries. The galler
 - smart selection of windows, client areas and internal controls;
 - free-region and full-screen selection;
 - support for offset multi-monitor desktops and per-monitor DPI;
-- PNG/JPEG image capture and clipboard copy;
-- H.264 MP4 video through Media Foundation, with optional system audio and microphone recording;
+- lossless PNG or 40/70/90% JPEG image capture with clipboard copy;
+- H.264 MP4 video through Media Foundation, with an independent 1–12 Mbps bitrate plus optional system audio and microphone recording;
+- configurable audio encoding from 96 kbps mono to 192 kbps stereo;
+- optional video clipboard copy as a Windows file, supported by Explorer and applications that accept attachments;
 - direct GIF capture with compact, balanced and high-quality profiles;
 - green idle tray icon and red recording icon with timer;
 - configurable local history and metadata: embedded in the media by default, central database, adjacent JSON or no metadata;
 - C# post-processing plugins through `ICapturePostProcessor` in `%LOCALAPPDATA%\CyCapture\Plugins`;
 - individual plugin activation and configuration from the settings;
 - optional plugin contributions as global toggles in the tray and quick palette;
-- bundled **CyAnnota Post Edit** plugin, disabled by default, for automatically opening completed images and videos;
+- bundled **CyAnnota Post Edit** plugin, disabled by default, with CyAnnota 0.3.6 included directly in Release builds;
 - compact settings window accessible from the tray;
 - single-instance behavior: starting CyCapture again opens the settings of the running instance.
 
@@ -166,7 +173,7 @@ dotnet build CyCapture.sln -c Release
 ```powershell
 dotnet publish CyCapture.App/CyCapture.App.csproj `
   -c Release -p:Platform=x64 -r win-x64 --self-contained true `
-  -o dist-native/CyCapture-1.4.1-windows-x64
+  -o dist-native/CyCapture-1.4.2-windows-x64
 ```
 
 The project publishes a self-contained, single-file executable. ScreenRecorderLib uses Media Foundation and requires the Media Feature Pack on Windows N/KN editions that do not include it.
@@ -186,9 +193,12 @@ The **Capture Manifest** plugin lets users choose its storage mode from the sett
 - **Adjacent JSON**: preserves the historical `.cycapture.json` behavior;
 - **No metadata**: does not produce a manifest.
 
-The **CyAnnota Post Edit** plugin is implemented exclusively inside CyCapture and does not modify, copy or reference any [CyAnnota](https://github.com/MrMybal/CyAnnota) source file at build time. It is disabled by default. Once enabled, its **PostEdit with CyAnnota** option is synchronized between the settings, tray and quick palette. The `CyAnnota.exe` path, launch behavior and supported media types are configurable. GIF files are ignored until CyAnnota supports them.
+The **CyAnnota Post Edit** plugin is implemented exclusively inside CyCapture and does not modify any [CyAnnota](https://github.com/MrMybal/CyAnnota) source file. Windows Release builds bundle the CyAnnota 0.3.6 Windows distribution. CyCapture extracts it once in the background to `%LOCALAPPDATA%\CyCapture\Bundled\CyAnnota`, then starts `CyAnnota.exe` directly, so no separate installation or `cyannota://` association is required. On a cold launch, CyCapture waits for the window to be ready before sending the media.
+
+The plugin remains disabled by default. Once enabled, its **PostEdit with CyAnnota** option is synchronized between the settings, tray and quick palette. A custom CyAnnota executable can still be selected in the settings. GIF files are ignored until CyAnnota supports them.
 
 The generic contract for other plugins is documented in [`PLUGIN_API.md`](PLUGIN_API.md).
+License and provenance information for the bundled executable is available in [`BUNDLED_COMPONENTS.md`](BUNDLED_COMPONENTS.md).
 
 ### License
 

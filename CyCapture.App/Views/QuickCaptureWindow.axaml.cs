@@ -13,6 +13,10 @@ public sealed partial class QuickCaptureWindow : Window
     private readonly Preferences _preferences;
     private readonly PostProcessingService _postProcessing;
     private readonly ComboBox _videoQualityCombo;
+    private readonly ComboBox _videoEncodingQualityCombo;
+    private readonly ComboBox _audioEncodingQualityCombo;
+    private readonly ComboBox _imageFormatCombo;
+    private readonly ComboBox _imageEncodingQualityCombo;
     private readonly ComboBox _gifQualityCombo;
     private readonly ComboBox _selectionModeCombo;
     private readonly Border _pluginOptionsBorder;
@@ -29,11 +33,19 @@ public sealed partial class QuickCaptureWindow : Window
         _postProcessing = postProcessing;
         AvaloniaXamlLoader.Load(this);
         _videoQualityCombo = RequireControl<ComboBox>("VideoQualityCombo");
+        _videoEncodingQualityCombo = RequireControl<ComboBox>("VideoEncodingQualityCombo");
+        _audioEncodingQualityCombo = RequireControl<ComboBox>("AudioEncodingQualityCombo");
+        _imageFormatCombo = RequireControl<ComboBox>("ImageFormatCombo");
+        _imageEncodingQualityCombo = RequireControl<ComboBox>("ImageEncodingQualityCombo");
         _gifQualityCombo = RequireControl<ComboBox>("GifQualityCombo");
         _selectionModeCombo = RequireControl<ComboBox>("SelectionModeCombo");
         _pluginOptionsBorder = RequireControl<Border>("PluginOptionsBorder");
         _pluginOptionsPanel = RequireControl<WrapPanel>("PluginOptionsPanel");
         SelectByTag(_videoQualityCombo, preferences.VideoQualityLevel.ToString());
+        SelectByTag(_videoEncodingQualityCombo, preferences.VideoEncodingQuality.ToString());
+        SelectByTag(_audioEncodingQualityCombo, preferences.AudioEncodingQuality.ToString());
+        SelectByTag(_imageFormatCombo, preferences.ImageFormat);
+        SelectByTag(_imageEncodingQualityCombo, preferences.ImageEncodingQuality.ToString());
         SelectByTag(_gifQualityCombo, preferences.GifQuality.ToString());
         SelectByTag(_selectionModeCombo, preferences.SelectionMode.ToString());
         PopulatePluginOptions();
@@ -66,13 +78,24 @@ public sealed partial class QuickCaptureWindow : Window
         if (_videoQualityCombo.SelectedItem is ComboBoxItem videoQuality
             && Enum.TryParse<VideoQuality>(videoQuality.Tag?.ToString(), out var selectedVideoQuality))
             _preferences.VideoQualityLevel = selectedVideoQuality;
+        if (_videoEncodingQualityCombo.SelectedItem is ComboBoxItem videoEncoding
+            && Enum.TryParse<VideoEncodingQuality>(videoEncoding.Tag?.ToString(), out var selectedVideoEncoding))
+            _preferences.VideoEncodingQuality = selectedVideoEncoding;
+        if (_audioEncodingQualityCombo.SelectedItem is ComboBoxItem audioEncoding
+            && Enum.TryParse<AudioEncodingQuality>(audioEncoding.Tag?.ToString(), out var selectedAudioEncoding))
+            _preferences.AudioEncodingQuality = selectedAudioEncoding;
+        if (_imageFormatCombo.SelectedItem is ComboBoxItem imageFormat)
+            _preferences.ImageFormat = imageFormat.Tag?.ToString() ?? "png";
+        if (_imageEncodingQualityCombo.SelectedItem is ComboBoxItem imageEncoding
+            && Enum.TryParse<ImageEncodingQuality>(imageEncoding.Tag?.ToString(), out var selectedImageEncoding))
+            _preferences.ImageEncodingQuality = selectedImageEncoding;
         if (_gifQualityCombo.SelectedItem is ComboBoxItem gifQuality
             && Enum.TryParse<GifQuality>(gifQuality.Tag?.ToString(), out var selectedGifQuality))
             _preferences.GifQuality = selectedGifQuality;
         if (_selectionModeCombo.SelectedItem is ComboBoxItem selectionMode
             && Enum.TryParse<CaptureSelectionMode>(selectionMode.Tag?.ToString(), out var selectedMode))
             _preferences.SelectionMode = selectedMode;
-        _preferences.ApplyVideoQuality();
+        _preferences.ApplyEncodingProfiles();
         try
         {
             await _preferences.SaveAsync();

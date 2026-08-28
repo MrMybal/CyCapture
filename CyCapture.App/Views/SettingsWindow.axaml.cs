@@ -17,12 +17,17 @@ public sealed partial class SettingsWindow : Window
     private readonly PostProcessingService _postProcessing;
     private readonly TextBlock _outputPathText;
     private readonly ComboBox _videoQualityCombo;
+    private readonly ComboBox _videoEncodingQualityCombo;
+    private readonly ComboBox _audioEncodingQualityCombo;
+    private readonly ComboBox _imageFormatCombo;
+    private readonly ComboBox _imageEncodingQualityCombo;
     private readonly ComboBox _gifQualityCombo;
     private readonly ComboBox _selectionModeCombo;
     private readonly ComboBox _printScreenBehaviorCombo;
     private readonly CheckBox _systemAudioCheck;
     private readonly CheckBox _microphoneCheck;
     private readonly CheckBox _clipboardCheck;
+    private readonly CheckBox _videoClipboardCheck;
     private readonly CheckBox _frameCheck;
     private readonly StackPanel _pluginsPanel;
     private bool _initializing = true;
@@ -39,22 +44,32 @@ public sealed partial class SettingsWindow : Window
         AvaloniaXamlLoader.Load(this);
         _outputPathText = RequireControl<TextBlock>("OutputPathText");
         _videoQualityCombo = RequireControl<ComboBox>("VideoQualityCombo");
+        _videoEncodingQualityCombo = RequireControl<ComboBox>("VideoEncodingQualityCombo");
+        _audioEncodingQualityCombo = RequireControl<ComboBox>("AudioEncodingQualityCombo");
+        _imageFormatCombo = RequireControl<ComboBox>("ImageFormatCombo");
+        _imageEncodingQualityCombo = RequireControl<ComboBox>("ImageEncodingQualityCombo");
         _gifQualityCombo = RequireControl<ComboBox>("GifQualityCombo");
         _selectionModeCombo = RequireControl<ComboBox>("SelectionModeCombo");
         _printScreenBehaviorCombo = RequireControl<ComboBox>("PrintScreenBehaviorCombo");
         _systemAudioCheck = RequireControl<CheckBox>("SystemAudioCheck");
         _microphoneCheck = RequireControl<CheckBox>("MicrophoneCheck");
         _clipboardCheck = RequireControl<CheckBox>("ClipboardCheck");
+        _videoClipboardCheck = RequireControl<CheckBox>("VideoClipboardCheck");
         _frameCheck = RequireControl<CheckBox>("FrameCheck");
         _pluginsPanel = RequireControl<StackPanel>("PluginsPanel");
         _outputPathText.Text = preferences.EffectiveOutputDirectory;
         SelectByTag(_videoQualityCombo, preferences.VideoQualityLevel.ToString());
+        SelectByTag(_videoEncodingQualityCombo, preferences.VideoEncodingQuality.ToString());
+        SelectByTag(_audioEncodingQualityCombo, preferences.AudioEncodingQuality.ToString());
+        SelectByTag(_imageFormatCombo, preferences.ImageFormat);
+        SelectByTag(_imageEncodingQualityCombo, preferences.ImageEncodingQuality.ToString());
         SelectByTag(_gifQualityCombo, preferences.GifQuality.ToString());
         SelectByTag(_selectionModeCombo, preferences.SelectionMode.ToString());
         SelectByTag(_printScreenBehaviorCombo, preferences.PrintScreenBehavior.ToString());
         _systemAudioCheck.IsChecked = preferences.IncludeSystemAudio;
         _microphoneCheck.IsChecked = preferences.IncludeMicrophone;
         _clipboardCheck.IsChecked = preferences.CopyScreenshotsToClipboard;
+        _videoClipboardCheck.IsChecked = preferences.CopyVideosToClipboard;
         _frameCheck.IsChecked = preferences.ShowRecordingFrame;
         _initializing = false;
         RenderPlugins();
@@ -110,6 +125,17 @@ public sealed partial class SettingsWindow : Window
         if (_videoQualityCombo.SelectedItem is ComboBoxItem videoQuality
             && Enum.TryParse<VideoQuality>(videoQuality.Tag?.ToString(), out var videoQualityValue))
             _preferences.VideoQualityLevel = videoQualityValue;
+        if (_videoEncodingQualityCombo.SelectedItem is ComboBoxItem videoEncoding
+            && Enum.TryParse<VideoEncodingQuality>(videoEncoding.Tag?.ToString(), out var videoEncodingValue))
+            _preferences.VideoEncodingQuality = videoEncodingValue;
+        if (_audioEncodingQualityCombo.SelectedItem is ComboBoxItem audioEncoding
+            && Enum.TryParse<AudioEncodingQuality>(audioEncoding.Tag?.ToString(), out var audioEncodingValue))
+            _preferences.AudioEncodingQuality = audioEncodingValue;
+        if (_imageFormatCombo.SelectedItem is ComboBoxItem imageFormat)
+            _preferences.ImageFormat = imageFormat.Tag?.ToString() ?? "png";
+        if (_imageEncodingQualityCombo.SelectedItem is ComboBoxItem imageEncoding
+            && Enum.TryParse<ImageEncodingQuality>(imageEncoding.Tag?.ToString(), out var imageEncodingValue))
+            _preferences.ImageEncodingQuality = imageEncodingValue;
         if (_gifQualityCombo.SelectedItem is ComboBoxItem quality
             && Enum.TryParse<GifQuality>(quality.Tag?.ToString(), out var qualityValue))
             _preferences.GifQuality = qualityValue;
@@ -122,8 +148,9 @@ public sealed partial class SettingsWindow : Window
         _preferences.IncludeSystemAudio = _systemAudioCheck.IsChecked == true;
         _preferences.IncludeMicrophone = _microphoneCheck.IsChecked == true;
         _preferences.CopyScreenshotsToClipboard = _clipboardCheck.IsChecked == true;
+        _preferences.CopyVideosToClipboard = _videoClipboardCheck.IsChecked == true;
         _preferences.ShowRecordingFrame = _frameCheck.IsChecked == true;
-        _preferences.ApplyVideoQuality();
+        _preferences.ApplyEncodingProfiles();
         await _preferences.SaveAsync();
     }
 

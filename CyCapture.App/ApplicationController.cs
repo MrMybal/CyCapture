@@ -77,11 +77,13 @@ internal sealed class ApplicationController
             _testMode = true;
             _preferences.OutputDirectory = Path.GetFullPath(_desktop.Args![testOutputIndex + 1]);
             _preferences.CopyScreenshotsToClipboard = false;
+            _preferences.CopyVideosToClipboard = false;
             _preferences.IncludeSystemAudio = false;
             _preferences.IncludeMicrophone = false;
         }
         Directory.CreateDirectory(_preferences.EffectiveOutputDirectory);
         CreateTray();
+        _ = _postProcessing.PrepareAsync(_shutdown.Token);
         _printScreenHook = new PrintScreenHook();
         _printScreenHook.Pressed += PrintScreenPressed;
         try
@@ -280,6 +282,11 @@ internal sealed class ApplicationController
         try
         {
             var artifact = await _recording.StopAsync();
+            if (artifact.Mode == CaptureMode.Video && _preferences.CopyVideosToClipboard)
+            {
+                try { WindowsClipboard.CopyFile(artifact.Path); }
+                catch { /* La vidéo reste enregistrée même si une application verrouille le presse-papiers. */ }
+            }
             await CompleteArtifactAsync(artifact);
             ShowToast(
                 artifact.Mode == CaptureMode.Gif ? "GIF enregistré" : "Vidéo enregistrée",

@@ -44,33 +44,69 @@
       </Grid>
 
       <Border Grid.Row="2" Padding="11" CornerRadius="11" Background="#101717" BorderBrush="#253030" BorderThickness="1">
-        <Grid ColumnDefinitions="*,*,*" ColumnSpacing="10">
-          <StackPanel Spacing="5">
-            <TextBlock Text="QUALITÉ VIDÉO" FontSize="9" FontWeight="Bold" Foreground="#FF6573" LetterSpacing="1" />
-            <ComboBox x:Name="VideoQualityCombo">
-              <ComboBoxItem Content="Compacte · 24 i/s" Tag="Compact" />
-              <ComboBoxItem Content="Équilibrée · 30 i/s" Tag="Balanced" />
-              <ComboBoxItem Content="Haute · 60 i/s" Tag="High" />
-            </ComboBox>
-          </StackPanel>
-          <StackPanel Grid.Column="1" Spacing="5">
-            <TextBlock Text="QUALITÉ GIF" FontSize="9" FontWeight="Bold" Foreground="#6CE5FF" LetterSpacing="1" />
-            <ComboBox x:Name="GifQualityCombo">
-              <ComboBoxItem Content="Compacte · 8 i/s" Tag="Compact" />
-              <ComboBoxItem Content="Équilibrée · 10 i/s" Tag="Balanced" />
-              <ComboBoxItem Content="Haute · 12 i/s" Tag="High" />
-            </ComboBox>
-          </StackPanel>
-          <StackPanel Grid.Column="2" Spacing="5">
-            <TextBlock Text="SÉLECTION" FontSize="9" FontWeight="Bold" Foreground="#9BFF28" LetterSpacing="1" />
-            <ComboBox x:Name="SelectionModeCombo">
-              <ComboBoxItem Content="Intelligente" Tag="Smart" />
-              <ComboBoxItem Content="Fenêtre" Tag="Window" />
-              <ComboBoxItem Content="Écran" Tag="Screen" />
-              <ComboBoxItem Content="Zone libre" Tag="Region" />
-            </ComboBox>
-          </StackPanel>
-        </Grid>
+        <StackPanel Spacing="10">
+          <Grid ColumnDefinitions="*,*,*" ColumnSpacing="10">
+            <StackPanel Spacing="5">
+              <TextBlock Text="FLUIDITÉ VIDÉO" FontSize="9" FontWeight="Bold" Foreground="#FF6573" LetterSpacing="1" />
+              <ComboBox x:Name="VideoQualityCombo">
+                <ComboBoxItem Content="24 images/s" Tag="Compact" />
+                <ComboBoxItem Content="30 images/s" Tag="Balanced" />
+                <ComboBoxItem Content="60 images/s" Tag="High" />
+              </ComboBox>
+            </StackPanel>
+            <StackPanel Grid.Column="1" Spacing="5">
+              <TextBlock Text="ENCODAGE VIDÉO" FontSize="9" FontWeight="Bold" Foreground="#FF6573" LetterSpacing="1" />
+              <ComboBox x:Name="VideoEncodingQualityCombo">
+                <ComboBoxItem Content="Très faible · 1 Mb/s" Tag="VeryLow" />
+                <ComboBoxItem Content="Compact · 2,5 Mb/s" Tag="Compact" />
+                <ComboBoxItem Content="Équilibré · 6 Mb/s" Tag="Balanced" />
+                <ComboBoxItem Content="Haute · 12 Mb/s" Tag="High" />
+              </ComboBox>
+            </StackPanel>
+            <StackPanel Grid.Column="2" Spacing="5">
+              <TextBlock Text="ENCODAGE AUDIO" FontSize="9" FontWeight="Bold" Foreground="#6CE5FF" LetterSpacing="1" />
+              <ComboBox x:Name="AudioEncodingQualityCombo">
+                <ComboBoxItem Content="96 kb/s · mono" Tag="Compact" />
+                <ComboBoxItem Content="128 kb/s · stéréo" Tag="Balanced" />
+                <ComboBoxItem Content="192 kb/s · stéréo" Tag="High" />
+              </ComboBox>
+            </StackPanel>
+          </Grid>
+          <Grid ColumnDefinitions="*,*,*,*" ColumnSpacing="10">
+            <StackPanel Spacing="5">
+              <TextBlock Text="FORMAT IMAGE" FontSize="9" FontWeight="Bold" Foreground="#9BFF28" LetterSpacing="1" />
+              <ComboBox x:Name="ImageFormatCombo">
+                <ComboBoxItem Content="PNG" Tag="png" />
+                <ComboBoxItem Content="JPEG" Tag="jpeg" />
+              </ComboBox>
+            </StackPanel>
+            <StackPanel Grid.Column="1" Spacing="5">
+              <TextBlock Text="QUALITÉ JPEG" FontSize="9" FontWeight="Bold" Foreground="#9BFF28" LetterSpacing="1" />
+              <ComboBox x:Name="ImageEncodingQualityCombo">
+                <ComboBoxItem Content="40 %" Tag="Compact" />
+                <ComboBoxItem Content="70 %" Tag="Balanced" />
+                <ComboBoxItem Content="90 %" Tag="High" />
+              </ComboBox>
+            </StackPanel>
+            <StackPanel Grid.Column="2" Spacing="5">
+              <TextBlock Text="QUALITÉ GIF" FontSize="9" FontWeight="Bold" Foreground="#6CE5FF" LetterSpacing="1" />
+              <ComboBox x:Name="GifQualityCombo">
+                <ComboBoxItem Content="8 images/s" Tag="Compact" />
+                <ComboBoxItem Content="10 images/s" Tag="Balanced" />
+                <ComboBoxItem Content="12 images/s" Tag="High" />
+              </ComboBox>
+            </StackPanel>
+            <StackPanel Grid.Column="3" Spacing="5">
+              <TextBlock Text="SÉLECTION" FontSize="9" FontWeight="Bold" Foreground="#9BFF28" LetterSpacing="1" />
+              <ComboBox x:Name="SelectionModeCombo">
+                <ComboBoxItem Content="Intelligente" Tag="Smart" />
+                <ComboBoxItem Content="Fenêtre" Tag="Window" />
+                <ComboBoxItem Content="Écran" Tag="Screen" />
+                <ComboBoxItem Content="Zone libre" Tag="Region" />
+              </ComboBox>
+            </StackPanel>
+          </Grid>
+        </StackPanel>
       </Border>
 
       <Border x:Name="PluginOptionsBorder" Grid.Row="3" IsVisible="False" Padding="11" CornerRadius="11"

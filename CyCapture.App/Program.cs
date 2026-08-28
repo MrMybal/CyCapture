@@ -14,11 +14,17 @@ internal static class Program
     public static int Main(string[] args)
     {
         NativeMethods.EnablePerMonitorDpiAwareness();
-        _singleInstance = new Mutex(true, "Local\\CyCapture.Avalonia.SingleInstance", out var isFirstInstance);
-        if (!isFirstInstance)
+        var isSelfTest = args.Contains("--self-test", StringComparer.OrdinalIgnoreCase);
+        if (!isSelfTest)
         {
-            NativeMethods.SignalExistingInstance();
-            return 0;
+            _singleInstance = new Mutex(true, "Local\\CyCapture.Avalonia.SingleInstance", out var isFirstInstance);
+            if (!isFirstInstance)
+            {
+                NativeMethods.SignalExistingInstance();
+                _singleInstance.Dispose();
+                _singleInstance = null;
+                return 0;
+            }
         }
 
         try
@@ -30,8 +36,12 @@ internal static class Program
         }
         finally
         {
-            _singleInstance.ReleaseMutex();
-            _singleInstance.Dispose();
+            if (_singleInstance is not null)
+            {
+                _singleInstance.ReleaseMutex();
+                _singleInstance.Dispose();
+                _singleInstance = null;
+            }
         }
     }
 

@@ -129,6 +129,7 @@ internal sealed class RecordingService : IDisposable
         var (outputWidth, outputHeight, gifFps) = mode == CaptureMode.Gif
             ? GifDimensions(local.Width, local.Height, preferences.GifQuality)
             : (Even(local.Width), Even(local.Height), preferences.FramesPerSecond);
+        var (audioBitrate, audioChannels) = GetAudioProfile(preferences.AudioEncodingQuality);
 
         return new RecorderOptions
         {
@@ -157,6 +158,8 @@ internal sealed class RecordingService : IDisposable
                 IsAudioEnabled = mode == CaptureMode.Video && (preferences.IncludeSystemAudio || preferences.IncludeMicrophone),
                 IsOutputDeviceEnabled = mode == CaptureMode.Video && preferences.IncludeSystemAudio,
                 IsInputDeviceEnabled = mode == CaptureMode.Video && preferences.IncludeMicrophone,
+                Bitrate = audioBitrate,
+                Channels = audioChannels,
                 InputVolume = preferences.IncludeSystemAudio && preferences.IncludeMicrophone ? 0.5f : 1f,
                 OutputVolume = preferences.IncludeSystemAudio && preferences.IncludeMicrophone ? 0.5f : 1f
             },
@@ -172,6 +175,13 @@ internal sealed class RecordingService : IDisposable
             }
         };
     }
+
+    internal static (AudioBitrate Bitrate, AudioChannels Channels) GetAudioProfile(AudioEncodingQuality quality) => quality switch
+    {
+        AudioEncodingQuality.Compact => (AudioBitrate.bitrate_96kbps, AudioChannels.Mono),
+        AudioEncodingQuality.High => (AudioBitrate.bitrate_192kbps, AudioChannels.Stereo),
+        _ => (AudioBitrate.bitrate_128kbps, AudioChannels.Stereo)
+    };
 
     private static (int Width, int Height, int Fps) GifDimensions(int width, int height, GifQuality quality)
     {

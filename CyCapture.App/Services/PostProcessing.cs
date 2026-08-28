@@ -42,6 +42,34 @@ internal sealed class PostProcessingService
 
     internal event EventHandler? PluginsChanged;
 
+    internal async Task PrepareAsync(CancellationToken cancellationToken = default)
+    {
+        List<(ICapturePostProcessor Processor, ICapturePluginPreparable Preparable)> preparable;
+        lock (_sync)
+            preparable = _processors.OfType<ICapturePluginPreparable>()
+                .Select(item => ((ICapturePostProcessor)item, item))
+                .ToList();
+
+        foreach (var (processor, item) in preparable)
+        {
+            try
+            {
+                await item.PrepareAsync(cancellationToken);
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                return;
+            }
+            catch (Exception error)
+            {
+                Directory.CreateDirectory(PluginsDirectory);
+                await File.AppendAllTextAsync(
+                    Path.Combine(PluginsDirectory, "plugin-errors.log"),
+                    $"{DateTimeOffset.Now:O} · {processor.Id} · préparation · {error}{Environment.NewLine}");
+            }
+        }
+    }
+
     internal IReadOnlyList<CapturePluginDescriptor> GetPlugins()
     {
         lock (_sync)
@@ -144,8 +172,8 @@ internal sealed class PostProcessingService
                 {
                     foreach (var setting in metadata.Settings)
                     {
-                        if (!state.Values.ContainsKey(setting.Key))
-                            state.Values[setting.Key] = NormalizeValue(setting, setting.DefaultValue);
+                        var storedValue = state.Values.GetValueOrDefault(setting.Key, setting.DefaultValue);
+                        state.Values[setting.Key] = NormalizeValue(setting, storedValue);
                     }
                     ApplySettings(processor, state);
                 }

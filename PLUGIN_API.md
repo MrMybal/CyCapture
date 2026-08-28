@@ -46,4 +46,4 @@ public sealed class ExamplePostProcessor : ICapturePostProcessor, ICapturePlugin
 - une exception de chargement ou de configuration désactive uniquement le plugin concerné et est écrite dans `Plugins\plugin-errors.log` ;
 - une exception pendant le post-traitement n’annule pas la capture et est écrite dans `cycapture-plugin-errors.log` à côté du média.
 
-Cette API reste générique. L’intégration fournie avec CyAnnota est un post-processeur CyCapture isolé qui utilise le chemin du média terminé comme argument de `CyAnnota.exe` ou via le protocole `cyannota://`. Elle ne charge aucune DLL et ne modifie aucun fichier du projet CyAnnota.
+Cette API reste générique. L’intégration fournie avec CyAnnota est un post-processeur CyCapture isolé qui précharge la distribution Windows embarquée, attend sa première fenêtre si nécessaire, puis lui transmet directement le chemin du média terminé. Elle n’utilise pas le protocole `cyannota://`, ne charge aucune DLL et ne modifie aucun fichier source du projet CyAnnota.

@@ -14,7 +14,7 @@
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
     <AssemblyName>CyCapture</AssemblyName>
     <RootNamespace>CyCapture</RootNamespace>
-    <Version>1.4.1</Version>
+    <Version>1.4.2</Version>
     <Authors>CyberAlien</Authors>
     <Copyright>Copyright © 2026 CyberAlien</Copyright>
     <Product>CyCapture</Product>
@@ -27,6 +27,16 @@
     <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
     <IncludeAllContentForSelfExtract>true</IncludeAllContentForSelfExtract>
     <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
+    <CyAnnotaBundleVersion>0.3.6</CyAnnotaBundleVersion>
+    <CyAnnotaBundleFileName>CyAnnota-$(CyAnnotaBundleVersion)-portable.exe</CyAnnotaBundleFileName>
+    <CyAnnotaBundleUrl>https://github.com/MrMybal/CyAnnota/releases/download/v$(CyAnnotaBundleVersion)/$(CyAnnotaBundleFileName)</CyAnnotaBundleUrl>
+    <CyAnnotaBundleSha256>60A07568B71EB98F2F86EBA8869F61392548BDA7EC3FFD78274245351E4A93F2</CyAnnotaBundleSha256>
+    <CyAnnotaBundleCacheDirectory>$(BaseIntermediateOutputPath)cyannota</CyAnnotaBundleCacheDirectory>
+    <CyAnnotaBundlePath>$(CyAnnotaBundleCacheDirectory)\$(CyAnnotaBundleFileName)</CyAnnotaBundlePath>
+    <CyAnnotaUnpackedArchiveFileName>CyAnnota-$(CyAnnotaBundleVersion)-win-x64.zip</CyAnnotaUnpackedArchiveFileName>
+    <CyAnnotaUnpackedArchivePath>$(CyAnnotaBundleCacheDirectory)\$(CyAnnotaUnpackedArchiveFileName)</CyAnnotaUnpackedArchivePath>
+    <BundleCyAnnota Condition="'$(BundleCyAnnota)' == '' and '$(Configuration)' == 'Release' and '$(RuntimeIdentifier)' == 'win-x64'">true</BundleCyAnnota>
+    <BundleCyAnnota Condition="'$(BundleCyAnnota)' == ''">false</BundleCyAnnota>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)' == 'Release'">
@@ -44,7 +54,34 @@
 
   <ItemGroup>
     <Content Include="..\LICENSE" Link="LICENSE" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" ExcludeFromSingleFile="true" />
+    <Content Include="..\BUNDLED_COMPONENTS.md" Link="BUNDLED_COMPONENTS.md" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" ExcludeFromSingleFile="true" />
+    <EmbeddedResource Include="$(CyAnnotaBundlePath)" LogicalName="CyCapture.Bundled.$(CyAnnotaBundleFileName)"
+                      Condition="'$(BundleCyAnnota)' == 'true' and '$(CyAnnotaUnpackedDirectory)' == ''" />
+    <EmbeddedResource Include="$(CyAnnotaUnpackedArchivePath)" LogicalName="CyCapture.Bundled.$(CyAnnotaUnpackedArchiveFileName)"
+                      Condition="'$(BundleCyAnnota)' == 'true' and '$(CyAnnotaUnpackedDirectory)' != ''" />
   </ItemGroup>
+
+  <Target Name="PrepareBundledCyAnnota" BeforeTargets="PrepareResourceNames" Condition="'$(BundleCyAnnota)' == 'true'">
+    <MakeDir Directories="$(CyAnnotaBundleCacheDirectory)" />
+    <Error Condition="'$(CyAnnotaUnpackedDirectory)' != '' and !Exists('$(CyAnnotaUnpackedDirectory)\CyAnnota.exe')"
+           Text="Le dossier CyAnnota unpacked ne contient pas CyAnnota.exe." />
+    <ZipDirectory SourceDirectory="$(CyAnnotaUnpackedDirectory)" DestinationFile="$(CyAnnotaUnpackedArchivePath)" Overwrite="true"
+                  Condition="'$(CyAnnotaUnpackedDirectory)' != '' and !Exists('$(CyAnnotaUnpackedArchivePath)')" />
+    <Copy SourceFiles="$(CyAnnotaBundleSource)" DestinationFiles="$(CyAnnotaBundlePath)" SkipUnchangedFiles="true"
+          Condition="'$(CyAnnotaUnpackedDirectory)' == '' and '$(CyAnnotaBundleSource)' != ''" />
+    <DownloadFile SourceUrl="$(CyAnnotaBundleUrl)" DestinationFolder="$(CyAnnotaBundleCacheDirectory)"
+                  DestinationFileName="$(CyAnnotaBundleFileName)" SkipUnchangedFiles="true"
+                  Condition="'$(CyAnnotaUnpackedDirectory)' == '' and '$(CyAnnotaBundleSource)' == '' and !Exists('$(CyAnnotaBundlePath)')" />
+    <GetFileHash Files="$(CyAnnotaBundlePath)" Algorithm="SHA256" Condition="'$(CyAnnotaUnpackedDirectory)' == ''">
+      <Output TaskParameter="Items" ItemName="CyAnnotaBundleHashItem" />
+    </GetFileHash>
+    <Error Condition="'$(CyAnnotaUnpackedDirectory)' == '' and '%(CyAnnotaBundleHashItem.FileHash)' != '$(CyAnnotaBundleSha256)'"
+           Text="L'empreinte SHA-256 de CyAnnota ne correspond pas à la version officielle attendue." />
+    <Message Importance="high" Text="CyAnnota $(CyAnnotaBundleVersion) unpacked est intégré depuis $(CyAnnotaUnpackedDirectory)."
+             Condition="'$(CyAnnotaUnpackedDirectory)' != ''" />
+    <Message Importance="high" Text="CyAnnota $(CyAnnotaBundleVersion) portable est intégré depuis $(CyAnnotaBundlePath)."
+             Condition="'$(CyAnnotaUnpackedDirectory)' == ''" />
+  </Target>
 
   <Target Name="RemovePublishedDebugSymbols" AfterTargets="Publish" Condition="'$(Configuration)' == 'Release'">
     <ItemGroup>

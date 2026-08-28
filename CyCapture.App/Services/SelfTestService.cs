@@ -59,18 +59,49 @@ internal sealed class SelfTestService
             var image = await new ImageCaptureService().CaptureAsync(selection, preferences);
             checks["imageFile"] = new { bytes = new FileInfo(image.Path).Length };
 
-            var videoProfiles = new Dictionary<string, object?>();
+            var frameRateProfiles = new Dictionary<string, object?>();
             foreach (var quality in Enum.GetValues<VideoQuality>())
             {
                 var probe = new Preferences { VideoQualityLevel = quality };
-                probe.ApplyVideoQuality();
-                videoProfiles[quality.ToString()] = new { probe.FramesPerSecond, probe.VideoBitrate };
+                probe.ApplyEncodingProfiles();
+                frameRateProfiles[quality.ToString()] = probe.FramesPerSecond;
             }
+            var videoEncodingProfiles = Enum.GetValues<VideoEncodingQuality>().ToDictionary(
+                quality => quality.ToString(),
+                quality =>
+                {
+                    var probe = new Preferences { VideoEncodingQuality = quality };
+                    probe.ApplyEncodingProfiles();
+                    return probe.VideoBitrate;
+                });
+            var imageEncodingProfiles = Enum.GetValues<ImageEncodingQuality>().ToDictionary(
+                quality => quality.ToString(),
+                quality =>
+                {
+                    var probe = new Preferences { ImageEncodingQuality = quality };
+                    probe.ApplyEncodingProfiles();
+                    return probe.JpegQuality;
+                });
+            var audioEncodingProfiles = Enum.GetValues<AudioEncodingQuality>().ToDictionary(
+                quality => quality.ToString(),
+                quality =>
+                {
+                    var profile = RecordingService.GetAudioProfile(quality);
+                    return new { bitrate = profile.Bitrate.ToString(), channels = profile.Channels.ToString() };
+                });
             checks["captureOptions"] = new
             {
-                videoProfiles,
+                frameRateProfiles,
+                videoEncodingProfiles,
+                imageEncodingProfiles,
+                audioEncodingProfiles,
+                videoClipboardAsFile = preferences.CopyVideosToClipboard,
                 selectionModes = Enum.GetNames<CaptureSelectionMode>()
             };
+            if (videoEncodingProfiles[nameof(VideoEncodingQuality.VeryLow)] != 1_000_000
+                || imageEncodingProfiles[nameof(ImageEncodingQuality.Compact)] != 40
+                || RecordingService.GetAudioProfile(AudioEncodingQuality.Compact).Channels != ScreenRecorderLib.AudioChannels.Mono)
+                throw new InvalidOperationException("Les profils d’encodage compacts ne sont pas appliqués.");
 
             var pluginData = Path.Combine(generatedRoot, "plugin-state");
             var pluginManager = new PostProcessingService(pluginData, false, [new SelfTestQuickPlugin()]);
@@ -120,7 +151,13 @@ internal sealed class SelfTestService
                                   && Directory.EnumerateFiles(Path.Combine(pluginData, "Metadata"), "*.json").Any();
 
             var cyAnnotaPlugin = pluginManager.GetPlugins().Single(plugin => plugin.Id == "cyannota-post-edit");
-            var cyAnnotaExecutable = new CyAnnotaPostProcessor().ResolveExecutable();
+            var cyAnnotaProcessor = new CyAnnotaPostProcessor();
+            cyAnnotaProcessor.InitializeHost(pluginData);
+            var cyAnnotaExecutable = cyAnnotaProcessor.ResolveExecutable();
+            var cyAnnotaBundled = CyAnnotaPostProcessor.HasBundledExecutable;
+            var expectedBundledRoot = Path.GetFullPath(Path.Combine(pluginData, "Bundled")) + Path.DirectorySeparatorChar;
+            var bundledExecutableUsed = cyAnnotaExecutable is not null
+                                        && Path.GetFullPath(cyAnnotaExecutable).StartsWith(expectedBundledRoot, StringComparison.OrdinalIgnoreCase);
             await pluginManager.SetEnabledAsync(manifestPlugin.Id, false);
             var pluginDisabled = !pluginManager.GetPlugins().Single(plugin => plugin.Id == manifestPlugin.Id).Enabled;
             var quickPlugin = pluginManager.GetPlugins().Single(plugin => plugin.Id == "self-test-quick-plugin");
@@ -141,7 +178,9 @@ internal sealed class SelfTestService
                     enabledByDefault = cyAnnotaPlugin.Enabled,
                     cyAnnotaPlugin.QuickAccessLabel,
                     executable = cyAnnotaExecutable,
-                    executableFound = cyAnnotaExecutable is not null && File.Exists(cyAnnotaExecutable)
+                    executableFound = cyAnnotaExecutable is not null && File.Exists(cyAnnotaExecutable),
+                    bundledResource = cyAnnotaBundled,
+                    bundledExecutableUsed
                 },
                 quickAccessLabel = quickPlugin.QuickAccessLabel,
                 quickSetting = quickPlugin.Values["profile"],
@@ -150,6 +189,7 @@ internal sealed class SelfTestService
             if (!noMetadataWritten || !selectionExcluded || !embeddedImageMetadata || !embeddedJpegMetadata
                 || !centralMetadata || !pluginDisabled
                 || cyAnnotaPlugin.Enabled || cyAnnotaPlugin.QuickAccessLabel != "PostEdit with CyAnnota"
+                || (cyAnnotaBundled && (!bundledExecutableUsed || cyAnnotaExecutable is null || !File.Exists(cyAnnotaExecutable)))
                 || quickPlugin.QuickAccessLabel is null || quickPlugin.Values["profile"] != "Quality")
                 throw new InvalidOperationException("La configuration ou l’activation des plugins n’a pas été appliquée.");
 

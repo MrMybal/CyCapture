@@ -54,11 +54,11 @@
 
       <Grid ColumnDefinitions="*,*,*" ColumnSpacing="12">
         <StackPanel Spacing="6">
-          <TextBlock Text="QUALITÉ VIDÉO" FontSize="10" FontWeight="Bold" Foreground="#FF6573" LetterSpacing="1.1" />
+          <TextBlock Text="FLUIDITÉ VIDÉO" FontSize="10" FontWeight="Bold" Foreground="#FF6573" LetterSpacing="1.1" />
           <ComboBox x:Name="VideoQualityCombo" SelectionChanged="SelectionPreferenceChanged">
-            <ComboBoxItem Content="Compacte · 24 i/s" Tag="Compact" />
-            <ComboBoxItem Content="Équilibrée · 30 i/s" Tag="Balanced" />
-            <ComboBoxItem Content="Haute · 60 i/s" Tag="High" />
+            <ComboBoxItem Content="24 images/s" Tag="Compact" />
+            <ComboBoxItem Content="30 images/s" Tag="Balanced" />
+            <ComboBoxItem Content="60 images/s" Tag="High" />
           </ComboBox>
         </StackPanel>
         <StackPanel Grid.Column="1" Spacing="6">
@@ -81,10 +81,54 @@
       </Grid>
 
       <Border Padding="14" CornerRadius="12" Background="#111817" BorderBrush="#263331" BorderThickness="1">
+        <StackPanel Spacing="12">
+          <StackPanel Spacing="3">
+            <TextBlock Text="ENCODAGE ET TAILLE DES FICHIERS" FontSize="10" FontWeight="Bold" Foreground="#9BFF28" LetterSpacing="1.4" />
+            <TextBlock Text="Ces profils sont indépendants du nombre d’images par seconde." Foreground="#7F8D8A" FontSize="11" />
+          </StackPanel>
+          <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto" ColumnSpacing="12" RowSpacing="12">
+            <StackPanel Spacing="5">
+              <TextBlock Text="FORMAT IMAGE" FontSize="9" FontWeight="Bold" Foreground="#B4C0BD" />
+              <ComboBox x:Name="ImageFormatCombo" SelectionChanged="SelectionPreferenceChanged">
+                <ComboBoxItem Content="PNG · sans perte" Tag="png" />
+                <ComboBoxItem Content="JPEG · fichier réduit" Tag="jpeg" />
+              </ComboBox>
+            </StackPanel>
+            <StackPanel Grid.Column="1" Spacing="5">
+              <TextBlock Text="QUALITÉ JPEG" FontSize="9" FontWeight="Bold" Foreground="#B4C0BD" />
+              <ComboBox x:Name="ImageEncodingQualityCombo" SelectionChanged="SelectionPreferenceChanged">
+                <ComboBoxItem Content="Compacte · 40 %" Tag="Compact" />
+                <ComboBoxItem Content="Équilibrée · 70 %" Tag="Balanced" />
+                <ComboBoxItem Content="Haute · 90 %" Tag="High" />
+              </ComboBox>
+            </StackPanel>
+            <StackPanel Grid.Row="1" Spacing="5">
+              <TextBlock Text="DÉBIT VIDÉO H.264" FontSize="9" FontWeight="Bold" Foreground="#FF6573" />
+              <ComboBox x:Name="VideoEncodingQualityCombo" SelectionChanged="SelectionPreferenceChanged">
+                <ComboBoxItem Content="Très faible · 1 Mbit/s" Tag="VeryLow" />
+                <ComboBoxItem Content="Compact · 2,5 Mbit/s" Tag="Compact" />
+                <ComboBoxItem Content="Équilibré · 6 Mbit/s" Tag="Balanced" />
+                <ComboBoxItem Content="Haute qualité · 12 Mbit/s" Tag="High" />
+              </ComboBox>
+            </StackPanel>
+            <StackPanel Grid.Row="1" Grid.Column="1" Spacing="5">
+              <TextBlock Text="ENCODAGE AUDIO" FontSize="9" FontWeight="Bold" Foreground="#6CE5FF" />
+              <ComboBox x:Name="AudioEncodingQualityCombo" SelectionChanged="SelectionPreferenceChanged">
+                <ComboBoxItem Content="Compact · 96 kbit/s mono" Tag="Compact" />
+                <ComboBoxItem Content="Équilibré · 128 kbit/s stéréo" Tag="Balanced" />
+                <ComboBoxItem Content="Haute qualité · 192 kbit/s stéréo" Tag="High" />
+              </ComboBox>
+            </StackPanel>
+          </Grid>
+        </StackPanel>
+      </Border>
+
+      <Border Padding="14" CornerRadius="12" Background="#111817" BorderBrush="#263331" BorderThickness="1">
         <StackPanel Spacing="13">
           <CheckBox x:Name="SystemAudioCheck" Content="Capturer le son du système" IsCheckedChanged="CheckedPreferenceChanged" />
           <CheckBox x:Name="MicrophoneCheck" Content="Ajouter le microphone" IsCheckedChanged="CheckedPreferenceChanged" />
           <CheckBox x:Name="ClipboardCheck" Content="Copier les images dans le presse-papiers" IsCheckedChanged="CheckedPreferenceChanged" />
+          <CheckBox x:Name="VideoClipboardCheck" Content="Copier les vidéos dans le presse-papiers comme fichiers" IsCheckedChanged="CheckedPreferenceChanged" />
           <CheckBox x:Name="FrameCheck" Content="Afficher le cadre rouge hors de la zone enregistrée" IsCheckedChanged="CheckedPreferenceChanged" />
         </StackPanel>
       </Border>

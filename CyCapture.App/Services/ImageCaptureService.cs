@@ -15,7 +15,12 @@ internal sealed class ImageCaptureService
 
         using var bitmap = await Task.Run(() => ScreenCapture.Capture(selection.Bounds));
         if (preferences.ImageFormat == "jpeg")
-            bitmap.Save(path, ImageFormat.Jpeg);
+        {
+            var encoder = ImageCodecInfo.GetImageEncoders().First(codec => codec.FormatID == ImageFormat.Jpeg.Guid);
+            using var parameters = new EncoderParameters(1);
+            parameters.Param[0] = new EncoderParameter(System.Drawing.Imaging.Encoder.Quality, (long)preferences.JpegQuality);
+            bitmap.Save(path, encoder, parameters);
+        }
         else
             bitmap.Save(path, ImageFormat.Png);
 
