@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-labelledby="title description">
+  <title id="title">CyCapture</title>
+  <description id="description">Monogramme CY blanc sur disque bleu nuit, entouré de trois arcs verts.</description>
+  <circle cx="512" cy="512" r="504" fill="#06192B"/>
+  <g fill="none" stroke="#78FF32" stroke-width="54" stroke-linecap="round">
+    <path d="M221 249 A392 392 0 0 1 803 249"/>
+    <path d="M851 316 A392 392 0 0 1 560 901"/>
+    <path d="M464 901 A392 392 0 0 1 173 316"/>
+  </g>
+  <path d="M676 676 A224 224 0 1 1 676 370" fill="none" stroke="#FFFFFF" stroke-width="62"/>
+  <path d="M420 420H486L512 478L538 420H604L545 530V672H479V530Z" fill="#FFFFFF"/>
+</svg>

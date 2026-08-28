@@ -1,0 +1,99 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="CyCapture.Views.QuickCaptureWindow"
+        Title="CyCapture · Capture rapide"
+        Width="720" SizeToContent="Height"
+        CanResize="False"
+        ShowInTaskbar="False"
+        Topmost="True"
+        WindowDecorations="None"
+        WindowStartupLocation="Manual"
+        Background="Transparent">
+  <Border Margin="8" Padding="14" CornerRadius="18" Background="#F20A1010" BorderBrush="#394748" BorderThickness="1">
+    <Grid RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="10">
+      <Grid ColumnDefinitions="*,Auto,Auto" Margin="4,0,4,0">
+        <StackPanel Orientation="Horizontal" Spacing="8">
+          <Ellipse Width="9" Height="9" Fill="#9BFF28" VerticalAlignment="Center" />
+          <TextBlock Text="CYCAPTURE" FontWeight="Bold" FontSize="12" LetterSpacing="1.8" />
+        </StackPanel>
+        <TextBlock Grid.Column="1" Text="Choisissez puis sélectionnez" Foreground="#90A09E" FontSize="11" />
+        <Button Grid.Column="2" Content="×" Click="CloseClick" Margin="10,-6,-5,-6" Padding="10,4" Background="Transparent" />
+      </Grid>
+      <Grid Grid.Row="1" ColumnDefinitions="*,*,*" ColumnSpacing="10">
+        <Button Grid.Column="0" Click="ImageClick" Classes="capture-mode">
+          <StackPanel HorizontalAlignment="Center" Spacing="5">
+            <TextBlock Text="▣" FontSize="24" Foreground="#9BFF28" HorizontalAlignment="Center" />
+            <TextBlock Text="IMAGE" FontWeight="Bold" FontSize="15" HorizontalAlignment="Center" />
+            <TextBlock Text="Capture instantanée" FontSize="10" Foreground="#90A09E" />
+          </StackPanel>
+        </Button>
+        <Button Grid.Column="1" Click="VideoClick" Classes="capture-mode">
+          <StackPanel HorizontalAlignment="Center" Spacing="5">
+            <TextBlock Text="●" FontSize="22" Foreground="#FF4657" HorizontalAlignment="Center" />
+            <TextBlock Text="VIDÉO" FontWeight="Bold" FontSize="15" HorizontalAlignment="Center" />
+            <TextBlock Text="MP4 · son système" FontSize="10" Foreground="#90A09E" />
+          </StackPanel>
+        </Button>
+        <Button Grid.Column="2" Click="GifClick" Classes="capture-mode">
+          <StackPanel HorizontalAlignment="Center" Spacing="5">
+            <TextBlock Text="GIF" FontSize="17" FontWeight="Black" Foreground="#6CE5FF" HorizontalAlignment="Center" />
+            <TextBlock Text="GIF" FontWeight="Bold" FontSize="15" HorizontalAlignment="Center" />
+            <TextBlock Text="Animation directe" FontSize="10" Foreground="#90A09E" />
+          </StackPanel>
+        </Button>
+      </Grid>
+
+      <Border Grid.Row="2" Padding="11" CornerRadius="11" Background="#101717" BorderBrush="#253030" BorderThickness="1">
+        <Grid ColumnDefinitions="*,*,*" ColumnSpacing="10">
+          <StackPanel Spacing="5">
+            <TextBlock Text="QUALITÉ VIDÉO" FontSize="9" FontWeight="Bold" Foreground="#FF6573" LetterSpacing="1" />
+            <ComboBox x:Name="VideoQualityCombo">
+              <ComboBoxItem Content="Compacte · 24 i/s" Tag="Compact" />
+              <ComboBoxItem Content="Équilibrée · 30 i/s" Tag="Balanced" />
+              <ComboBoxItem Content="Haute · 60 i/s" Tag="High" />
+            </ComboBox>
+          </StackPanel>
+          <StackPanel Grid.Column="1" Spacing="5">
+            <TextBlock Text="QUALITÉ GIF" FontSize="9" FontWeight="Bold" Foreground="#6CE5FF" LetterSpacing="1" />
+            <ComboBox x:Name="GifQualityCombo">
+              <ComboBoxItem Content="Compacte · 8 i/s" Tag="Compact" />
+              <ComboBoxItem Content="Équilibrée · 10 i/s" Tag="Balanced" />
+              <ComboBoxItem Content="Haute · 12 i/s" Tag="High" />
+            </ComboBox>
+          </StackPanel>
+          <StackPanel Grid.Column="2" Spacing="5">
+            <TextBlock Text="SÉLECTION" FontSize="9" FontWeight="Bold" Foreground="#9BFF28" LetterSpacing="1" />
+            <ComboBox x:Name="SelectionModeCombo">
+              <ComboBoxItem Content="Intelligente" Tag="Smart" />
+              <ComboBoxItem Content="Fenêtre" Tag="Window" />
+              <ComboBoxItem Content="Écran" Tag="Screen" />
+              <ComboBoxItem Content="Zone libre" Tag="Region" />
+            </ComboBox>
+          </StackPanel>
+        </Grid>
+      </Border>
+
+      <Border x:Name="PluginOptionsBorder" Grid.Row="3" IsVisible="False" Padding="11" CornerRadius="11"
+              Background="#101717" BorderBrush="#3B493C" BorderThickness="1">
+        <StackPanel Spacing="7">
+          <TextBlock Text="POST-TRAITEMENTS" FontSize="9" FontWeight="Bold" Foreground="#9BFF28" LetterSpacing="1" />
+          <WrapPanel x:Name="PluginOptionsPanel" Orientation="Horizontal" />
+        </StackPanel>
+      </Border>
+    </Grid>
+  </Border>
+  <Window.Styles>
+    <Style Selector="Button.capture-mode">
+      <Setter Property="Background" Value="#151C1C" />
+      <Setter Property="BorderBrush" Value="#253030" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="Padding" Value="10" />
+      <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+      <Setter Property="VerticalContentAlignment" Value="Center" />
+    </Style>
+    <Style Selector="Button.capture-mode:pointerover">
+      <Setter Property="Background" Value="#202B27" />
+      <Setter Property="BorderBrush" Value="#9BFF28" />
+    </Style>
+  </Window.Styles>
+</Window>

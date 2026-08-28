@@ -1,0 +1,111 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="CyCapture.Views.SettingsWindow"
+        Title="CyCapture"
+        Width="680" Height="760"
+        MinWidth="560" MinHeight="620"
+        CanResize="True"
+        WindowStartupLocation="CenterScreen">
+  <ScrollViewer>
+    <StackPanel Margin="28" Spacing="20">
+      <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
+        <Border Width="42" Height="42" CornerRadius="21" Background="#17201D" BorderBrush="#9BFF28" BorderThickness="2">
+          <Ellipse Width="12" Height="12" Fill="#9BFF28" HorizontalAlignment="Center" VerticalAlignment="Center" />
+        </Border>
+        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+          <TextBlock Text="CyCapture" FontSize="22" FontWeight="Black" />
+          <TextBlock Text="ACTIF EN ARRIÈRE-PLAN · AVALONIA/C#" FontSize="10" Foreground="#8E9C99" LetterSpacing="1.2" />
+        </StackPanel>
+      </Grid>
+
+      <Border Padding="16" CornerRadius="12" Background="#111817" BorderBrush="#263331" BorderThickness="1">
+        <StackPanel Spacing="12">
+          <TextBlock Text="CAPTURE RAPIDE" FontSize="10" FontWeight="Bold" Foreground="#9BFF28" LetterSpacing="1.4" />
+          <TextBlock Text="Lancez immédiatement un mode ici. Pendant une vidéo ou un GIF, Impr écran arrête l’enregistrement." TextWrapping="Wrap" Foreground="#B4C0BD" />
+          <Grid ColumnDefinitions="*,*,*" ColumnSpacing="8">
+            <Button Grid.Column="0" Content="▣  Image" Click="ImageClick" Height="42" />
+            <Button Grid.Column="1" Content="●  Vidéo" Click="VideoClick" Height="42" />
+            <Button Grid.Column="2" Content="GIF" Click="GifClick" Height="42" />
+          </Grid>
+        </StackPanel>
+      </Border>
+
+      <StackPanel Spacing="8">
+        <TextBlock Text="COMPORTEMENT DE LA TOUCHE IMPR ÉCRAN" FontSize="10" FontWeight="Bold" Foreground="#9BFF28" LetterSpacing="1.4" />
+        <ComboBox x:Name="PrintScreenBehaviorCombo" SelectionChanged="SelectionPreferenceChanged">
+          <ComboBoxItem Content="Afficher le choix Image / Vidéo / GIF" Tag="ShowModePicker" />
+          <ComboBoxItem Content="Capture d’image directe" Tag="CaptureImage" />
+          <ComboBoxItem Content="Capture vidéo directe" Tag="CaptureVideo" />
+          <ComboBoxItem Content="Capture GIF directe" Tag="CaptureGif" />
+        </ComboBox>
+        <TextBlock Text="Les modes directs sautent la palette, puis ouvrent immédiatement la sélection intelligente." TextWrapping="Wrap" Foreground="#7F8D8A" FontSize="11" />
+      </StackPanel>
+
+      <StackPanel Spacing="8">
+        <TextBlock Text="DOSSIER DES CAPTURES" FontSize="10" FontWeight="Bold" Foreground="#9BFF28" LetterSpacing="1.4" />
+        <Border Padding="12" CornerRadius="10" Background="#111817" BorderBrush="#263331" BorderThickness="1">
+          <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8">
+            <TextBlock x:Name="OutputPathText" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+            <Button Grid.Column="1" Content="Choisir" Click="ChooseFolderClick" />
+            <Button Grid.Column="2" Content="Ouvrir" Click="OpenFolderClick" />
+          </Grid>
+        </Border>
+      </StackPanel>
+
+      <Grid ColumnDefinitions="*,*,*" ColumnSpacing="12">
+        <StackPanel Spacing="6">
+          <TextBlock Text="QUALITÉ VIDÉO" FontSize="10" FontWeight="Bold" Foreground="#FF6573" LetterSpacing="1.1" />
+          <ComboBox x:Name="VideoQualityCombo" SelectionChanged="SelectionPreferenceChanged">
+            <ComboBoxItem Content="Compacte · 24 i/s" Tag="Compact" />
+            <ComboBoxItem Content="Équilibrée · 30 i/s" Tag="Balanced" />
+            <ComboBoxItem Content="Haute · 60 i/s" Tag="High" />
+          </ComboBox>
+        </StackPanel>
+        <StackPanel Grid.Column="1" Spacing="6">
+          <TextBlock Text="QUALITÉ GIF" FontSize="10" FontWeight="Bold" Foreground="#6CE5FF" LetterSpacing="1.1" />
+          <ComboBox x:Name="GifQualityCombo" SelectionChanged="SelectionPreferenceChanged">
+            <ComboBoxItem Content="Compacte · 8 i/s" Tag="Compact" />
+            <ComboBoxItem Content="Équilibrée · 10 i/s" Tag="Balanced" />
+            <ComboBoxItem Content="Haute · 12 i/s" Tag="High" />
+          </ComboBox>
+        </StackPanel>
+        <StackPanel Grid.Column="2" Spacing="6">
+          <TextBlock Text="SÉLECTION PAR DÉFAUT" FontSize="10" FontWeight="Bold" Foreground="#9BFF28" LetterSpacing="1.1" />
+          <ComboBox x:Name="SelectionModeCombo" SelectionChanged="SelectionPreferenceChanged">
+            <ComboBoxItem Content="Intelligente" Tag="Smart" />
+            <ComboBoxItem Content="Fenêtre" Tag="Window" />
+            <ComboBoxItem Content="Écran" Tag="Screen" />
+            <ComboBoxItem Content="Zone libre" Tag="Region" />
+          </ComboBox>
+        </StackPanel>
+      </Grid>
+
+      <Border Padding="14" CornerRadius="12" Background="#111817" BorderBrush="#263331" BorderThickness="1">
+        <StackPanel Spacing="13">
+          <CheckBox x:Name="SystemAudioCheck" Content="Capturer le son du système" IsCheckedChanged="CheckedPreferenceChanged" />
+          <CheckBox x:Name="MicrophoneCheck" Content="Ajouter le microphone" IsCheckedChanged="CheckedPreferenceChanged" />
+          <CheckBox x:Name="ClipboardCheck" Content="Copier les images dans le presse-papiers" IsCheckedChanged="CheckedPreferenceChanged" />
+          <CheckBox x:Name="FrameCheck" Content="Afficher le cadre rouge hors de la zone enregistrée" IsCheckedChanged="CheckedPreferenceChanged" />
+        </StackPanel>
+      </Border>
+
+      <Border Padding="14" CornerRadius="12" Background="#111817" BorderBrush="#263331" BorderThickness="1">
+        <StackPanel Spacing="12">
+          <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
+            <StackPanel>
+              <TextBlock Text="PLUGINS DE POST-TRAITEMENT" FontSize="10" FontWeight="Bold" Foreground="#9BFF28" LetterSpacing="1.4" />
+              <TextBlock Text="Activez et configurez chaque extension indépendamment." Foreground="#7F8D8A" FontSize="11" />
+            </StackPanel>
+            <Button Grid.Column="1" Content="Dossier des plugins" Click="OpenPluginsFolderClick" />
+          </Grid>
+          <StackPanel x:Name="PluginsPanel" Spacing="10" />
+        </StackPanel>
+      </Border>
+
+      <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+        <TextBlock Text="Fermer cette fenêtre laisse CyCapture dans la zone de notification." Foreground="#7F8D8A" FontSize="11" VerticalAlignment="Center" />
+        <Button Grid.Column="1" Content="Fermer" Click="CloseClick" Padding="22,9" />
+      </Grid>
+    </StackPanel>
+  </ScrollViewer>
+</Window>

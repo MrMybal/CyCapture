@@ -1,0 +1,13 @@
+node_modules/
+.vs/
+.idea/
+.vscode/
+dist/
+dist-packages/
+dist-native/
+artifacts/
+**/bin/
+**/obj/
+*.user
+*.suo
+*.log
