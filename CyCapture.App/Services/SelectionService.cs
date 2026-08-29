@@ -11,7 +11,7 @@ internal sealed class SelectionService
 
     internal bool IsSelecting => _pending is not null;
 
-    internal async Task<CaptureSelection?> SelectAsync(CaptureSelectionMode selectionMode)
+    internal async Task<CaptureSelection?> SelectAsync(CaptureSelectionMode selectionMode, bool enableQuickAnnotations = false)
     {
         if (_pending is not null) return null;
         var monitors = NativeMethods.GetMonitors();
@@ -23,13 +23,22 @@ internal sealed class SelectionService
         var captures = await Task.Run(() => monitors
             .Select(monitor => (Monitor: monitor, Bitmap: ScreenCapture.Capture(monitor.Bounds)))
             .ToArray());
+        var annotationSession = new QuickAnnotationSession();
 
         _pending = new TaskCompletionSource<CaptureSelection?>(TaskCreationOptions.RunContinuationsAsynchronously);
         foreach (var capture in captures)
         {
             using var drawingBitmap = capture.Bitmap;
             var screenshot = ScreenCapture.ToAvaloniaBitmap(drawingBitmap);
-            var window = new SelectionOverlayWindow(screenshot, capture.Monitor, regions, selectionMode);
+            var frozenFrame = enableQuickAnnotations ? ScreenCapture.ToPngBytes(drawingBitmap) : null;
+            var window = new SelectionOverlayWindow(
+                screenshot,
+                frozenFrame,
+                capture.Monitor,
+                regions,
+                selectionMode,
+                enableQuickAnnotations,
+                annotationSession);
             window.SelectionCompleted += Complete;
             window.Canceled += Cancel;
             window.Closed += (_, _) => screenshot.Dispose();

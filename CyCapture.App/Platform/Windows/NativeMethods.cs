@@ -135,6 +135,9 @@ internal static class NativeMethods
     private static extern int DwmGetWindowAttributeInt(nint window, int attribute, out int value, int size);
 
     [DllImport("dwmapi.dll")]
+    private static extern int DwmSetWindowAttribute(nint window, int attribute, ref int value, int size);
+
+    [DllImport("dwmapi.dll")]
     internal static extern int DwmFlush();
 
     [DllImport("user32.dll")]
@@ -298,6 +301,30 @@ internal static class NativeMethods
     {
         if (handle != 0) DestroyIcon(handle);
     }
+
+    internal static void ApplyDarkWindowChrome(nint window)
+    {
+        if (window == 0) return;
+        try
+        {
+            var enabled = 1;
+            if (DwmSetWindowAttribute(window, 20, ref enabled, sizeof(int)) != 0)
+                DwmSetWindowAttribute(window, 19, ref enabled, sizeof(int));
+
+            var caption = ColorRef(10, 15, 15);
+            var border = ColorRef(38, 51, 49);
+            var text = ColorRef(244, 248, 244);
+            DwmSetWindowAttribute(window, 35, ref caption, sizeof(int));
+            DwmSetWindowAttribute(window, 34, ref border, sizeof(int));
+            DwmSetWindowAttribute(window, 36, ref text, sizeof(int));
+        }
+        catch
+        {
+            // Les versions de Windows antérieures ignorent simplement la personnalisation DWM.
+        }
+    }
+
+    private static int ColorRef(byte red, byte green, byte blue) => red | (green << 8) | (blue << 16);
 
     private static bool TryGetExtendedBounds(nint window, out Rect rect)
     {

@@ -67,6 +67,7 @@ public sealed class Preferences
     public bool IncludeMicrophone { get; set; }
     public bool CopyScreenshotsToClipboard { get; set; } = true;
     public bool CopyVideosToClipboard { get; set; }
+    public bool EnableQuickAnnotations { get; set; } = true;
     public bool ShowRecordingFrame { get; set; } = true;
     public bool SeparateCaptureTypes { get; set; }
     public bool CreateDailyCaptureFolders { get; set; }

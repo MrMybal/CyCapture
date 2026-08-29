@@ -15,7 +15,8 @@ internal static class Program
     {
         NativeMethods.EnablePerMonitorDpiAwareness();
         var isSelfTest = args.Contains("--self-test", StringComparer.OrdinalIgnoreCase);
-        if (!isSelfTest)
+        var allowMultiple = args.Contains("--allow-multiple", StringComparer.OrdinalIgnoreCase);
+        if (!isSelfTest && !allowMultiple)
         {
             _singleInstance = new Mutex(true, "Local\\CyCapture.Avalonia.SingleInstance", out var isFirstInstance);
             if (!isFirstInstance)

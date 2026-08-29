@@ -161,6 +161,9 @@
           <CheckBox x:Name="MicrophoneCheck" Content="Ajouter le microphone" IsCheckedChanged="CheckedPreferenceChanged" />
           <CheckBox x:Name="ClipboardCheck" Content="Copier les images dans le presse-papiers" IsCheckedChanged="CheckedPreferenceChanged" />
           <CheckBox x:Name="VideoClipboardCheck" Content="Copier les vidéos dans le presse-papiers comme fichiers" IsCheckedChanged="CheckedPreferenceChanged" />
+          <CheckBox x:Name="QuickAnnotationsCheck" Content="Afficher les outils d’annotation rapide pendant la sélection d’image" IsCheckedChanged="CheckedPreferenceChanged" />
+          <TextBlock Text="Après la sélection, dessinez, ajoutez un cadre, une flèche ou du texte sur l’image figée avant de la capturer."
+                     Margin="28,-8,0,0" TextWrapping="Wrap" Foreground="#7F8D8A" FontSize="11" />
           <CheckBox x:Name="FrameCheck" Content="Afficher le cadre rouge hors de la zone enregistrée" IsCheckedChanged="CheckedPreferenceChanged" />
           <CheckBox x:Name="StartupCheck" Content="Lancer CyCapture au démarrage de Windows" IsCheckedChanged="CheckedPreferenceChanged" />
           <TextBlock x:Name="StartupStatusText"

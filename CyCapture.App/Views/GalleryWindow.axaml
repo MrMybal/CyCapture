@@ -1,42 +1,105 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vlc="clr-namespace:LibVLCSharp.Avalonia;assembly=LibVLCSharp.Avalonia"
         x:Class="CyCapture.Views.GalleryWindow"
         Title="CyCapture · Galerie"
-        Width="920" Height="680"
-        MinWidth="720" MinHeight="500"
+        Width="1040" Height="740"
+        MinWidth="760" MinHeight="540"
         CanResize="True"
+        KeyDown="WindowKeyDown"
         WindowStartupLocation="CenterScreen">
-  <Grid Margin="26" RowDefinitions="Auto,Auto,*" RowSpacing="18">
-    <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
-      <Border Width="42" Height="42" CornerRadius="21" Background="#17201D" BorderBrush="#9BFF28" BorderThickness="2">
-        <Ellipse Width="12" Height="12" Fill="#9BFF28" HorizontalAlignment="Center" VerticalAlignment="Center" />
-      </Border>
-      <StackPanel Grid.Column="1" VerticalAlignment="Center">
-        <TextBlock Text="Galerie CyCapture" FontSize="22" FontWeight="Black" />
-        <TextBlock x:Name="GalleryStatusText" Text="CHARGEMENT DES CAPTURES…" FontSize="10" Foreground="#8E9C99" LetterSpacing="1.1" />
-      </StackPanel>
-      <Button Grid.Column="2" Content="Actualiser" Click="RefreshClick" Padding="18,9" VerticalAlignment="Center" />
-    </Grid>
-
-    <Border Grid.Row="1" Padding="12" CornerRadius="10" Background="#111817" BorderBrush="#263331" BorderThickness="1">
-      <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
-        <TextBlock x:Name="OutputPathText" VerticalAlignment="Center" Foreground="#AAB7B4" TextTrimming="CharacterEllipsis" />
-        <Button Grid.Column="1" Content="Ouvrir le dossier" Click="OpenFolderClick" />
+  <Grid>
+    <Grid Margin="26" RowDefinitions="Auto,Auto,Auto,*" RowSpacing="16">
+      <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
+        <Border Width="42" Height="42" CornerRadius="21" Background="#17201D" BorderBrush="#9BFF28" BorderThickness="2">
+          <Ellipse Width="12" Height="12" Fill="#9BFF28" HorizontalAlignment="Center" VerticalAlignment="Center" />
+        </Border>
+        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+          <TextBlock Text="Galerie CyCapture" FontSize="22" FontWeight="Black" />
+          <TextBlock x:Name="GalleryStatusText" Text="CHARGEMENT DES CAPTURES…" FontSize="10" Foreground="#8E9C99" LetterSpacing="1.1" />
+        </StackPanel>
+        <Button Grid.Column="2" Content="Actualiser" Click="RefreshClick" Padding="18,9" VerticalAlignment="Center" />
       </Grid>
-    </Border>
 
-    <Grid Grid.Row="2">
-      <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
-        <WrapPanel x:Name="GalleryPanel" Orientation="Horizontal" />
-      </ScrollViewer>
-      <Border x:Name="EmptyGalleryPanel" IsVisible="False" Padding="30" CornerRadius="14"
-              Background="#111817" BorderBrush="#263331" BorderThickness="1"
-              HorizontalAlignment="Stretch" VerticalAlignment="Center">
-        <StackPanel Spacing="8" HorizontalAlignment="Center">
-          <TextBlock Text="Aucune capture" FontSize="18" FontWeight="Bold" HorizontalAlignment="Center" />
-          <TextBlock Text="Vos prochaines images, vidéos, GIF et captures audio apparaîtront ici." Foreground="#8E9C99" TextAlignment="Center" />
+      <Border Grid.Row="1" Padding="12" CornerRadius="10" Background="#111817" BorderBrush="#263331" BorderThickness="1">
+        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
+          <TextBlock x:Name="OutputPathText" VerticalAlignment="Center" Foreground="#AAB7B4" TextTrimming="CharacterEllipsis" />
+          <Button Grid.Column="1" Content="Ouvrir le dossier" Click="OpenFolderClick" />
+        </Grid>
+      </Border>
+
+      <Border Grid.Row="2" Padding="6" CornerRadius="11" Background="#0E1514" BorderBrush="#263331" BorderThickness="1"
+              HorizontalAlignment="Left">
+        <StackPanel Orientation="Horizontal" Spacing="6">
+          <Button x:Name="TodayFilterButton" Content="Aujourd’hui" Click="TodayFilterClick" Padding="18,8" />
+          <Button x:Name="YesterdayFilterButton" Content="Hier" Click="YesterdayFilterClick" Padding="18,8" />
+          <Button x:Name="AllFilterButton" Content="Tout" Click="AllFilterClick" Padding="18,8" />
         </StackPanel>
       </Border>
+
+      <Grid Grid.Row="3">
+        <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+          <WrapPanel x:Name="GalleryPanel" Orientation="Horizontal" />
+        </ScrollViewer>
+        <Border x:Name="EmptyGalleryPanel" IsVisible="False" Padding="30" CornerRadius="14"
+                Background="#111817" BorderBrush="#263331" BorderThickness="1"
+                HorizontalAlignment="Stretch" VerticalAlignment="Center">
+          <StackPanel Spacing="8" HorizontalAlignment="Center">
+            <TextBlock Text="Aucune capture" FontSize="18" FontWeight="Bold" HorizontalAlignment="Center" />
+            <TextBlock x:Name="EmptyGalleryText"
+                       Text="Vos prochaines images, vidéos, GIF et captures audio apparaîtront ici."
+                       Foreground="#8E9C99" TextAlignment="Center" TextWrapping="Wrap" />
+          </StackPanel>
+        </Border>
+      </Grid>
     </Grid>
+
+    <Border x:Name="ViewerOverlay" Grid.RowSpan="4" IsVisible="False" Background="#FC070B0B"
+            BorderBrush="#263331" BorderThickness="1" Padding="22">
+      <Grid RowDefinitions="Auto,*,Auto,Auto" RowSpacing="14">
+        <Grid ColumnDefinitions="Auto,Auto,*,Auto,Auto,Auto" ColumnSpacing="8">
+          <Button Content="‹" Click="PreviousMediaClick" Width="42" FontSize="21" ToolTip.Tip="Capture précédente" />
+          <Button Grid.Column="1" Content="›" Click="NextMediaClick" Width="42" FontSize="21" ToolTip.Tip="Capture suivante" />
+          <StackPanel Grid.Column="2" VerticalAlignment="Center" Margin="8,0">
+            <TextBlock x:Name="ViewerTitleText" FontSize="16" FontWeight="Bold" TextTrimming="CharacterEllipsis" />
+            <TextBlock x:Name="ViewerDetailsText" FontSize="10" Foreground="#8E9C99" TextTrimming="CharacterEllipsis" />
+          </StackPanel>
+          <Button Grid.Column="3" Content="Copier" Click="CopyViewerClick" Padding="16,9" />
+          <Button Grid.Column="4" Content="Afficher le fichier" Click="RevealViewerClick" Padding="16,9" />
+          <Button Grid.Column="5" Content="Fermer  ×" Click="CloseViewerClick" Padding="16,9" />
+        </Grid>
+
+        <Border Grid.Row="1" CornerRadius="12" Background="#020505" BorderBrush="#263331" BorderThickness="1" ClipToBounds="True">
+          <Grid>
+            <Image x:Name="ViewerImage" IsVisible="False" Stretch="Uniform" Margin="8" />
+            <vlc:VideoView x:Name="ViewerVideoView" IsVisible="False" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" />
+            <Border x:Name="ViewerAudioArtwork" IsVisible="False" Background="#090D0D">
+              <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="14">
+                <Border Width="118" Height="118" CornerRadius="59" Background="#241A30" BorderBrush="#C58CFF" BorderThickness="2">
+                  <TextBlock Text="♪" FontSize="66" FontWeight="Bold" Foreground="#C58CFF"
+                             HorizontalAlignment="Center" VerticalAlignment="Center" />
+                </Border>
+                <TextBlock Text="LECTURE AUDIO" FontSize="11" FontWeight="Bold" Foreground="#A99BB6" LetterSpacing="1.8" />
+              </StackPanel>
+            </Border>
+            <TextBlock x:Name="ViewerErrorText" IsVisible="False" TextWrapping="Wrap" TextAlignment="Center"
+                       Foreground="#FF6B76" FontSize="14" HorizontalAlignment="Center" VerticalAlignment="Center"
+                       MaxWidth="520" />
+          </Grid>
+        </Border>
+
+        <Grid x:Name="PlaybackControls" Grid.Row="2" ColumnDefinitions="Auto,Auto,*,Auto" ColumnSpacing="12">
+          <Button x:Name="PlayPauseButton" Content="Pause" Click="PlayPauseClick" Width="90" />
+          <Button Grid.Column="1" Content="■" Click="StopPlaybackClick" Width="44" ToolTip.Tip="Arrêter" />
+          <Slider x:Name="PlaybackSlider" Grid.Column="2" Minimum="0" Maximum="1000" Value="0"
+                  VerticalAlignment="Center" ValueChanged="PlaybackValueChanged" />
+          <TextBlock x:Name="PlaybackTimeText" Grid.Column="3" Text="00:00 / 00:00" Foreground="#B4C0BD"
+                     MinWidth="112" TextAlignment="Right" VerticalAlignment="Center" />
+        </Grid>
+
+        <TextBlock Grid.Row="3" Text="Échap pour fermer · Flèches gauche/droite pour parcourir les captures"
+                   HorizontalAlignment="Center" Foreground="#667572" FontSize="10" />
+      </Grid>
+    </Border>
   </Grid>
 </Window>

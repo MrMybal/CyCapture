@@ -4,6 +4,8 @@ VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CyCapture.App", "CyCapture.App\CyCapture.App.csproj", "{6F17D2C4-55D7-4C0E-B34D-30E01D815DD4}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CyCapture.Plugin.CyAnnota", "CyCapture.Plugin.CyAnnota\CyCapture.Plugin.CyAnnota.csproj", "{32571B8A-D55F-4603-8298-F091E074AC33}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -14,5 +16,7 @@ Global
 		{6F17D2C4-55D7-4C0E-B34D-30E01D815DD4}.Debug|x64.Build.0 = Debug|x64
 		{6F17D2C4-55D7-4C0E-B34D-30E01D815DD4}.Release|x64.ActiveCfg = Release|x64
 		{6F17D2C4-55D7-4C0E-B34D-30E01D815DD4}.Release|x64.Build.0 = Release|x64
+		{32571B8A-D55F-4603-8298-F091E074AC33}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{32571B8A-D55F-4603-8298-F091E074AC33}.Release|x64.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 EndGlobal

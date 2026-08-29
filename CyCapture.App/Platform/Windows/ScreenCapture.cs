@@ -29,6 +29,21 @@ internal static class ScreenCapture
         return new Avalonia.Media.Imaging.Bitmap(stream);
     }
 
+    internal static byte[] ToPngBytes(Bitmap bitmap)
+    {
+        using var stream = new MemoryStream();
+        bitmap.Save(stream, ImageFormat.Png);
+        return stream.ToArray();
+    }
+
+    internal static Bitmap CropFrozenFrame(byte[] png, PixelBounds localBounds)
+    {
+        using var stream = new MemoryStream(png, writable: false);
+        using var fullFrame = new Bitmap(stream);
+        var bounds = new Rectangle(localBounds.X, localBounds.Y, localBounds.Width, localBounds.Height);
+        return fullFrame.Clone(bounds, PixelFormat.Format32bppArgb);
+    }
+
     internal static void CopyToClipboard(Bitmap bitmap)
     {
         Exception? lastError = null;

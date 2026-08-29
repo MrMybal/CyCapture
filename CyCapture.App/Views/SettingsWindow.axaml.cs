@@ -30,6 +30,7 @@ public sealed partial class SettingsWindow : Window
     private readonly CheckBox _microphoneCheck;
     private readonly CheckBox _clipboardCheck;
     private readonly CheckBox _videoClipboardCheck;
+    private readonly CheckBox _quickAnnotationsCheck;
     private readonly CheckBox _frameCheck;
     private readonly CheckBox _separateCaptureTypesCheck;
     private readonly CheckBox _dailyFoldersCheck;
@@ -49,6 +50,7 @@ public sealed partial class SettingsWindow : Window
         _preferences = preferences;
         _postProcessing = postProcessing;
         AvaloniaXamlLoader.Load(this);
+        WindowsWindowAppearance.Attach(this);
         _outputPathText = RequireControl<TextBlock>("OutputPathText");
         _videoQualityCombo = RequireControl<ComboBox>("VideoQualityCombo");
         _videoEncodingQualityCombo = RequireControl<ComboBox>("VideoEncodingQualityCombo");
@@ -63,6 +65,7 @@ public sealed partial class SettingsWindow : Window
         _microphoneCheck = RequireControl<CheckBox>("MicrophoneCheck");
         _clipboardCheck = RequireControl<CheckBox>("ClipboardCheck");
         _videoClipboardCheck = RequireControl<CheckBox>("VideoClipboardCheck");
+        _quickAnnotationsCheck = RequireControl<CheckBox>("QuickAnnotationsCheck");
         _frameCheck = RequireControl<CheckBox>("FrameCheck");
         _separateCaptureTypesCheck = RequireControl<CheckBox>("SeparateCaptureTypesCheck");
         _dailyFoldersCheck = RequireControl<CheckBox>("DailyFoldersCheck");
@@ -84,6 +87,7 @@ public sealed partial class SettingsWindow : Window
         _microphoneCheck.IsChecked = preferences.IncludeMicrophone;
         _clipboardCheck.IsChecked = preferences.CopyScreenshotsToClipboard;
         _videoClipboardCheck.IsChecked = preferences.CopyVideosToClipboard;
+        _quickAnnotationsCheck.IsChecked = preferences.EnableQuickAnnotations;
         _frameCheck.IsChecked = preferences.ShowRecordingFrame;
         _separateCaptureTypesCheck.IsChecked = preferences.SeparateCaptureTypes;
         _dailyFoldersCheck.IsChecked = preferences.CreateDailyCaptureFolders;
@@ -172,6 +176,7 @@ public sealed partial class SettingsWindow : Window
         _preferences.IncludeMicrophone = _microphoneCheck.IsChecked == true;
         _preferences.CopyScreenshotsToClipboard = _clipboardCheck.IsChecked == true;
         _preferences.CopyVideosToClipboard = _videoClipboardCheck.IsChecked == true;
+        _preferences.EnableQuickAnnotations = _quickAnnotationsCheck.IsChecked == true;
         _preferences.ShowRecordingFrame = _frameCheck.IsChecked == true;
         _preferences.SeparateCaptureTypes = _separateCaptureTypesCheck.IsChecked == true;
         _preferences.CreateDailyCaptureFolders = _dailyFoldersCheck.IsChecked == true;

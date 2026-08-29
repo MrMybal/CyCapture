@@ -2,7 +2,9 @@ using System.Reflection;
 using System.Runtime.Loader;
 using System.Text.Json;
 using CyCapture.Models;
+#if CYCAPTURE_CYANNOTA_PLUGIN
 using CyCapture.Plugins;
+#endif
 
 namespace CyCapture.Services;
 
@@ -15,7 +17,11 @@ public interface ICapturePostProcessor
 
 internal sealed class PostProcessingService
 {
+#if CYCAPTURE_CYANNOTA_PLUGIN
     private readonly List<ICapturePostProcessor> _processors = [new ManifestPostProcessor(), new CyAnnotaPostProcessor()];
+#else
+    private readonly List<ICapturePostProcessor> _processors = [new ManifestPostProcessor()];
+#endif
     private readonly Dictionary<string, StoredPluginState> _states;
     private readonly SemaphoreSlim _saveGate = new(1, 1);
     private readonly object _sync = new();

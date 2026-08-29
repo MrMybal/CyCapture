@@ -25,6 +25,24 @@ public enum SelectionKind
     Region
 }
 
+public enum QuickAnnotationKind
+{
+    Freehand,
+    Rectangle,
+    Arrow,
+    Text
+}
+
+public sealed record AnnotationPoint(int X, int Y);
+
+public sealed record QuickAnnotationElement(
+    QuickAnnotationKind Kind,
+    IReadOnlyList<AnnotationPoint> Points,
+    string Color,
+    string Text = "");
+
+public sealed record QuickAnnotationDocument(IReadOnlyList<QuickAnnotationElement> Elements);
+
 public sealed record PixelBounds(int X, int Y, int Width, int Height)
 {
     public int Right => X + Width;
@@ -66,7 +84,9 @@ public sealed record CaptureSelection(
     MonitorDescriptor Monitor,
     SelectionKind Kind,
     string Title,
-    nint WindowHandle = 0)
+    nint WindowHandle = 0,
+    byte[]? FrozenFramePng = null,
+    QuickAnnotationDocument? QuickAnnotations = null)
 {
     public PixelBounds LocalBounds => new(
         Bounds.X - Monitor.Bounds.X,

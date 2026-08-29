@@ -14,7 +14,14 @@ internal sealed class ImageCaptureService
         var extension = preferences.ImageFormat == "jpeg" ? "jpg" : "png";
         var path = Path.Combine(outputDirectory, FileNames.Create("capture", extension));
 
-        using var bitmap = await Task.Run(() => ScreenCapture.Capture(selection.Bounds));
+        using var bitmap = await Task.Run(() =>
+        {
+            var image = selection.FrozenFramePng is { Length: > 0 } frozen
+                ? ScreenCapture.CropFrozenFrame(frozen, selection.LocalBounds)
+                : ScreenCapture.Capture(selection.Bounds);
+            QuickAnnotationRenderer.Render(image, selection);
+            return image;
+        });
         if (preferences.ImageFormat == "jpeg")
         {
             var encoder = ImageCodecInfo.GetImageEncoders().First(codec => codec.FormatID == ImageFormat.Jpeg.Guid);

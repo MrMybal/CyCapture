@@ -12,6 +12,19 @@ Le paquet NuGet et ses bibliothèques nécessaires sont inclus dans les builds a
 
 ---
 
+## LibVLCSharp 3.10.1 et LibVLC 3.0.23.1
+
+CyCapture utilise les vues Avalonia officielles LibVLCSharp et le moteur LibVLC Windows pour lire directement les vidéos, GIF animés et fichiers audio dans la galerie.
+
+- Projet et code source : <https://code.videolan.org/videolan/LibVLCSharp>
+- Moteur LibVLC : <https://www.videolan.org/vlc/libvlc.html>
+- Licences : GNU Lesser General Public License v2.1 ou ultérieure pour LibVLCSharp et les composants LibVLC concernés
+- Copyright © VideoLAN et les contributeurs
+
+Les bibliothèques natives et les plugins de codecs fournis par les paquets officiels VideoLAN sont inclus dans les deux éditions Windows de CyCapture.
+
+---
+
 ## CyAnnota 0.3.7
 
 Les builds Windows Release de CyCapture embarquent la distribution Windows **CyAnnota 0.3.7** afin que le post-traitement fonctionne sans installation séparée ni association de protocole Windows. La distribution unpacked est privilégiée : elle est extraite une seule fois en arrière-plan, puis CyCapture lance directement `CyAnnota.exe`.
@@ -38,6 +51,19 @@ CyCapture uses NAudio for WASAPI audio capture (system audio and microphone) and
 - Copyright © Mark Heath and NAudio contributors
 
 The NuGet package and its required libraries are included in CyCapture self-contained builds.
+
+---
+
+## LibVLCSharp 3.10.1 and LibVLC 3.0.23.1
+
+CyCapture uses the official LibVLCSharp Avalonia views and the Windows LibVLC engine to play videos, animated GIFs and audio files directly inside the gallery.
+
+- Project and source code: <https://code.videolan.org/videolan/LibVLCSharp>
+- LibVLC engine: <https://www.videolan.org/vlc/libvlc.html>
+- Licenses: GNU Lesser General Public License v2.1 or later for LibVLCSharp and the applicable LibVLC components
+- Copyright © VideoLAN and contributors
+
+The native libraries and codec plugins supplied by the official VideoLAN packages are included in both Windows editions of CyCapture.
 
 ---
 

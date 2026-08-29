@@ -298,7 +298,9 @@ internal sealed class ApplicationController
         _captureFlowActive = true;
         try
         {
-            var selection = await _selection.SelectAsync(selectionMode ?? _preferences.SelectionMode);
+            var selection = await _selection.SelectAsync(
+                selectionMode ?? _preferences.SelectionMode,
+                mode == CaptureMode.Image && _preferences.EnableQuickAnnotations);
             if (selection is null) return;
 
             if (mode == CaptureMode.Image)

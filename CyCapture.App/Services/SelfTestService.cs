@@ -4,7 +4,9 @@ using System.Drawing.Imaging;
 using System.Text.Json;
 using CyCapture.Models;
 using CyCapture.Platform.Windows;
+#if CYCAPTURE_CYANNOTA_PLUGIN
 using CyCapture.Plugins;
+#endif
 using NAudio.Wave;
 
 namespace CyCapture.Services;
@@ -171,6 +173,7 @@ internal sealed class SelfTestService
             var centralMetadata = Directory.Exists(Path.Combine(pluginData, "Metadata"))
                                   && Directory.EnumerateFiles(Path.Combine(pluginData, "Metadata"), "*.json").Any();
 
+#if CYCAPTURE_CYANNOTA_PLUGIN
             var cyAnnotaPlugin = pluginManager.GetPlugins().Single(plugin => plugin.Id == "cyannota-post-edit");
             var cyAnnotaProcessor = new CyAnnotaPostProcessor();
             cyAnnotaProcessor.InitializeHost(pluginData);
@@ -179,6 +182,28 @@ internal sealed class SelfTestService
             var expectedBundledRoot = Path.GetFullPath(Path.Combine(pluginData, "Bundled")) + Path.DirectorySeparatorChar;
             var bundledExecutableUsed = cyAnnotaExecutable is not null
                                         && Path.GetFullPath(cyAnnotaExecutable).StartsWith(expectedBundledRoot, StringComparison.OrdinalIgnoreCase);
+            object cyAnnotaCheck = new
+            {
+                available = true,
+                enabledByDefault = cyAnnotaPlugin.Enabled,
+                cyAnnotaPlugin.QuickAccessLabel,
+                executable = cyAnnotaExecutable,
+                executableFound = cyAnnotaExecutable is not null && File.Exists(cyAnnotaExecutable),
+                bundledResource = cyAnnotaBundled,
+                bundledExecutableUsed
+            };
+#else
+            object cyAnnotaCheck = new
+            {
+                available = false,
+                enabledByDefault = false,
+                quickAccessLabel = (string?)null,
+                executable = (string?)null,
+                executableFound = false,
+                bundledResource = false,
+                bundledExecutableUsed = false
+            };
+#endif
             await pluginManager.SetEnabledAsync(manifestPlugin.Id, false);
             var pluginDisabled = !pluginManager.GetPlugins().Single(plugin => plugin.Id == manifestPlugin.Id).Enabled;
             var quickPlugin = pluginManager.GetPlugins().Single(plugin => plugin.Id == "self-test-quick-plugin");
@@ -194,23 +219,17 @@ internal sealed class SelfTestService
                 embeddedJpegMetadata,
                 centralMetadata,
                 pluginDisabled,
-                cyAnnota = new
-                {
-                    enabledByDefault = cyAnnotaPlugin.Enabled,
-                    cyAnnotaPlugin.QuickAccessLabel,
-                    executable = cyAnnotaExecutable,
-                    executableFound = cyAnnotaExecutable is not null && File.Exists(cyAnnotaExecutable),
-                    bundledResource = cyAnnotaBundled,
-                    bundledExecutableUsed
-                },
+                cyAnnota = cyAnnotaCheck,
                 quickAccessLabel = quickPlugin.QuickAccessLabel,
                 quickSetting = quickPlugin.Values["profile"],
                 stateSaved = File.Exists(Path.Combine(pluginData, "plugin-settings.json"))
             };
             if (!noMetadataWritten || !selectionExcluded || !embeddedImageMetadata || !embeddedJpegMetadata
                 || !centralMetadata || !pluginDisabled
+#if CYCAPTURE_CYANNOTA_PLUGIN
                 || cyAnnotaPlugin.Enabled || cyAnnotaPlugin.QuickAccessLabel != "PostEdit with CyAnnota"
                 || (cyAnnotaBundled && (!bundledExecutableUsed || cyAnnotaExecutable is null || !File.Exists(cyAnnotaExecutable)))
+#endif
                 || quickPlugin.QuickAccessLabel is null || quickPlugin.Values["profile"] != "Quality")
                 throw new InvalidOperationException("La configuration ou l’activation des plugins n’a pas été appliquée.");
 

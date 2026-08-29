@@ -23,12 +23,12 @@ public interface ICapturePluginMetadata
     void ApplySettings(IReadOnlyDictionary<string, string> values);
 }
 
-internal interface ICapturePluginHostAware
+public interface ICapturePluginHostAware
 {
     void InitializeHost(string dataDirectory);
 }
 
-internal interface ICapturePluginPreparable
+public interface ICapturePluginPreparable
 {
     ValueTask PrepareAsync(CancellationToken cancellationToken);
 }
