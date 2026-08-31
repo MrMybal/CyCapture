@@ -82,8 +82,8 @@ dotnet build CyCapture.sln -c Release
 
 Le script place dans `dist-local` :
 
-- `CyCapture-1.4.4-windows-x64.exe`, édition complète avec CyAnnota ;
-- `CyCapture-1.4.4-windows-x64-without-CyAnnota.exe`, édition légère sans CyAnnota ni son entrée de plugin ;
+- `CyCapture-1.4.5-windows-x64.exe`, édition complète avec CyAnnota ;
+- `CyCapture-1.4.5-windows-x64-without-CyAnnota.exe`, édition légère sans CyAnnota ni son entrée de plugin ;
 - `CyCapture.Plugin.CyAnnota-0.3.7.dll` et son archive ZIP, installables dans `%LOCALAPPDATA%\CyCapture\Plugins`.
 
 Les exécutables sont autonomes et produits en fichier unique. Le moteur LibVLC est inclus pour la lecture directe des médias dans la galerie. ScreenRecorderLib utilise Media Foundation et demande le Media Feature Pack sur une édition Windows N/KN qui ne l’inclut pas.
@@ -192,8 +192,8 @@ dotnet build CyCapture.sln -c Release
 
 The script writes the following assets to `dist-local`:
 
-- `CyCapture-1.4.4-windows-x64.exe`, the full CyAnnota edition;
-- `CyCapture-1.4.4-windows-x64-without-CyAnnota.exe`, with neither CyAnnota nor its plugin entry;
+- `CyCapture-1.4.5-windows-x64.exe`, the full CyAnnota edition;
+- `CyCapture-1.4.5-windows-x64-without-CyAnnota.exe`, with neither CyAnnota nor its plugin entry;
 - `CyCapture.Plugin.CyAnnota-0.3.7.dll` and its ZIP archive, installable in `%LOCALAPPDATA%\CyCapture\Plugins`.
 
 The executables are self-contained and published as single files. LibVLC is included for direct gallery playback. ScreenRecorderLib uses Media Foundation and requires the Media Feature Pack on Windows N/KN editions that do not include it.
