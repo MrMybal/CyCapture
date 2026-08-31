@@ -86,6 +86,8 @@ internal sealed class ApplicationController
             _preferences.CopyVideosToClipboard = false;
             _preferences.IncludeSystemAudio = false;
             _preferences.IncludeMicrophone = false;
+            _preferences.AudioOnlyIncludeSystemAudio = false;
+            _preferences.AudioOnlyIncludeMicrophone = false;
         }
         Directory.CreateDirectory(_preferences.EffectiveOutputDirectory);
         CreateTray();
@@ -312,7 +314,7 @@ internal sealed class ApplicationController
             }
 
             await _recording.StartAsync(mode, selection, _preferences);
-            if (_preferences.ShowRecordingFrame) _indicator.Show(selection);
+            if (_preferences.ShouldShowRecordingFrame(mode)) _indicator.Show(selection);
             UpdateTrayState();
         }
         catch (Exception error)

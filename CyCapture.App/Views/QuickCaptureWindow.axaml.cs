@@ -15,6 +15,11 @@ public sealed partial class QuickCaptureWindow : Window
     private readonly ComboBox _videoQualityCombo;
     private readonly ComboBox _videoEncodingQualityCombo;
     private readonly ComboBox _audioEncodingQualityCombo;
+    private readonly ComboBox _audioOnlyEncodingQualityCombo;
+    private readonly CheckBox _videoSystemAudioCheck;
+    private readonly CheckBox _videoMicrophoneCheck;
+    private readonly CheckBox _audioOnlySystemCheck;
+    private readonly CheckBox _audioOnlyMicrophoneCheck;
     private readonly ComboBox _imageFormatCombo;
     private readonly ComboBox _imageEncodingQualityCombo;
     private readonly ComboBox _gifQualityCombo;
@@ -35,6 +40,11 @@ public sealed partial class QuickCaptureWindow : Window
         _videoQualityCombo = RequireControl<ComboBox>("VideoQualityCombo");
         _videoEncodingQualityCombo = RequireControl<ComboBox>("VideoEncodingQualityCombo");
         _audioEncodingQualityCombo = RequireControl<ComboBox>("AudioEncodingQualityCombo");
+        _audioOnlyEncodingQualityCombo = RequireControl<ComboBox>("AudioOnlyEncodingQualityCombo");
+        _videoSystemAudioCheck = RequireControl<CheckBox>("VideoSystemAudioCheck");
+        _videoMicrophoneCheck = RequireControl<CheckBox>("VideoMicrophoneCheck");
+        _audioOnlySystemCheck = RequireControl<CheckBox>("AudioOnlySystemCheck");
+        _audioOnlyMicrophoneCheck = RequireControl<CheckBox>("AudioOnlyMicrophoneCheck");
         _imageFormatCombo = RequireControl<ComboBox>("ImageFormatCombo");
         _imageEncodingQualityCombo = RequireControl<ComboBox>("ImageEncodingQualityCombo");
         _gifQualityCombo = RequireControl<ComboBox>("GifQualityCombo");
@@ -44,6 +54,12 @@ public sealed partial class QuickCaptureWindow : Window
         SelectByTag(_videoQualityCombo, preferences.VideoQualityLevel.ToString());
         SelectByTag(_videoEncodingQualityCombo, preferences.VideoEncodingQuality.ToString());
         SelectByTag(_audioEncodingQualityCombo, preferences.AudioEncodingQuality.ToString());
+        var audioOnly = preferences.GetAudioSettings(CaptureMode.Audio);
+        SelectByTag(_audioOnlyEncodingQualityCombo, audioOnly.Quality.ToString());
+        _videoSystemAudioCheck.IsChecked = preferences.IncludeSystemAudio;
+        _videoMicrophoneCheck.IsChecked = preferences.IncludeMicrophone;
+        _audioOnlySystemCheck.IsChecked = audioOnly.SystemAudio;
+        _audioOnlyMicrophoneCheck.IsChecked = audioOnly.Microphone;
         SelectByTag(_imageFormatCombo, preferences.ImageFormat);
         SelectByTag(_imageEncodingQualityCombo, preferences.ImageEncodingQuality.ToString());
         SelectByTag(_gifQualityCombo, preferences.GifQuality.ToString());
@@ -84,6 +100,13 @@ public sealed partial class QuickCaptureWindow : Window
         if (_audioEncodingQualityCombo.SelectedItem is ComboBoxItem audioEncoding
             && Enum.TryParse<AudioEncodingQuality>(audioEncoding.Tag?.ToString(), out var selectedAudioEncoding))
             _preferences.AudioEncodingQuality = selectedAudioEncoding;
+        if (_audioOnlyEncodingQualityCombo.SelectedItem is ComboBoxItem audioOnlyEncoding
+            && Enum.TryParse<AudioEncodingQuality>(audioOnlyEncoding.Tag?.ToString(), out var selectedAudioOnlyEncoding))
+            _preferences.AudioOnlyEncodingQuality = selectedAudioOnlyEncoding;
+        _preferences.IncludeSystemAudio = _videoSystemAudioCheck.IsChecked == true;
+        _preferences.IncludeMicrophone = _videoMicrophoneCheck.IsChecked == true;
+        _preferences.AudioOnlyIncludeSystemAudio = _audioOnlySystemCheck.IsChecked == true;
+        _preferences.AudioOnlyIncludeMicrophone = _audioOnlyMicrophoneCheck.IsChecked == true;
         if (_imageFormatCombo.SelectedItem is ComboBoxItem imageFormat)
             _preferences.ImageFormat = imageFormat.Tag?.ToString() ?? "png";
         if (_imageEncodingQualityCombo.SelectedItem is ComboBoxItem imageEncoding

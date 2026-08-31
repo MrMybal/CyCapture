@@ -275,8 +275,9 @@ internal sealed class SelfTestService
             if (!embeddedGifMetadata || !organizedGifPath || gifInfo.FrameCount == 0)
                 throw new InvalidOperationException("Le GIF n’est plus valide ou n’a pas été organisé correctement.");
 
-            preferences.IncludeSystemAudio = true;
-            preferences.AudioEncodingQuality = AudioEncodingQuality.Compact;
+            preferences.AudioOnlyIncludeSystemAudio = true;
+            preferences.AudioOnlyIncludeMicrophone = false;
+            preferences.AudioOnlyEncodingQuality = AudioEncodingQuality.Compact;
             await recording.StartAsync(CaptureMode.Audio, selection, preferences);
             await Task.Delay(1300);
             var audio = await recording.StopAsync();

@@ -65,10 +65,15 @@ public sealed class Preferences
     public int PrintScreenHoldDelayMilliseconds { get; set; } = 300;
     public bool IncludeSystemAudio { get; set; } = true;
     public bool IncludeMicrophone { get; set; }
+    // Null means this preference predates per-mode settings; inherit the old value once on load.
+    public bool? AudioOnlyIncludeSystemAudio { get; set; }
+    public bool? AudioOnlyIncludeMicrophone { get; set; }
+    public AudioEncodingQuality? AudioOnlyEncodingQuality { get; set; }
     public bool CopyScreenshotsToClipboard { get; set; } = true;
     public bool CopyVideosToClipboard { get; set; }
     public bool EnableQuickAnnotations { get; set; } = true;
     public bool ShowRecordingFrame { get; set; } = true;
+    public bool? ShowGifRecordingFrame { get; set; }
     public bool SeparateCaptureTypes { get; set; }
     public bool CreateDailyCaptureFolders { get; set; }
     public bool StartWithWindows { get; set; }
@@ -91,7 +96,7 @@ public sealed class Preferences
         }
         catch
         {
-            return new Preferences();
+            return Sanitize(new Preferences());
         }
     }
 
@@ -101,6 +106,23 @@ public sealed class Preferences
         await using var stream = File.Create(Path.Combine(DataDirectory, "preferences.json"));
         await JsonSerializer.SerializeAsync(stream, Sanitize(this), new JsonSerializerOptions { WriteIndented = true });
     }
+
+    internal (bool SystemAudio, bool Microphone, AudioEncodingQuality Quality) GetAudioSettings(CaptureMode mode) => mode switch
+    {
+        CaptureMode.Video => (IncludeSystemAudio, IncludeMicrophone, AudioEncodingQuality),
+        CaptureMode.Audio => (
+            AudioOnlyIncludeSystemAudio ?? IncludeSystemAudio,
+            AudioOnlyIncludeMicrophone ?? IncludeMicrophone,
+            AudioOnlyEncodingQuality ?? AudioEncodingQuality),
+        _ => (false, false, AudioEncodingQuality.Balanced)
+    };
+
+    internal bool ShouldShowRecordingFrame(CaptureMode mode) => mode switch
+    {
+        CaptureMode.Video => ShowRecordingFrame,
+        CaptureMode.Gif => ShowGifRecordingFrame ?? ShowRecordingFrame,
+        _ => false
+    };
 
     internal void ApplyEncodingProfiles()
     {
@@ -132,6 +154,12 @@ public sealed class Preferences
         if (!Enum.IsDefined(value.VideoQualityLevel)) value.VideoQualityLevel = VideoQuality.Balanced;
         if (!Enum.IsDefined(value.VideoEncodingQuality)) value.VideoEncodingQuality = VideoEncodingQuality.Balanced;
         if (!Enum.IsDefined(value.AudioEncodingQuality)) value.AudioEncodingQuality = AudioEncodingQuality.Balanced;
+        value.AudioOnlyIncludeSystemAudio ??= value.IncludeSystemAudio;
+        value.AudioOnlyIncludeMicrophone ??= value.IncludeMicrophone;
+        value.AudioOnlyEncodingQuality ??= value.AudioEncodingQuality;
+        if (!Enum.IsDefined(value.AudioOnlyEncodingQuality.Value))
+            value.AudioOnlyEncodingQuality = AudioEncodingQuality.Balanced;
+        value.ShowGifRecordingFrame ??= value.ShowRecordingFrame;
         value.ApplyEncodingProfiles();
         if (!Enum.IsDefined(value.GifQuality)) value.GifQuality = GifQuality.Balanced;
         if (!Enum.IsDefined(value.SelectionMode)) value.SelectionMode = CaptureSelectionMode.Smart;

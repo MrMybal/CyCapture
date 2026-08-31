@@ -1,7 +1,8 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         x:Class="CyCapture.Views.SettingsWindow"
-        Title="CyCapture"
+        Title="CyCapture · Réglages"
+        FontSize="13"
         Width="680" Height="760"
         MinWidth="560" MinHeight="620"
         CanResize="True"
@@ -30,6 +31,128 @@
           </Grid>
         </StackPanel>
       </Border>
+
+      <StackPanel Spacing="8">
+        <TextBlock Text="RÉGLAGES PAR MODE" FontSize="10" FontWeight="Bold" Foreground="#9BFF28" LetterSpacing="1.4" />
+        <TextBlock Text="Chaque onglet regroupe uniquement les options du type de capture indiqué."
+                   TextWrapping="Wrap" Foreground="#7F8D8A" FontSize="11" />
+        <TabControl x:Name="CaptureSettingsTabs">
+          <TabItem Header="Image" FontSize="14" Foreground="#B4C0BD">
+            <Border Padding="14" CornerRadius="12" Background="#111817" BorderBrush="#263331" BorderThickness="1">
+              <StackPanel Spacing="14">
+                <TextBlock Text="IMAGE" FontSize="12" FontWeight="Bold" Foreground="#9BFF28" LetterSpacing="1.1" />
+                <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
+                  <StackPanel Spacing="6">
+                    <TextBlock Text="FORMAT" FontSize="10" FontWeight="Bold" Foreground="#B4C0BD" />
+                    <ComboBox x:Name="ImageFormatCombo" SelectionChanged="SelectionPreferenceChanged">
+                      <ComboBoxItem Content="PNG · sans perte" Tag="png" />
+                      <ComboBoxItem Content="JPEG · fichier réduit" Tag="jpeg" />
+                    </ComboBox>
+                  </StackPanel>
+                  <StackPanel Grid.Column="1" Spacing="6">
+                    <TextBlock Text="QUALITÉ JPEG" FontSize="10" FontWeight="Bold" Foreground="#B4C0BD" />
+                    <ComboBox x:Name="ImageEncodingQualityCombo" SelectionChanged="SelectionPreferenceChanged">
+                      <ComboBoxItem Content="Compacte · 40 %" Tag="Compact" />
+                      <ComboBoxItem Content="Équilibrée · 70 %" Tag="Balanced" />
+                      <ComboBoxItem Content="Haute · 90 %" Tag="High" />
+                    </ComboBox>
+                  </StackPanel>
+                </Grid>
+                <TextBlock Text="Le PNG est sans perte. Le réglage de qualité s’applique uniquement au JPEG."
+                           TextWrapping="Wrap" Foreground="#7F8D8A" FontSize="11" />
+                <CheckBox x:Name="ClipboardCheck" Content="Copier les images dans le presse-papiers" IsCheckedChanged="CheckedPreferenceChanged" />
+                <CheckBox x:Name="QuickAnnotationsCheck" Content="Afficher les outils d’annotation rapide" IsCheckedChanged="CheckedPreferenceChanged" />
+                <TextBlock Text="Dessinez sur l’écran figé, ajoutez des cadres, flèches ou textes, puis repassez en sélection pour capturer."
+                           TextWrapping="Wrap" Foreground="#7F8D8A" FontSize="11" />
+              </StackPanel>
+            </Border>
+          </TabItem>
+
+          <TabItem Header="Vidéo" FontSize="14" Foreground="#B4C0BD">
+            <Border Padding="14" CornerRadius="12" Background="#111817" BorderBrush="#263331" BorderThickness="1">
+              <StackPanel Spacing="14">
+                <TextBlock Text="VIDÉO · MP4 / H.264" FontSize="12" FontWeight="Bold" Foreground="#FF6573" LetterSpacing="1.1" />
+                <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
+                  <StackPanel Spacing="6">
+                    <TextBlock Text="FLUIDITÉ" FontSize="10" FontWeight="Bold" Foreground="#B4C0BD" />
+                    <ComboBox x:Name="VideoQualityCombo" SelectionChanged="SelectionPreferenceChanged">
+                      <ComboBoxItem Content="24 images/s" Tag="Compact" />
+                      <ComboBoxItem Content="30 images/s" Tag="Balanced" />
+                      <ComboBoxItem Content="60 images/s" Tag="High" />
+                    </ComboBox>
+                  </StackPanel>
+                  <StackPanel Grid.Column="1" Spacing="6">
+                    <TextBlock Text="DÉBIT VIDÉO" FontSize="10" FontWeight="Bold" Foreground="#B4C0BD" />
+                    <ComboBox x:Name="VideoEncodingQualityCombo" SelectionChanged="SelectionPreferenceChanged">
+                      <ComboBoxItem Content="Très faible · 1 Mbit/s" Tag="VeryLow" />
+                      <ComboBoxItem Content="Compact · 2,5 Mbit/s" Tag="Compact" />
+                      <ComboBoxItem Content="Équilibré · 6 Mbit/s" Tag="Balanced" />
+                      <ComboBoxItem Content="Haute qualité · 12 Mbit/s" Tag="High" />
+                    </ComboBox>
+                  </StackPanel>
+                </Grid>
+                <Border Padding="12" CornerRadius="9" Background="#0A1010" BorderBrush="#35302F" BorderThickness="1">
+                  <StackPanel Spacing="10">
+                    <TextBlock Text="SON DE LA VIDÉO" FontSize="10" FontWeight="Bold" Foreground="#FF6573" LetterSpacing="1.1" />
+                    <CheckBox x:Name="SystemAudioCheck" Content="Capturer le son du système dans la vidéo" IsCheckedChanged="CheckedPreferenceChanged" />
+                    <CheckBox x:Name="MicrophoneCheck" Content="Ajouter le microphone à la vidéo" IsCheckedChanged="CheckedPreferenceChanged" />
+                    <TextBlock Text="ENCODAGE DU SON" FontSize="10" FontWeight="Bold" Foreground="#B4C0BD" />
+                    <ComboBox x:Name="AudioEncodingQualityCombo" SelectionChanged="SelectionPreferenceChanged">
+                      <ComboBoxItem Content="Compact · 96 kbit/s mono" Tag="Compact" />
+                      <ComboBoxItem Content="Équilibré · 128 kbit/s stéréo" Tag="Balanced" />
+                      <ComboBoxItem Content="Haute qualité · 192 kbit/s stéréo" Tag="High" />
+                    </ComboBox>
+                    <TextBlock Text="Sans source cochée, la vidéo est silencieuse. Ces options ne modifient pas le mode Audio seul."
+                               TextWrapping="Wrap" Foreground="#7F8D8A" FontSize="11" />
+                  </StackPanel>
+                </Border>
+                <CheckBox x:Name="VideoClipboardCheck" Content="Copier les vidéos dans le presse-papiers comme fichiers" IsCheckedChanged="CheckedPreferenceChanged" />
+                <CheckBox x:Name="FrameCheck" Content="Afficher le cadre rouge pendant la vidéo" IsCheckedChanged="CheckedPreferenceChanged" />
+              </StackPanel>
+            </Border>
+          </TabItem>
+
+          <TabItem Header="GIF" FontSize="14" Foreground="#B4C0BD">
+            <Border Padding="14" CornerRadius="12" Background="#111817" BorderBrush="#263331" BorderThickness="1">
+              <StackPanel Spacing="14">
+                <TextBlock Text="GIF · ANIMATION SANS SON" FontSize="12" FontWeight="Bold" Foreground="#6CE5FF" LetterSpacing="1.1" />
+                <StackPanel Spacing="6">
+                  <TextBlock Text="QUALITÉ ET FLUIDITÉ" FontSize="10" FontWeight="Bold" Foreground="#B4C0BD" />
+                  <ComboBox x:Name="GifQualityCombo" SelectionChanged="SelectionPreferenceChanged">
+                    <ComboBoxItem Content="Compacte · 8 i/s · 720 px max." Tag="Compact" />
+                    <ComboBoxItem Content="Équilibrée · 10 i/s · 960 px max." Tag="Balanced" />
+                    <ComboBoxItem Content="Haute · 12 i/s · 1280 px max." Tag="High" />
+                  </ComboBox>
+                </StackPanel>
+                <TextBlock Text="Le profil règle la fluidité et la dimension maximale de l’animation. Les options vidéo et audio ne s’appliquent pas au GIF."
+                           TextWrapping="Wrap" Foreground="#7F8D8A" FontSize="11" />
+                <CheckBox x:Name="GifFrameCheck" Content="Afficher le cadre rouge pendant le GIF" IsCheckedChanged="CheckedPreferenceChanged" />
+              </StackPanel>
+            </Border>
+          </TabItem>
+
+          <TabItem Header="Audio" FontSize="14" Foreground="#B4C0BD">
+            <Border Padding="14" CornerRadius="12" Background="#111817" BorderBrush="#263331" BorderThickness="1">
+              <StackPanel Spacing="14">
+                <TextBlock Text="AUDIO SEUL · SANS IMAGE" FontSize="12" FontWeight="Bold" Foreground="#C58CFF" LetterSpacing="1.1" />
+                <TextBlock Text="Ces réglages concernent uniquement le mode Audio. Le son des vidéos se règle dans l’onglet Vidéo."
+                           TextWrapping="Wrap" Foreground="#7F8D8A" FontSize="11" />
+                <CheckBox x:Name="AudioOnlySystemCheck" Content="Enregistrer le son du système" IsCheckedChanged="CheckedPreferenceChanged" />
+                <CheckBox x:Name="AudioOnlyMicrophoneCheck" Content="Enregistrer le microphone" IsCheckedChanged="CheckedPreferenceChanged" />
+                <StackPanel Spacing="6">
+                  <TextBlock Text="ENCODAGE DU FICHIER AUDIO" FontSize="10" FontWeight="Bold" Foreground="#B4C0BD" />
+                  <ComboBox x:Name="AudioOnlyEncodingQualityCombo" SelectionChanged="SelectionPreferenceChanged">
+                    <ComboBoxItem Content="Compact · 96 kbit/s mono" Tag="Compact" />
+                    <ComboBoxItem Content="Équilibré · 128 kbit/s stéréo" Tag="Balanced" />
+                    <ComboBoxItem Content="Haute qualité · 192 kbit/s stéréo" Tag="High" />
+                  </ComboBox>
+                </StackPanel>
+                <TextBlock x:Name="AudioOnlySourceHint" TextWrapping="Wrap" Foreground="#7F8D8A" FontSize="11" />
+              </StackPanel>
+            </Border>
+          </TabItem>
+        </TabControl>
+      </StackPanel>
 
       <StackPanel Spacing="8">
         <TextBlock Text="COMPORTEMENT DE LA TOUCHE IMPR ÉCRAN" FontSize="10" FontWeight="Bold" Foreground="#9BFF28" LetterSpacing="1.4" />
@@ -84,95 +207,25 @@
         </Border>
       </StackPanel>
 
-      <Grid ColumnDefinitions="*,*,*" ColumnSpacing="12">
-        <StackPanel Spacing="6">
-          <TextBlock Text="FLUIDITÉ VIDÉO" FontSize="10" FontWeight="Bold" Foreground="#FF6573" LetterSpacing="1.1" />
-          <ComboBox x:Name="VideoQualityCombo" SelectionChanged="SelectionPreferenceChanged">
-            <ComboBoxItem Content="24 images/s" Tag="Compact" />
-            <ComboBoxItem Content="30 images/s" Tag="Balanced" />
-            <ComboBoxItem Content="60 images/s" Tag="High" />
-          </ComboBox>
-        </StackPanel>
-        <StackPanel Grid.Column="1" Spacing="6">
-          <TextBlock Text="QUALITÉ GIF" FontSize="10" FontWeight="Bold" Foreground="#6CE5FF" LetterSpacing="1.1" />
-          <ComboBox x:Name="GifQualityCombo" SelectionChanged="SelectionPreferenceChanged">
-            <ComboBoxItem Content="Compacte · 8 i/s" Tag="Compact" />
-            <ComboBoxItem Content="Équilibrée · 10 i/s" Tag="Balanced" />
-            <ComboBoxItem Content="Haute · 12 i/s" Tag="High" />
-          </ComboBox>
-        </StackPanel>
-        <StackPanel Grid.Column="2" Spacing="6">
-          <TextBlock Text="SÉLECTION PAR DÉFAUT" FontSize="10" FontWeight="Bold" Foreground="#9BFF28" LetterSpacing="1.1" />
-          <ComboBox x:Name="SelectionModeCombo" SelectionChanged="SelectionPreferenceChanged">
-            <ComboBoxItem Content="Intelligente" Tag="Smart" />
-            <ComboBoxItem Content="Fenêtre" Tag="Window" />
-            <ComboBoxItem Content="Écran" Tag="Screen" />
-            <ComboBoxItem Content="Zone libre" Tag="Region" />
-          </ComboBox>
-        </StackPanel>
-      </Grid>
-
       <Border Padding="14" CornerRadius="12" Background="#111817" BorderBrush="#263331" BorderThickness="1">
         <StackPanel Spacing="12">
-          <StackPanel Spacing="3">
-            <TextBlock Text="ENCODAGE ET TAILLE DES FICHIERS" FontSize="10" FontWeight="Bold" Foreground="#9BFF28" LetterSpacing="1.4" />
-            <TextBlock Text="Ces profils sont indépendants du nombre d’images par seconde." Foreground="#7F8D8A" FontSize="11" />
+          <TextBlock Text="RÉGLAGES COMMUNS" FontSize="10" FontWeight="Bold" Foreground="#9BFF28" LetterSpacing="1.4" />
+          <StackPanel Spacing="6">
+            <TextBlock Text="SÉLECTION PAR DÉFAUT · IMAGE / VIDÉO / GIF" FontSize="10" FontWeight="Bold" Foreground="#B4C0BD" />
+            <ComboBox x:Name="SelectionModeCombo" SelectionChanged="SelectionPreferenceChanged">
+              <ComboBoxItem Content="Intelligente" Tag="Smart" />
+              <ComboBoxItem Content="Fenêtre" Tag="Window" />
+              <ComboBoxItem Content="Écran" Tag="Screen" />
+              <ComboBoxItem Content="Zone libre" Tag="Region" />
+            </ComboBox>
           </StackPanel>
-          <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto" ColumnSpacing="12" RowSpacing="12">
-            <StackPanel Spacing="5">
-              <TextBlock Text="FORMAT IMAGE" FontSize="9" FontWeight="Bold" Foreground="#B4C0BD" />
-              <ComboBox x:Name="ImageFormatCombo" SelectionChanged="SelectionPreferenceChanged">
-                <ComboBoxItem Content="PNG · sans perte" Tag="png" />
-                <ComboBoxItem Content="JPEG · fichier réduit" Tag="jpeg" />
-              </ComboBox>
-            </StackPanel>
-            <StackPanel Grid.Column="1" Spacing="5">
-              <TextBlock Text="QUALITÉ JPEG" FontSize="9" FontWeight="Bold" Foreground="#B4C0BD" />
-              <ComboBox x:Name="ImageEncodingQualityCombo" SelectionChanged="SelectionPreferenceChanged">
-                <ComboBoxItem Content="Compacte · 40 %" Tag="Compact" />
-                <ComboBoxItem Content="Équilibrée · 70 %" Tag="Balanced" />
-                <ComboBoxItem Content="Haute · 90 %" Tag="High" />
-              </ComboBox>
-            </StackPanel>
-            <StackPanel Grid.Row="1" Spacing="5">
-              <TextBlock Text="DÉBIT VIDÉO H.264" FontSize="9" FontWeight="Bold" Foreground="#FF6573" />
-              <ComboBox x:Name="VideoEncodingQualityCombo" SelectionChanged="SelectionPreferenceChanged">
-                <ComboBoxItem Content="Très faible · 1 Mbit/s" Tag="VeryLow" />
-                <ComboBoxItem Content="Compact · 2,5 Mbit/s" Tag="Compact" />
-                <ComboBoxItem Content="Équilibré · 6 Mbit/s" Tag="Balanced" />
-                <ComboBoxItem Content="Haute qualité · 12 Mbit/s" Tag="High" />
-              </ComboBox>
-            </StackPanel>
-            <StackPanel Grid.Row="1" Grid.Column="1" Spacing="5">
-              <TextBlock Text="ENCODAGE AUDIO" FontSize="9" FontWeight="Bold" Foreground="#6CE5FF" />
-              <ComboBox x:Name="AudioEncodingQualityCombo" SelectionChanged="SelectionPreferenceChanged">
-                <ComboBoxItem Content="Compact · 96 kbit/s mono" Tag="Compact" />
-                <ComboBoxItem Content="Équilibré · 128 kbit/s stéréo" Tag="Balanced" />
-                <ComboBoxItem Content="Haute qualité · 192 kbit/s stéréo" Tag="High" />
-              </ComboBox>
-            </StackPanel>
-          </Grid>
-        </StackPanel>
-      </Border>
-
-      <Border Padding="14" CornerRadius="12" Background="#111817" BorderBrush="#263331" BorderThickness="1">
-        <StackPanel Spacing="13">
-          <CheckBox x:Name="SystemAudioCheck" Content="Capturer le son du système" IsCheckedChanged="CheckedPreferenceChanged" />
-          <CheckBox x:Name="MicrophoneCheck" Content="Ajouter le microphone" IsCheckedChanged="CheckedPreferenceChanged" />
-          <CheckBox x:Name="ClipboardCheck" Content="Copier les images dans le presse-papiers" IsCheckedChanged="CheckedPreferenceChanged" />
-          <CheckBox x:Name="VideoClipboardCheck" Content="Copier les vidéos dans le presse-papiers comme fichiers" IsCheckedChanged="CheckedPreferenceChanged" />
-          <CheckBox x:Name="QuickAnnotationsCheck" Content="Afficher les outils d’annotation rapide pendant la sélection d’image" IsCheckedChanged="CheckedPreferenceChanged" />
-          <TextBlock Text="Après la sélection, dessinez, ajoutez un cadre, une flèche ou du texte sur l’image figée avant de la capturer."
-                     Margin="28,-8,0,0" TextWrapping="Wrap" Foreground="#7F8D8A" FontSize="11" />
-          <CheckBox x:Name="FrameCheck" Content="Afficher le cadre rouge hors de la zone enregistrée" IsCheckedChanged="CheckedPreferenceChanged" />
           <CheckBox x:Name="StartupCheck" Content="Lancer CyCapture au démarrage de Windows" IsCheckedChanged="CheckedPreferenceChanged" />
           <TextBlock x:Name="StartupStatusText"
                      Text="CyCapture démarrera directement dans la zone de notification pour l’utilisateur actuel."
-                     TextWrapping="Wrap"
-                     Foreground="#7F8D8A"
-                     FontSize="11" />
+                     TextWrapping="Wrap" Foreground="#7F8D8A" FontSize="11" />
         </StackPanel>
       </Border>
+
 
       <Border Padding="14" CornerRadius="12" Background="#111817" BorderBrush="#263331" BorderThickness="1">
         <StackPanel Spacing="12">

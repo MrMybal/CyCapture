@@ -46,7 +46,8 @@ internal sealed class RecordingService : IDisposable
                 _audioSession = new AudioRecordingSession();
                 try
                 {
-                    _audioSession.Start(preferences.IncludeSystemAudio, preferences.IncludeMicrophone);
+                    var audioSettings = preferences.GetAudioSettings(CaptureMode.Audio);
+                    _audioSession.Start(audioSettings.SystemAudio, audioSettings.Microphone);
                 }
                 catch
                 {
@@ -115,7 +116,7 @@ internal sealed class RecordingService : IDisposable
         {
             if (_audioSession is null || _preferences is null || _selection is null || _outputPath is null)
                 throw new InvalidOperationException("La session audio a été perdue.");
-            var result = await _audioSession.StopAsync(_outputPath, _preferences.AudioEncodingQuality);
+            var result = await _audioSession.StopAsync(_outputPath, _preferences.GetAudioSettings(CaptureMode.Audio).Quality);
             _outputPath = result.Path;
             var finishedAt = StartedAt + result.Duration;
             if (!File.Exists(_outputPath) || new FileInfo(_outputPath).Length == 0)
@@ -182,7 +183,8 @@ internal sealed class RecordingService : IDisposable
         var (outputWidth, outputHeight, gifFps) = mode == CaptureMode.Gif
             ? GifDimensions(local.Width, local.Height, preferences.GifQuality)
             : (Even(local.Width), Even(local.Height), preferences.FramesPerSecond);
-        var (audioBitrate, audioChannels) = GetAudioProfile(preferences.AudioEncodingQuality);
+        var audioSettings = preferences.GetAudioSettings(mode);
+        var (audioBitrate, audioChannels) = GetAudioProfile(audioSettings.Quality);
 
         return new RecorderOptions
         {
@@ -208,13 +210,13 @@ internal sealed class RecordingService : IDisposable
             },
             AudioOptions = new AudioOptions
             {
-                IsAudioEnabled = mode == CaptureMode.Video && (preferences.IncludeSystemAudio || preferences.IncludeMicrophone),
-                IsOutputDeviceEnabled = mode == CaptureMode.Video && preferences.IncludeSystemAudio,
-                IsInputDeviceEnabled = mode == CaptureMode.Video && preferences.IncludeMicrophone,
+                IsAudioEnabled = audioSettings.SystemAudio || audioSettings.Microphone,
+                IsOutputDeviceEnabled = audioSettings.SystemAudio,
+                IsInputDeviceEnabled = audioSettings.Microphone,
                 Bitrate = audioBitrate,
                 Channels = audioChannels,
-                InputVolume = preferences.IncludeSystemAudio && preferences.IncludeMicrophone ? 0.5f : 1f,
-                OutputVolume = preferences.IncludeSystemAudio && preferences.IncludeMicrophone ? 0.5f : 1f
+                InputVolume = audioSettings.SystemAudio && audioSettings.Microphone ? 0.5f : 1f,
+                OutputVolume = audioSettings.SystemAudio && audioSettings.Microphone ? 0.5f : 1f
             },
             MouseOptions = new MouseOptions
             {

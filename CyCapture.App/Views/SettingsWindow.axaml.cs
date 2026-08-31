@@ -20,6 +20,7 @@ public sealed partial class SettingsWindow : Window
     private readonly ComboBox _videoQualityCombo;
     private readonly ComboBox _videoEncodingQualityCombo;
     private readonly ComboBox _audioEncodingQualityCombo;
+    private readonly ComboBox _audioOnlyEncodingQualityCombo;
     private readonly ComboBox _imageFormatCombo;
     private readonly ComboBox _imageEncodingQualityCombo;
     private readonly ComboBox _gifQualityCombo;
@@ -28,15 +29,19 @@ public sealed partial class SettingsWindow : Window
     private readonly ComboBox _printScreenHoldDelayCombo;
     private readonly CheckBox _systemAudioCheck;
     private readonly CheckBox _microphoneCheck;
+    private readonly CheckBox _audioOnlySystemCheck;
+    private readonly CheckBox _audioOnlyMicrophoneCheck;
     private readonly CheckBox _clipboardCheck;
     private readonly CheckBox _videoClipboardCheck;
     private readonly CheckBox _quickAnnotationsCheck;
     private readonly CheckBox _frameCheck;
+    private readonly CheckBox _gifFrameCheck;
     private readonly CheckBox _separateCaptureTypesCheck;
     private readonly CheckBox _dailyFoldersCheck;
     private readonly CheckBox _startupCheck;
     private readonly TextBlock _captureOrganizationPreview;
     private readonly TextBlock _startupStatusText;
+    private readonly TextBlock _audioOnlySourceHint;
     private readonly StackPanel _pluginsPanel;
     private bool _initializing = true;
     private bool _changingPlugin;
@@ -55,6 +60,7 @@ public sealed partial class SettingsWindow : Window
         _videoQualityCombo = RequireControl<ComboBox>("VideoQualityCombo");
         _videoEncodingQualityCombo = RequireControl<ComboBox>("VideoEncodingQualityCombo");
         _audioEncodingQualityCombo = RequireControl<ComboBox>("AudioEncodingQualityCombo");
+        _audioOnlyEncodingQualityCombo = RequireControl<ComboBox>("AudioOnlyEncodingQualityCombo");
         _imageFormatCombo = RequireControl<ComboBox>("ImageFormatCombo");
         _imageEncodingQualityCombo = RequireControl<ComboBox>("ImageEncodingQualityCombo");
         _gifQualityCombo = RequireControl<ComboBox>("GifQualityCombo");
@@ -63,20 +69,26 @@ public sealed partial class SettingsWindow : Window
         _printScreenHoldDelayCombo = RequireControl<ComboBox>("PrintScreenHoldDelayCombo");
         _systemAudioCheck = RequireControl<CheckBox>("SystemAudioCheck");
         _microphoneCheck = RequireControl<CheckBox>("MicrophoneCheck");
+        _audioOnlySystemCheck = RequireControl<CheckBox>("AudioOnlySystemCheck");
+        _audioOnlyMicrophoneCheck = RequireControl<CheckBox>("AudioOnlyMicrophoneCheck");
         _clipboardCheck = RequireControl<CheckBox>("ClipboardCheck");
         _videoClipboardCheck = RequireControl<CheckBox>("VideoClipboardCheck");
         _quickAnnotationsCheck = RequireControl<CheckBox>("QuickAnnotationsCheck");
         _frameCheck = RequireControl<CheckBox>("FrameCheck");
+        _gifFrameCheck = RequireControl<CheckBox>("GifFrameCheck");
         _separateCaptureTypesCheck = RequireControl<CheckBox>("SeparateCaptureTypesCheck");
         _dailyFoldersCheck = RequireControl<CheckBox>("DailyFoldersCheck");
         _startupCheck = RequireControl<CheckBox>("StartupCheck");
         _captureOrganizationPreview = RequireControl<TextBlock>("CaptureOrganizationPreview");
         _startupStatusText = RequireControl<TextBlock>("StartupStatusText");
+        _audioOnlySourceHint = RequireControl<TextBlock>("AudioOnlySourceHint");
         _pluginsPanel = RequireControl<StackPanel>("PluginsPanel");
         _outputPathText.Text = preferences.EffectiveOutputDirectory;
         SelectByTag(_videoQualityCombo, preferences.VideoQualityLevel.ToString());
         SelectByTag(_videoEncodingQualityCombo, preferences.VideoEncodingQuality.ToString());
         SelectByTag(_audioEncodingQualityCombo, preferences.AudioEncodingQuality.ToString());
+        var audioOnly = preferences.GetAudioSettings(CaptureMode.Audio);
+        SelectByTag(_audioOnlyEncodingQualityCombo, audioOnly.Quality.ToString());
         SelectByTag(_imageFormatCombo, preferences.ImageFormat);
         SelectByTag(_imageEncodingQualityCombo, preferences.ImageEncodingQuality.ToString());
         SelectByTag(_gifQualityCombo, preferences.GifQuality.ToString());
@@ -85,15 +97,19 @@ public sealed partial class SettingsWindow : Window
         SelectByTag(_printScreenHoldDelayCombo, preferences.PrintScreenHoldDelayMilliseconds.ToString());
         _systemAudioCheck.IsChecked = preferences.IncludeSystemAudio;
         _microphoneCheck.IsChecked = preferences.IncludeMicrophone;
+        _audioOnlySystemCheck.IsChecked = audioOnly.SystemAudio;
+        _audioOnlyMicrophoneCheck.IsChecked = audioOnly.Microphone;
         _clipboardCheck.IsChecked = preferences.CopyScreenshotsToClipboard;
         _videoClipboardCheck.IsChecked = preferences.CopyVideosToClipboard;
         _quickAnnotationsCheck.IsChecked = preferences.EnableQuickAnnotations;
         _frameCheck.IsChecked = preferences.ShowRecordingFrame;
+        _gifFrameCheck.IsChecked = preferences.ShouldShowRecordingFrame(CaptureMode.Gif);
         _separateCaptureTypesCheck.IsChecked = preferences.SeparateCaptureTypes;
         _dailyFoldersCheck.IsChecked = preferences.CreateDailyCaptureFolders;
         preferences.StartWithWindows = WindowsStartup.IsEnabled();
         _startupCheck.IsChecked = preferences.StartWithWindows;
         UpdateCaptureOrganizationPreview();
+        UpdateModeControls();
         _initializing = false;
         RenderPlugins();
         _postProcessing.PluginsChanged += PluginsChanged;
@@ -155,6 +171,9 @@ public sealed partial class SettingsWindow : Window
         if (_audioEncodingQualityCombo.SelectedItem is ComboBoxItem audioEncoding
             && Enum.TryParse<AudioEncodingQuality>(audioEncoding.Tag?.ToString(), out var audioEncodingValue))
             _preferences.AudioEncodingQuality = audioEncodingValue;
+        if (_audioOnlyEncodingQualityCombo.SelectedItem is ComboBoxItem audioOnlyEncoding
+            && Enum.TryParse<AudioEncodingQuality>(audioOnlyEncoding.Tag?.ToString(), out var audioOnlyEncodingValue))
+            _preferences.AudioOnlyEncodingQuality = audioOnlyEncodingValue;
         if (_imageFormatCombo.SelectedItem is ComboBoxItem imageFormat)
             _preferences.ImageFormat = imageFormat.Tag?.ToString() ?? "png";
         if (_imageEncodingQualityCombo.SelectedItem is ComboBoxItem imageEncoding
@@ -174,13 +193,17 @@ public sealed partial class SettingsWindow : Window
             _preferences.PrintScreenHoldDelayMilliseconds = holdDelayMilliseconds;
         _preferences.IncludeSystemAudio = _systemAudioCheck.IsChecked == true;
         _preferences.IncludeMicrophone = _microphoneCheck.IsChecked == true;
+        _preferences.AudioOnlyIncludeSystemAudio = _audioOnlySystemCheck.IsChecked == true;
+        _preferences.AudioOnlyIncludeMicrophone = _audioOnlyMicrophoneCheck.IsChecked == true;
         _preferences.CopyScreenshotsToClipboard = _clipboardCheck.IsChecked == true;
         _preferences.CopyVideosToClipboard = _videoClipboardCheck.IsChecked == true;
         _preferences.EnableQuickAnnotations = _quickAnnotationsCheck.IsChecked == true;
         _preferences.ShowRecordingFrame = _frameCheck.IsChecked == true;
+        _preferences.ShowGifRecordingFrame = _gifFrameCheck.IsChecked == true;
         _preferences.SeparateCaptureTypes = _separateCaptureTypesCheck.IsChecked == true;
         _preferences.CreateDailyCaptureFolders = _dailyFoldersCheck.IsChecked == true;
         UpdateCaptureOrganizationPreview();
+        UpdateModeControls();
 
         var startWithWindows = _startupCheck.IsChecked == true;
         if (startWithWindows != _preferences.StartWithWindows)
@@ -204,6 +227,20 @@ public sealed partial class SettingsWindow : Window
         }
         _preferences.ApplyEncodingProfiles();
         await _preferences.SaveAsync();
+    }
+
+    private void UpdateModeControls()
+    {
+        _imageEncodingQualityCombo.IsEnabled = _preferences.ImageFormat == "jpeg";
+        _audioEncodingQualityCombo.IsEnabled = _systemAudioCheck.IsChecked == true || _microphoneCheck.IsChecked == true;
+        var hasAudioSource = _audioOnlySystemCheck.IsChecked == true || _audioOnlyMicrophoneCheck.IsChecked == true;
+        _audioOnlyEncodingQualityCombo.IsEnabled = hasAudioSource;
+        _audioOnlySourceHint.Text = hasAudioSource
+            ? "Enregistrement MP3 (repli WAV si nécessaire). Impr écran arrête l’enregistrement."
+            : "Choisissez au moins une source pour pouvoir lancer une capture audio.";
+        _audioOnlySourceHint.Foreground = new SolidColorBrush(hasAudioSource
+            ? Color.FromRgb(127, 141, 138)
+            : Color.FromRgb(255, 101, 115));
     }
 
     private void UpdateCaptureOrganizationPreview()
