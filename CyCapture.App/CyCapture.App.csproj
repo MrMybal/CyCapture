@@ -14,7 +14,7 @@
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
     <AssemblyName>CyCapture</AssemblyName>
     <RootNamespace>CyCapture</RootNamespace>
-    <Version>1.4.5</Version>
+    <Version>1.4.6</Version>
     <Authors>CyberAlien</Authors>
     <Copyright>Copyright © 2026 CyberAlien</Copyright>
     <Product>CyCapture</Product>
