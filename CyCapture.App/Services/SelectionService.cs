@@ -17,9 +17,9 @@ internal sealed class SelectionService
         var monitors = NativeMethods.GetMonitors();
         if (monitors.Count == 0) throw new InvalidOperationException("Aucun écran Windows n’a été détecté.");
 
-        var regions = selectionMode is CaptureSelectionMode.Smart or CaptureSelectionMode.Window
+        var desktop = selectionMode is CaptureSelectionMode.Smart or CaptureSelectionMode.Window
             ? await Task.Run(NativeMethods.EnumerateSelectableRegions)
-            : [];
+            : (Regions: (IReadOnlyList<SelectableRegion>)[], WindowLayers: (IReadOnlyList<SelectableWindowLayer>)[]);
         var captures = await Task.Run(() => monitors
             .Select(monitor => (Monitor: monitor, Bitmap: ScreenCapture.Capture(monitor.Bounds)))
             .ToArray());
@@ -35,7 +35,8 @@ internal sealed class SelectionService
                 screenshot,
                 frozenFrame,
                 capture.Monitor,
-                regions,
+                desktop.Regions,
+                desktop.WindowLayers,
                 selectionMode,
                 enableQuickAnnotations,
                 annotationSession);

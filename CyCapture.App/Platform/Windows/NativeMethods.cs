@@ -15,6 +15,8 @@ internal static class NativeMethods
     private const long WsExToolWindow = 0x00000080L;
     private const int DwmwaExtendedFrameBounds = 9;
     private const int DwmwaCloaked = 14;
+    private const uint CwpSkipInvisible = 0x0001;
+    private const uint CwpSkipTransparent = 0x0004;
     private const uint MonitorinfofPrimary = 1;
     private const uint MonitorDefaultToNearest = 2;
     private static readonly nint DpiAwarenessContextPerMonitorAwareV2 = new(-4);
@@ -122,6 +124,13 @@ internal static class NativeMethods
     [return: MarshalAs(UnmanagedType.Bool)]
     private static extern bool ClientToScreen(nint window, ref Point point);
 
+    [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool ScreenToClient(nint window, ref Point point);
+
+    [DllImport("user32.dll")]
+    private static extern nint ChildWindowFromPointEx(nint parent, Point point, uint flags);
+
     [DllImport("user32.dll", EntryPoint = "GetWindowLongPtrW")]
     private static extern nint GetWindowLongPtr(nint window, int index);
 
@@ -213,31 +222,45 @@ internal static class NativeMethods
         return GetMonitors().First(item => item.Handle == monitor);
     }
 
-    internal static IReadOnlyList<SelectableRegion> EnumerateSelectableRegions()
+    internal static (IReadOnlyList<SelectableRegion> Regions, IReadOnlyList<SelectableWindowLayer> WindowLayers)
+        EnumerateSelectableRegions()
     {
         var regions = new List<SelectableRegion>();
+        var windowLayers = new List<SelectableWindowLayer>();
         var ownProcess = (uint)Environment.ProcessId;
+        var zOrder = 0;
 
         EnumWindows((window, _) =>
         {
             if (!IsWindowVisible(window) || IsIconic(window)) return true;
+            if (IsCloaked(window)) return true;
+            if (!TryGetExtendedBounds(window, out var windowRect) || !IsValid(windowRect, 1, 1)) return true;
+
+            var windowBounds = windowRect.ToBounds();
+            windowLayers.Add(new SelectableWindowLayer(window, windowBounds, zOrder++));
+
             GetWindowThreadProcessId(window, out var processId);
             if (processId == ownProcess) return true;
             if ((GetWindowLongPtr(window, GwlExStyle).ToInt64() & WsExToolWindow) != 0) return true;
-            if (IsCloaked(window)) return true;
 
             var title = WindowText(window);
             if (string.IsNullOrWhiteSpace(title)) return true;
-            if (!TryGetExtendedBounds(window, out var windowRect) || !IsValid(windowRect, 80, 50)) return true;
+            if (!IsValid(windowRect, 80, 50)) return true;
 
-            regions.Add(new SelectableRegion(window, title, SelectionKind.Window, windowRect.ToBounds(), 10));
+            regions.Add(new SelectableRegion(window, title, SelectionKind.Window, windowBounds, 10, window));
 
             if (TryGetClientBounds(window, out var clientRect) && IsValid(clientRect, 60, 40))
             {
                 var inset = Math.Abs(clientRect.Left - windowRect.Left) + Math.Abs(clientRect.Top - windowRect.Top)
                     + Math.Abs(clientRect.Right - windowRect.Right) + Math.Abs(clientRect.Bottom - windowRect.Bottom);
                 if (inset > 3)
-                    regions.Add(new SelectableRegion(window, $"Contenu — {title}", SelectionKind.Client, clientRect.ToBounds(), 20));
+                    regions.Add(new SelectableRegion(
+                        window,
+                        $"Contenu — {title}",
+                        SelectionKind.Client,
+                        clientRect.ToBounds().Intersect(windowBounds),
+                        20,
+                        window));
             }
 
             EnumChildWindows(window, (child, _) =>
@@ -246,14 +269,32 @@ internal static class NativeMethods
                 var childTitle = WindowText(child);
                 if (string.IsNullOrWhiteSpace(childTitle)) childTitle = WindowClass(child);
                 if (string.IsNullOrWhiteSpace(childTitle)) childTitle = "Contrôle";
-                regions.Add(new SelectableRegion(child, childTitle, SelectionKind.Control, rect.ToBounds(), 30));
+                var childBounds = rect.ToBounds().Intersect(windowBounds);
+                if (childBounds.Width > 0 && childBounds.Height > 0)
+                    regions.Add(new SelectableRegion(child, childTitle, SelectionKind.Control, childBounds, 30, window));
                 return true;
             }, 0);
 
             return true;
         }, 0);
 
-        return regions;
+        return (regions, windowLayers);
+    }
+
+    internal static IReadOnlyList<nint> ChildWindowPathAt(nint rootWindow, int screenX, int screenY)
+    {
+        var path = new List<nint>();
+        var current = rootWindow;
+        for (var depth = 0; depth < 32; depth++)
+        {
+            var point = new Point { X = screenX, Y = screenY };
+            if (!ScreenToClient(current, ref point)) break;
+            var child = ChildWindowFromPointEx(current, point, CwpSkipInvisible | CwpSkipTransparent);
+            if (child == 0 || child == current || path.Contains(child)) break;
+            path.Add(child);
+            current = child;
+        }
+        return path;
     }
 
     internal static nint CreateIconHandle(bool recording)

@@ -36,6 +36,7 @@ Le même menu contient maintenant des entrées séparées pour la **Galerie** et
 - palette Image / Vidéo / GIF / Audio au niveau de la souris ;
 - fluidité vidéo, débit H.264, encodage audio, format/qualité d’image, qualité GIF et style de sélection directement modifiables dans la palette ;
 - modes de sélection Intelligente, Fenêtre, Écran et Zone libre ;
+- respect des occlusions et du Z-order Windows : une fenêtre cachée derrière une autre n’est plus sélectionnée ;
 - réglages classés par onglets Image, Vidéo, GIF et Audio dans les paramètres et la palette rapide ; son vidéo et audio seul indépendants ;
 - annotations rapides facultatives sur l’écran figé avant la capture d’image : dessin libre, cadre, flèche, texte, couleurs, annulation et effacement ;
 - comportement de `Impr. écran` configurable : palette ou démarrage direct Image/Vidéo/GIF/Audio ;
@@ -146,6 +147,7 @@ The same menu provides separate **Gallery** and **Settings** entries. Clicking a
 - Image / Video / GIF / Audio palette displayed near the pointer;
 - video frame rate, H.264 bitrate, audio encoding, image format/quality, GIF quality and selection style controls available directly in the palette;
 - Smart, Window, Screen and Free region selection modes;
+- Windows occlusion and Z-order awareness, preventing hidden background windows from being selected;
 - Image, Video, GIF and Audio settings tabs in both Settings and the quick palette, with independent video sound and audio-only preferences;
 - optional quick annotations on the frozen screen before saving an image: freehand drawing, rectangle, arrow, text, colors, undo and clear;
 - configurable `Print Screen` behavior: show the palette or directly start an Image, Video, GIF or Audio capture;

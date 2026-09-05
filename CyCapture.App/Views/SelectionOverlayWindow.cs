@@ -19,6 +19,7 @@ internal sealed class SelectionOverlayWindow : Window
         byte[]? frozenFramePng,
         MonitorDescriptor monitor,
         IReadOnlyList<SelectableRegion> regions,
+        IReadOnlyList<SelectableWindowLayer> windowLayers,
         CaptureSelectionMode selectionMode,
         bool quickAnnotationsEnabled,
         QuickAnnotationSession annotationSession)
@@ -40,6 +41,7 @@ internal sealed class SelectionOverlayWindow : Window
             frozenFramePng,
             monitor,
             regions,
+            windowLayers,
             selectionMode,
             quickAnnotationsEnabled,
             annotationSession);

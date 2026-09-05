@@ -77,7 +77,13 @@ public sealed record SelectableRegion(
     string Title,
     SelectionKind Kind,
     PixelBounds Bounds,
-    int Priority = 0);
+    int Priority = 0,
+    nint RootWindowHandle = 0);
+
+public sealed record SelectableWindowLayer(
+    nint Handle,
+    PixelBounds Bounds,
+    int ZOrder);
 
 public sealed record CaptureSelection(
     PixelBounds Bounds,

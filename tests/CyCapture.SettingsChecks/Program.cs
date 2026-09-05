@@ -26,9 +26,11 @@ internal static class Program
             Directory.CreateDirectory(output);
             CheckPreferences();
             CheckRecorderOptions();
+            CheckSmartSelectionZOrder();
+            CheckNativeWindowSnapshot();
             CheckXamlGroups(projectRoot);
             CheckWindows(output);
-            Console.WriteLine("PASS: preference migration, independent modes, recorder routing, XAML groups and window construction.");
+            Console.WriteLine("PASS: preferences, recorder routing, smart-selection Z-order, XAML groups and window construction.");
             return 0;
         }
         catch (Exception error)
@@ -105,6 +107,76 @@ internal static class Program
     }
 
     private static object Property(object target, string name) => target.GetType().GetProperty(name)!.GetValue(target)!;
+
+    private static void CheckSmartSelectionZOrder()
+    {
+        const nint front = 100;
+        const nint back = 200;
+        const nint child = 110;
+        const nint deepestChild = 111;
+        const nint overlappingSibling = 112;
+        var frontBounds = new PixelBounds(0, 0, 400, 300);
+        var backBounds = new PixelBounds(40, 40, 180, 140);
+        var regions = new List<SelectableRegion>
+        {
+            new(front, "Front", SelectionKind.Window, frontBounds, 10, front),
+            new(front, "Front content", SelectionKind.Client, new PixelBounds(8, 30, 384, 262), 20, front),
+            new(child, "Front child", SelectionKind.Control, new PixelBounds(50, 50, 160, 100), 30, front),
+            new(deepestChild, "Front deepest child", SelectionKind.Control, new PixelBounds(70, 70, 90, 60), 30, front),
+            new(overlappingSibling, "Covered sibling", SelectionKind.Control, new PixelBounds(75, 75, 20, 20), 30, front),
+            new(back, "Back", SelectionKind.Window, backBounds, 10, back),
+            new(back, "Back content", SelectionKind.Client, backBounds, 20, back)
+        };
+        var layers = new List<SelectableWindowLayer>
+        {
+            new(front, frontBounds, 0),
+            new(back, backBounds, 1)
+        };
+
+        var resolved = ResolveSelection(regions, layers, 80, 80, CaptureSelectionMode.Smart, [child, deepestChild]);
+        Require(resolved is { Handle: deepestChild }, "Smart selection ignored the visible child-window path.");
+        resolved = ResolveSelection(regions, layers, 80, 80, CaptureSelectionMode.Smart, [child]);
+        Require(resolved is { Handle: child }, "A smaller overlapping sibling replaced the actual visible child.");
+        resolved = ResolveSelection(regions, layers, 80, 80, CaptureSelectionMode.Smart, [back]);
+        Require(resolved is { Handle: front, Kind: SelectionKind.Client }, "A covered back window bypassed the front window.");
+        resolved = ResolveSelection(regions, layers, 80, 80, CaptureSelectionMode.Window, []);
+        Require(resolved is { Handle: front, Kind: SelectionKind.Window }, "Window mode ignored top-level Z-order.");
+
+        var blockingLayers = new List<SelectableWindowLayer>
+        {
+            new(300, new PixelBounds(60, 60, 80, 80), 0),
+            new(back, backBounds, 1)
+        };
+        resolved = ResolveSelection(regions, blockingLayers, 80, 80, CaptureSelectionMode.Smart, []);
+        Require(resolved is null, "A non-selectable visible window did not occlude the window behind it.");
+    }
+
+    private static SelectableRegion? ResolveSelection(
+        IReadOnlyList<SelectableRegion> regions,
+        IReadOnlyList<SelectableWindowLayer> layers,
+        int x,
+        int y,
+        CaptureSelectionMode mode,
+        IReadOnlyList<nint> childPath) =>
+        (SelectableRegion?)AppAssembly.GetType("CyCapture.Views.SelectionCandidateResolver")!
+            .GetMethod("Resolve", BindingFlags.NonPublic | BindingFlags.Static)!
+            .Invoke(null, [regions, layers, x, y, mode, childPath]);
+
+    private static void CheckNativeWindowSnapshot()
+    {
+        var snapshot = AppAssembly.GetType("CyCapture.Platform.Windows.NativeMethods")!
+            .GetMethod("EnumerateSelectableRegions", BindingFlags.NonPublic | BindingFlags.Static)!
+            .Invoke(null, null)!;
+        var snapshotType = snapshot.GetType();
+        var regions = (IReadOnlyList<SelectableRegion>)snapshotType.GetField("Item1")!.GetValue(snapshot)!;
+        var layers = (IReadOnlyList<SelectableWindowLayer>)snapshotType.GetField("Item2")!.GetValue(snapshot)!;
+        Require(layers.Count > 0, "The native Windows Z-order snapshot is empty.");
+        Require(layers.Select(item => item.ZOrder).SequenceEqual(Enumerable.Range(0, layers.Count)),
+            "The native Windows layers are not stored in Z-order.");
+        var layerHandles = layers.Select(item => item.Handle).ToHashSet();
+        Require(regions.All(item => item.RootWindowHandle != 0 && layerHandles.Contains(item.RootWindowHandle)),
+            "A selectable region is not associated with its top-level window layer.");
+    }
 
     private static void CheckXamlGroups(string root)
     {

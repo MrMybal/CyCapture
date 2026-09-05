@@ -5,6 +5,7 @@ using Avalonia.Input;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using CyCapture.Models;
+using CyCapture.Platform.Windows;
 
 namespace CyCapture.Views;
 
@@ -18,6 +19,7 @@ internal sealed class SelectionSurface : Control
     private readonly byte[]? _frozenFramePng;
     private readonly MonitorDescriptor _monitor;
     private readonly IReadOnlyList<SelectableRegion> _regions;
+    private readonly IReadOnlyList<SelectableWindowLayer> _windowLayers;
     private readonly CaptureSelectionMode _selectionMode;
     private readonly bool _quickAnnotationsEnabled;
     private readonly QuickAnnotationSession _annotationSession;
@@ -33,6 +35,7 @@ internal sealed class SelectionSurface : Control
         byte[]? frozenFramePng,
         MonitorDescriptor monitor,
         IReadOnlyList<SelectableRegion> regions,
+        IReadOnlyList<SelectableWindowLayer> windowLayers,
         CaptureSelectionMode selectionMode,
         bool quickAnnotationsEnabled,
         QuickAnnotationSession annotationSession)
@@ -41,6 +44,7 @@ internal sealed class SelectionSurface : Control
         _frozenFramePng = frozenFramePng;
         _monitor = monitor;
         _regions = regions;
+        _windowLayers = windowLayers;
         _selectionMode = selectionMode;
         _quickAnnotationsEnabled = quickAnnotationsEnabled;
         _annotationSession = annotationSession;
@@ -343,13 +347,19 @@ internal sealed class SelectionSurface : Control
 
         var globalX = _monitor.Bounds.X + (int)Math.Round(point.X * _monitor.Scale);
         var globalY = _monitor.Bounds.Y + (int)Math.Round(point.Y * _monitor.Scale);
-        var matches = _regions
+        var frontWindow = _windowLayers
             .Where(item => item.Bounds.Contains(globalX, globalY))
-            .Where(item => _selectionMode != CaptureSelectionMode.Window || item.Kind == SelectionKind.Window)
-            .OrderBy(item => item.Bounds.Area)
-            .ThenByDescending(item => item.Priority)
-            .ToList();
-        return matches.FirstOrDefault()
+            .MinBy(item => item.ZOrder);
+        var childPath = frontWindow is null || _selectionMode == CaptureSelectionMode.Window
+            ? (IReadOnlyList<nint>)[]
+            : NativeMethods.ChildWindowPathAt(frontWindow.Handle, globalX, globalY);
+        return SelectionCandidateResolver.Resolve(
+                   _regions,
+                   _windowLayers,
+                   globalX,
+                   globalY,
+                   _selectionMode,
+                   childPath)
                ?? (_selectionMode == CaptureSelectionMode.Smart
                    ? new SelectableRegion(0, _monitor.DisplayName, SelectionKind.Screen, _monitor.Bounds)
                    : null);
