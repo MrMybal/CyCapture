@@ -9,7 +9,10 @@ dotnet run --project .\tests\CyCapture.SettingsChecks\CyCapture.SettingsChecks.c
 Le programme vérifie la migration des anciennes préférences, la sérialisation,
 l'indépendance des réglages Vidéo/Audio et des cadres Vidéo/GIF, les options
 transmises à l'encodeur, le respect du Z-order par la sélection intelligente et
-le regroupement des contrôles dans les quatre onglets.
+le regroupement des contrôles dans les quatre onglets. Il valide également la
+détection des mises à jour, le choix du bon binaire avec/sans CyAnnota, le rejet
+des URL non fiables, ainsi que la présence du numéro de version et du bouton de
+mise à jour dans les réglages.
 Il instancie également les deux fenêtres et génère des aperçus PNG dans
 `artifacts/settings-checks/`.
 

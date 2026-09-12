@@ -27,3 +27,5 @@ artifacts/
 *.dmp
 *.etl
 *.binlog
+__pycache__/
+*.py[cod]

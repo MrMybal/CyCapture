@@ -26,11 +26,12 @@ internal static class Program
             Directory.CreateDirectory(output);
             CheckPreferences();
             CheckRecorderOptions();
+            CheckUpdates();
             CheckSmartSelectionZOrder();
             CheckNativeWindowSnapshot();
             CheckXamlGroups(projectRoot);
             CheckWindows(output);
-            Console.WriteLine("PASS: preferences, recorder routing, smart-selection Z-order, XAML groups and window construction.");
+            Console.WriteLine("PASS: preferences, recorder routing, updates, smart-selection Z-order, XAML groups and window construction.");
             return 0;
         }
         catch (Exception error)
@@ -107,6 +108,44 @@ internal static class Program
     }
 
     private static object Property(object target, string name) => target.GetType().GetProperty(name)!.GetValue(target)!;
+
+    private static void CheckUpdates()
+    {
+        const string fullName = "CyCapture-1.4.8-windows-x64.exe";
+        const string liteName = "CyCapture-1.4.8-windows-x64-without-CyAnnota.exe";
+        const string fullHash = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
+        const string liteHash = "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB";
+        var json = JsonSerializer.Serialize(new
+        {
+            tag_name = "v1.4.8",
+            html_url = "https://github.com/MrMybal/CyCapture/releases/tag/v1.4.8",
+            assets = new object[]
+            {
+                new { name = fullName, browser_download_url = $"https://github.com/MrMybal/CyCapture/releases/download/v1.4.8/{fullName}", size = 123L, digest = $"sha256:{fullHash}" },
+                new { name = liteName, browser_download_url = $"https://github.com/MrMybal/CyCapture/releases/download/v1.4.8/{liteName}", size = 456L, digest = $"sha256:{liteHash}" }
+            }
+        });
+        var parse = AppAssembly.GetType("CyCapture.Services.UpdateService")!
+            .GetMethod("ParseLatestRelease", PrivateStatic)!;
+
+        var full = parse.Invoke(null, [json, new Version(1, 4, 7), true])!;
+        Require(Equals(Property(full, "IsUpdateAvailable"), true), "A newer GitHub release was not detected.");
+        Require(Property(full, "AssetName").ToString() == fullName, "The full edition selected the wrong update asset.");
+        Require(Property(full, "Sha256").ToString() == fullHash, "The full update digest was not preserved.");
+
+        var lite = parse.Invoke(null, [json, new Version(1, 4, 7), false])!;
+        Require(Property(lite, "AssetName").ToString() == liteName, "The edition without CyAnnota selected the wrong update asset.");
+        Require(Property(lite, "Sha256").ToString() == liteHash, "The lite update digest was not preserved.");
+
+        var current = parse.Invoke(null, [json, new Version(1, 4, 8), true])!;
+        Require(Equals(Property(current, "IsUpdateAvailable"), false), "The current version was reported as outdated.");
+
+        var unsafeJson = json.Replace("https://github.com/MrMybal/CyCapture/releases/download/", "https://example.invalid/");
+        var unsafeUpdate = parse.Invoke(null, [unsafeJson, new Version(1, 4, 7), true])!;
+        Require(PropertyOrNull(unsafeUpdate, "DownloadUrl") is null, "An untrusted update download URL was accepted.");
+    }
+
+    private static object? PropertyOrNull(object target, string name) => target.GetType().GetProperty(name)!.GetValue(target);
 
     private static void CheckSmartSelectionZOrder()
     {
@@ -216,6 +255,15 @@ internal static class Program
         Require(settings.FindControl<CheckBox>("AudioOnlySystemCheck")!.IsChecked == true, "Audio-only source initialized incorrectly.");
         Require(settings.FindControl<CheckBox>("FrameCheck")!.IsChecked == false && settings.FindControl<CheckBox>("GifFrameCheck")!.IsChecked == true,
             "Frame options are not independent.");
+        var versionText = settings.FindControl<TextBlock>("AppVersionText")!.Text ?? string.Empty;
+        var editionLabel = (string)AppAssembly.GetType("CyCapture.Services.AppBuildInfo")!
+            .GetProperty("EditionLabel", PrivateStatic)!.GetValue(null)!;
+        Require(versionText.Contains("1.4.7", StringComparison.Ordinal),
+            "The settings window does not show the application version.");
+        Require(versionText.Contains(editionLabel, StringComparison.Ordinal),
+            "The settings window does not show the compiled edition.");
+        Require(settings.FindControl<Button>("UpdateButton") is not null,
+            "The settings window has no update button.");
         Require(((ComboBoxItem)quick.FindControl<ComboBox>("AudioEncodingQualityCombo")!.SelectedItem!).Tag?.ToString() == "Compact", "Quick video quality mismatch.");
         Require(((ComboBoxItem)quick.FindControl<ComboBox>("AudioOnlyEncodingQualityCombo")!.SelectedItem!).Tag?.ToString() == "High", "Quick audio-only quality mismatch.");
         var tabs = settings.FindControl<TabControl>("CaptureSettingsTabs")!;

@@ -15,9 +15,22 @@
         </Border>
         <StackPanel Grid.Column="1" VerticalAlignment="Center">
           <TextBlock Text="CyCapture" FontSize="22" FontWeight="Black" />
-          <TextBlock Text="ACTIF EN ARRIÈRE-PLAN · AVALONIA/C#" FontSize="10" Foreground="#8E9C99" LetterSpacing="1.2" />
+          <TextBlock x:Name="AppVersionText" Text="VERSION · BÊTA" FontSize="10" Foreground="#8E9C99" LetterSpacing="1.2" />
         </StackPanel>
       </Grid>
+
+      <Border Padding="14" CornerRadius="12" Background="#111817" BorderBrush="#314139" BorderThickness="1">
+        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="14">
+          <StackPanel Spacing="5">
+            <TextBlock Text="MISES À JOUR" FontSize="10" FontWeight="Bold" Foreground="#9BFF28" LetterSpacing="1.4" />
+            <TextBlock x:Name="UpdateStatusText"
+                       Text="Vérifiez si une nouvelle version de CyCapture est disponible."
+                       TextWrapping="Wrap" Foreground="#9DAEAA" FontSize="11" />
+          </StackPanel>
+          <Button x:Name="UpdateButton" Grid.Column="1" Content="Vérifier les mises à jour"
+                  Click="UpdateClick" Padding="16,9" VerticalAlignment="Center" />
+        </Grid>
+      </Border>
 
       <Border Padding="16" CornerRadius="12" Background="#111817" BorderBrush="#263331" BorderThickness="1">
         <StackPanel Spacing="12">

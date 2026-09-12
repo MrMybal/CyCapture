@@ -16,6 +16,11 @@ public sealed partial class SettingsWindow : Window
 {
     private readonly Preferences _preferences;
     private readonly PostProcessingService _postProcessing;
+    private readonly UpdateService _updateService = new();
+    private readonly CancellationTokenSource _updateCancellation = new();
+    private readonly TextBlock _appVersionText;
+    private readonly TextBlock _updateStatusText;
+    private readonly Button _updateButton;
     private readonly TextBlock _outputPathText;
     private readonly ComboBox _videoQualityCombo;
     private readonly ComboBox _videoEncodingQualityCombo;
@@ -45,6 +50,9 @@ public sealed partial class SettingsWindow : Window
     private readonly StackPanel _pluginsPanel;
     private bool _initializing = true;
     private bool _changingPlugin;
+    private bool _checkingUpdate;
+    private UpdateCheckResult? _availableUpdate;
+    private string? _downloadedUpdatePath;
 
     public SettingsWindow() : this(new Preferences(), new PostProcessingService())
     {
@@ -56,6 +64,10 @@ public sealed partial class SettingsWindow : Window
         _postProcessing = postProcessing;
         AvaloniaXamlLoader.Load(this);
         WindowsWindowAppearance.Attach(this);
+        _appVersionText = RequireControl<TextBlock>("AppVersionText");
+        _updateStatusText = RequireControl<TextBlock>("UpdateStatusText");
+        _updateButton = RequireControl<Button>("UpdateButton");
+        _appVersionText.Text = $"VERSION {AppBuildInfo.DisplayVersion} · BÊTA · {AppBuildInfo.EditionLabel}";
         _outputPathText = RequireControl<TextBlock>("OutputPathText");
         _videoQualityCombo = RequireControl<ComboBox>("VideoQualityCombo");
         _videoEncodingQualityCombo = RequireControl<ComboBox>("VideoEncodingQualityCombo");
@@ -113,7 +125,12 @@ public sealed partial class SettingsWindow : Window
         _initializing = false;
         RenderPlugins();
         _postProcessing.PluginsChanged += PluginsChanged;
-        Closed += (_, _) => _postProcessing.PluginsChanged -= PluginsChanged;
+        Closed += (_, _) =>
+        {
+            _postProcessing.PluginsChanged -= PluginsChanged;
+            _updateCancellation.Cancel();
+            _updateCancellation.Dispose();
+        };
     }
 
     public event EventHandler<CaptureMode>? CaptureRequested;
@@ -154,6 +171,122 @@ public sealed partial class SettingsWindow : Window
     {
         Directory.CreateDirectory(_postProcessing.PluginsDirectory);
         Process.Start(new ProcessStartInfo("explorer.exe", _postProcessing.PluginsDirectory) { UseShellExecute = true });
+    }
+
+    private async void UpdateClick(object? sender, RoutedEventArgs args)
+    {
+        if (_checkingUpdate) return;
+        if (_downloadedUpdatePath is not null)
+        {
+            try
+            {
+                Process.Start(new ProcessStartInfo("explorer.exe", $"/select,\"{_downloadedUpdatePath}\"") { UseShellExecute = true });
+            }
+            catch (Exception error)
+            {
+                SetUpdateStatus($"Impossible d’ouvrir le dossier : {error.Message}", true);
+            }
+            return;
+        }
+
+        if (_availableUpdate is { } available)
+        {
+            if (available.DownloadUrl is null || available.AssetName is null)
+            {
+                OpenUpdatePage(available.ReleasePageUrl);
+                return;
+            }
+            var destination = await StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
+            {
+                Title = $"Télécharger CyCapture {available.LatestVersion:3}",
+                SuggestedFileName = available.AssetName,
+                DefaultExtension = "exe",
+                FileTypeChoices =
+                [
+                    new FilePickerFileType("Application Windows") { Patterns = ["*.exe"] }
+                ]
+            });
+            if (destination is null) return;
+
+            await RunUpdateActionAsync(async () =>
+            {
+                SetUpdateStatus($"Téléchargement et vérification de {available.AssetName}…");
+                _updateButton.Content = "Téléchargement…";
+                await _updateService.DownloadAsync(available, destination.Path.LocalPath, _updateCancellation.Token);
+                _downloadedUpdatePath = destination.Path.LocalPath;
+                SetUpdateStatus("Mise à jour téléchargée et SHA-256 vérifié. Quittez CyCapture, puis lancez ce fichier.");
+                _updateButton.Content = "Afficher le fichier";
+            });
+            return;
+        }
+
+        await RunUpdateActionAsync(async () =>
+        {
+            SetUpdateStatus("Vérification de la dernière release GitHub…");
+            _updateButton.Content = "Vérification…";
+            var result = await _updateService.CheckAsync(_updateCancellation.Token);
+            if (!result.IsUpdateAvailable)
+            {
+                SetUpdateStatus($"CyCapture {AppBuildInfo.DisplayVersion} est à jour.");
+                _updateButton.Content = "Revérifier";
+                return;
+            }
+
+            _availableUpdate = result;
+            if (result.DownloadUrl is not null)
+            {
+                SetUpdateStatus($"CyCapture {result.LatestVersion:3} est disponible pour l’édition {AppBuildInfo.EditionLabel.ToLowerInvariant()}.");
+                _updateButton.Content = $"Télécharger {result.LatestVersion:3}";
+            }
+            else
+            {
+                SetUpdateStatus($"CyCapture {result.LatestVersion:3} est disponible, mais le binaire de cette édition est absent.", true);
+                _updateButton.Content = "Voir la release";
+            }
+        });
+    }
+
+    private async Task RunUpdateActionAsync(Func<Task> action)
+    {
+        _checkingUpdate = true;
+        _updateButton.IsEnabled = false;
+        try
+        {
+            await action();
+        }
+        catch (OperationCanceledException) when (_updateCancellation.IsCancellationRequested)
+        {
+        }
+        catch (Exception error)
+        {
+            SetUpdateStatus($"Mise à jour impossible : {error.Message}", true);
+            _updateButton.Content = _availableUpdate is null ? "Réessayer" : "Télécharger";
+        }
+        finally
+        {
+            _checkingUpdate = false;
+            if (!_updateCancellation.IsCancellationRequested) _updateButton.IsEnabled = true;
+        }
+    }
+
+    private void OpenUpdatePage(string url)
+    {
+        try
+        {
+            Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
+        }
+        catch (Exception error)
+        {
+            SetUpdateStatus($"Impossible d’ouvrir la release : {error.Message}", true);
+        }
+    }
+
+    private void SetUpdateStatus(string text, bool error = false)
+    {
+        _updateStatusText.Text = text;
+        _updateStatusText.Foreground = new SolidColorBrush(error
+            ? Color.FromRgb(255, 101, 115)
+            : Color.FromRgb(157, 174, 170));
     }
 
     private void SelectionPreferenceChanged(object? sender, SelectionChangedEventArgs args) => SavePreferences();

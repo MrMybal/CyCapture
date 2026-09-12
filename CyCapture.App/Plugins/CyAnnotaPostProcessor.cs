@@ -12,11 +12,11 @@ public sealed class CyAnnotaPostProcessor :
     ICapturePluginHostAware,
     ICapturePluginPreparable
 {
-    public const string BundledVersion = "0.3.7";
+    public const string BundledVersion = "0.3.9";
     public const string BundledPortableFileName = $"CyAnnota-{BundledVersion}-portable.exe";
     public const string BundledArchiveFileName = $"CyAnnota-{BundledVersion}-win-x64.zip";
-    public const string BundledPortableSha256 = "A07452E00BB463B63D6ED68092A3119033471A7B04A808D00ECD9B493FC93C02";
-    private const long BundledPortableLength = 107_922_282;
+    public const string BundledPortableSha256 = "0EE600E3554C0B3DE3187172A90FBEE63F47AF99B6DD20C0436D1734EFF3D59F";
+    private const long BundledPortableLength = 107_925_252;
     private const string BundledPortableResourceName = $"CyCapture.Bundled.{BundledPortableFileName}";
     private const string BundledArchiveResourceName = $"CyCapture.Bundled.{BundledArchiveFileName}";
     private static readonly object BundleSync = new();
