@@ -12,3 +12,18 @@ artifacts/
 *.user
 *.suo
 *.log
+
+# Private local data and diagnostic outputs
+.codex/
+.cyrevision/
+/.openai/hosting.json
+.env
+.env.*
+!.env.example
+*.pfx
+*.p12
+*.key
+*.pem
+*.dmp
+*.etl
+*.binlog

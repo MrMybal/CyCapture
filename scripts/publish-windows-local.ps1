@@ -1,7 +1,9 @@
 param(
     [string]$Configuration = "Release",
     [string]$Runtime = "win-x64",
-    [string]$CyAnnotaSource = ""
+    [Parameter(Mandatory = $true)]
+    [ValidateNotNullOrEmpty()]
+    [string]$CyAnnotaSource
 )
 
 $ErrorActionPreference = "Stop"

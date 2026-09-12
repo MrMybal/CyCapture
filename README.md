@@ -227,3 +227,13 @@ License and provenance information for the bundled executable is available in [`
 Copyright © 2026 CyberAlien.
 
 CyCapture is distributed under the **GNU Affero General Public License v3.0 only** (`AGPL-3.0-only`). The complete license text is available in [`LICENSE`](LICENSE).
+
+## Local packaging dependency
+
+Pass the path to the CyAnnota portable executable explicitly when packaging:
+
+```powershell
+./scripts/publish-windows-local.ps1 -CyAnnotaSource "../CyAnnota/release/CyAnnota-0.3.7-portable.exe"
+```
+
+The repository does not store a developer-specific installation path.
