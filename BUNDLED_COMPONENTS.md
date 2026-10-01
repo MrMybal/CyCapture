@@ -25,14 +25,14 @@ Les bibliothèques natives et les plugins de codecs fournis par les paquets offi
 
 ---
 
-## CyAnnota 0.3.9
+## CyAnnota 0.4.4
 
-Les builds Windows Release de CyCapture embarquent la distribution Windows **CyAnnota 0.3.9** afin que le post-traitement fonctionne sans installation séparée ni association de protocole Windows. La distribution unpacked est privilégiée : elle est extraite une seule fois en arrière-plan, puis CyCapture lance directement `CyAnnota.exe`.
+Les builds Windows Release de CyCapture embarquent la distribution Windows **CyAnnota 0.4.4** afin que le post-traitement fonctionne sans installation séparée ni association de protocole Windows. La distribution unpacked est privilégiée : elle est extraite une seule fois en arrière-plan, puis CyCapture lance directement `CyAnnota.exe`.
 
-- Projet et code source correspondant : <https://github.com/MrMybal/CyAnnota/tree/v0.3.9>
-- Release utilisée : <https://github.com/MrMybal/CyAnnota/releases/tag/v0.3.9>
-- Distribution de référence : `CyAnnota-0.3.9-portable.exe`
-- SHA-256 de la distribution portable officielle : `0EE600E3554C0B3DE3187172A90FBEE63F47AF99B6DD20C0436D1734EFF3D59F`
+- Projet et code source correspondant : <https://github.com/MrMybal/CyAnnota/tree/v0.4.4>
+- Release utilisée : <https://github.com/MrMybal/CyAnnota/releases/tag/v0.4.4>
+- Distribution de référence : `CyAnnota-0.4.4-portable.exe`
+- SHA-256 de la distribution portable officielle : `B239CB3DC3E1A2B5266AF1DCA70A152AB6F4F5D45C49F54F1D6871CB350E35E2`
 - Licence : GNU Affero General Public License v3.0 uniquement (`AGPL-3.0-only`)
 - Copyright © 2026 CyberAlien
 
@@ -67,14 +67,14 @@ The native libraries and codec plugins supplied by the official VideoLAN package
 
 ---
 
-## CyAnnota 0.3.9
+## CyAnnota 0.4.4
 
-Windows Release builds of CyCapture bundle the **CyAnnota 0.3.9** Windows distribution so that post-processing works without a separate installation or a Windows protocol association. The unpacked distribution is preferred: it is extracted once in the background, after which CyCapture starts `CyAnnota.exe` directly.
+Windows Release builds of CyCapture bundle the **CyAnnota 0.4.4** Windows distribution so that post-processing works without a separate installation or a Windows protocol association. The unpacked distribution is preferred: it is extracted once in the background, after which CyCapture starts `CyAnnota.exe` directly.
 
-- Project and corresponding source code: <https://github.com/MrMybal/CyAnnota/tree/v0.3.9>
-- Source release: <https://github.com/MrMybal/CyAnnota/releases/tag/v0.3.9>
-- Reference distribution: `CyAnnota-0.3.9-portable.exe`
-- Official portable distribution SHA-256: `0EE600E3554C0B3DE3187172A90FBEE63F47AF99B6DD20C0436D1734EFF3D59F`
+- Project and corresponding source code: <https://github.com/MrMybal/CyAnnota/tree/v0.4.4>
+- Source release: <https://github.com/MrMybal/CyAnnota/releases/tag/v0.4.4>
+- Reference distribution: `CyAnnota-0.4.4-portable.exe`
+- Official portable distribution SHA-256: `B239CB3DC3E1A2B5266AF1DCA70A152AB6F4F5D45C49F54F1D6871CB350E35E2`
 - License: GNU Affero General Public License v3.0 only (`AGPL-3.0-only`)
 - Copyright © 2026 CyberAlien
 

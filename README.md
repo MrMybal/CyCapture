@@ -59,7 +59,7 @@ Le même menu contient maintenant des entrées séparées pour la **Galerie** et
 - plugins C# de post-traitement via `ICapturePostProcessor` dans `%LOCALAPPDATA%\CyCapture\Plugins` ;
 - activation et configuration individuelles des plugins depuis les réglages ;
 - contribution facultative des plugins sous forme de case globale dans le tray et la palette rapide ;
-- édition complète avec le plugin **CyAnnota Post Edit** et CyAnnota 0.3.9 intégrés, édition sans CyAnnota et plugin autonome distribuable séparément ;
+- édition complète avec le plugin **CyAnnota Post Edit** et CyAnnota 0.4.4 intégrés, édition sans CyAnnota et plugin autonome distribuable séparément ;
 - petite fenêtre de réglages accessible depuis le tray ;
 - version et édition affichées dans les réglages, avec vérification et téléchargement sécurisé des mises à jour GitHub ;
 - lancement facultatif de CyCapture avec Windows, directement dans la zone de notification de l’utilisateur courant ;
@@ -67,7 +67,7 @@ Le même menu contient maintenant des entrées séparées pour la **Galerie** et
 
 ### Compiler
 
-Prérequis : SDK .NET 8 ou plus récent et Windows x64.
+Prérequis : SDK .NET 8 ou plus récent, Inno Setup 6 et Windows x64.
 
 ```powershell
 git clone https://github.com/MrMybal/CyCapture.git
@@ -79,16 +79,17 @@ dotnet build CyCapture.sln -c Release
 ### Produire les paquets Windows locaux
 
 ```powershell
-./scripts/publish-windows-local.ps1
+./scripts/publish-windows-local.ps1 -CyAnnotaSource "C:\chemin\vers\CyAnnota-0.4.4-portable.exe"
 ```
 
 Le script place dans `dist-local` :
 
-- `CyCapture-1.4.7-windows-x64.exe`, édition complète avec CyAnnota ;
-- `CyCapture-1.4.7-windows-x64-without-CyAnnota.exe`, édition légère sans CyAnnota ni son entrée de plugin ;
-- `CyCapture.Plugin.CyAnnota-0.3.9.dll` et son archive ZIP, installables dans `%LOCALAPPDATA%\CyCapture\Plugins`.
+- `CyCapture-1.4.8-windows-x64-installer.exe`, installateur Windows avec CyAnnota et son plugin ;
+- `CyCapture-1.4.8-windows-x64-portable.exe`, édition portable complète avec CyAnnota ;
+- `CyCapture-1.4.8-windows-x64-portable-without-CyAnnota.exe`, édition portable légère sans CyAnnota ni son entrée de plugin ;
+- `CyCapture.Plugin.CyAnnota-0.4.4.dll` et son archive ZIP, installables dans `%LOCALAPPDATA%\CyCapture\Plugins`.
 
-Les exécutables sont autonomes et produits en fichier unique. Le moteur LibVLC est inclus pour la lecture directe des médias dans la galerie. ScreenRecorderLib utilise Media Foundation et demande le Media Feature Pack sur une édition Windows N/KN qui ne l’inclut pas.
+Les éditions portables sont autonomes et produites en fichier unique. L’installateur place CyCapture dans `Program Files`, crée les raccourcis Windows et fournit une désinstallation standard. Le moteur LibVLC est inclus pour la lecture directe des médias dans la galerie. ScreenRecorderLib utilise Media Foundation et demande le Media Feature Pack sur une édition Windows N/KN qui ne l’inclut pas.
 
 ### Architecture et portabilité
 
@@ -105,7 +106,7 @@ Le plugin **Manifeste de capture** permet de choisir son stockage depuis les ré
 - **JSON adjacent** : conserve le comportement historique `.cycapture.json` ;
 - **Aucune métadonnée** : ne produit aucun manifeste.
 
-Le plugin **CyAnnota Post Edit** ne modifie aucun fichier source de [CyAnnota](https://github.com/MrMybal/CyAnnota). L’édition complète et le DLL autonome embarquent la distribution Windows CyAnnota 0.3.9. CyCapture l’extrait une seule fois dans `%LOCALAPPDATA%\CyCapture\Bundled\CyAnnota` en arrière-plan, puis lance directement `CyAnnota.exe` : aucune installation séparée ni association `cyannota://` n’est nécessaire. L’édition sans CyAnnota n’embarque ni le logiciel ni le plugin. Lors d’un premier lancement, CyCapture attend que la fenêtre soit prête avant de lui transmettre le média.
+Le plugin **CyAnnota Post Edit** ne modifie aucun fichier source de [CyAnnota](https://github.com/MrMybal/CyAnnota). L’édition complète et le DLL autonome embarquent la distribution Windows CyAnnota 0.4.4. CyCapture l’extrait une seule fois dans `%LOCALAPPDATA%\CyCapture\Bundled\CyAnnota` en arrière-plan, puis lance directement `CyAnnota.exe` : aucune installation séparée ni association `cyannota://` n’est nécessaire. L’édition sans CyAnnota n’embarque ni le logiciel ni le plugin. Lors d’un premier lancement, CyCapture attend que la fenêtre soit prête avant de lui transmettre le média.
 
 Le plugin reste désactivé par défaut. Une fois activé, sa case **PostEdit with CyAnnota** est synchronisée entre les réglages, le tray et la palette rapide. Un exécutable CyAnnota personnalisé peut toujours être choisi dans les réglages. Les GIF sont ignorés tant qu’ils ne sont pas pris en charge par CyAnnota.
 
@@ -171,7 +172,7 @@ The same menu provides separate **Gallery** and **Settings** entries. Clicking a
 - C# post-processing plugins through `ICapturePostProcessor` in `%LOCALAPPDATA%\CyCapture\Plugins`;
 - individual plugin activation and configuration from the settings;
 - optional plugin contributions as global toggles in the tray and quick palette;
-- full edition with the **CyAnnota Post Edit** plugin and CyAnnota 0.3.9 bundled, a CyAnnota-free edition and a separately distributable plugin;
+- full edition with the **CyAnnota Post Edit** plugin and CyAnnota 0.4.4 bundled, a CyAnnota-free edition and a separately distributable plugin;
 - compact settings window accessible from the tray;
 - version and edition shown in Settings, with built-in GitHub update checks and verified downloads;
 - optional launch with Windows directly into the current user’s notification area;
@@ -179,7 +180,7 @@ The same menu provides separate **Gallery** and **Settings** entries. Clicking a
 
 ### Build
 
-Requirements: .NET 8 SDK or newer and Windows x64.
+Requirements: .NET 8 SDK or newer, Inno Setup 6 and Windows x64.
 
 ```powershell
 git clone https://github.com/MrMybal/CyCapture.git
@@ -191,16 +192,17 @@ dotnet build CyCapture.sln -c Release
 ### Create the local Windows packages
 
 ```powershell
-./scripts/publish-windows-local.ps1
+./scripts/publish-windows-local.ps1 -CyAnnotaSource "C:\path\to\CyAnnota-0.4.4-portable.exe"
 ```
 
 The script writes the following assets to `dist-local`:
 
-- `CyCapture-1.4.7-windows-x64.exe`, the full CyAnnota edition;
-- `CyCapture-1.4.7-windows-x64-without-CyAnnota.exe`, with neither CyAnnota nor its plugin entry;
-- `CyCapture.Plugin.CyAnnota-0.3.9.dll` and its ZIP archive, installable in `%LOCALAPPDATA%\CyCapture\Plugins`.
+- `CyCapture-1.4.8-windows-x64-installer.exe`, the Windows installer with CyAnnota and its plugin;
+- `CyCapture-1.4.8-windows-x64-portable.exe`, the full portable CyAnnota edition;
+- `CyCapture-1.4.8-windows-x64-portable-without-CyAnnota.exe`, the portable edition without CyAnnota or its plugin entry;
+- `CyCapture.Plugin.CyAnnota-0.4.4.dll` and its ZIP archive, installable in `%LOCALAPPDATA%\CyCapture\Plugins`.
 
-The executables are self-contained and published as single files. LibVLC is included for direct gallery playback. ScreenRecorderLib uses Media Foundation and requires the Media Feature Pack on Windows N/KN editions that do not include it.
+The portable editions are self-contained single files. The installer deploys CyCapture to `Program Files`, creates Windows shortcuts and provides standard uninstallation. LibVLC is included for direct gallery playback. ScreenRecorderLib uses Media Foundation and requires the Media Feature Pack on Windows N/KN editions that do not include it.
 
 ### Architecture and portability
 
@@ -217,7 +219,7 @@ The **Capture Manifest** plugin lets users choose its storage mode from the sett
 - **Adjacent JSON**: preserves the historical `.cycapture.json` behavior;
 - **No metadata**: does not produce a manifest.
 
-The **CyAnnota Post Edit** plugin does not modify any [CyAnnota](https://github.com/MrMybal/CyAnnota) source file. The full edition and standalone plugin DLL bundle the CyAnnota 0.3.9 Windows distribution. CyCapture extracts it once in the background to `%LOCALAPPDATA%\CyCapture\Bundled\CyAnnota`, then starts `CyAnnota.exe` directly, so no separate installation or `cyannota://` association is required. The CyAnnota-free edition includes neither the application nor the plugin. On a cold launch, CyCapture waits for the window to be ready before sending the media.
+The **CyAnnota Post Edit** plugin does not modify any [CyAnnota](https://github.com/MrMybal/CyAnnota) source file. The full edition and standalone plugin DLL bundle the CyAnnota 0.4.4 Windows distribution. CyCapture extracts it once in the background to `%LOCALAPPDATA%\CyCapture\Bundled\CyAnnota`, then starts `CyAnnota.exe` directly, so no separate installation or `cyannota://` association is required. The CyAnnota-free edition includes neither the application nor the plugin. On a cold launch, CyCapture waits for the window to be ready before sending the media.
 
 The plugin remains disabled by default. Once enabled, its **PostEdit with CyAnnota** option is synchronized between the settings, tray and quick palette. A custom CyAnnota executable can still be selected in the settings. GIF files are ignored until CyAnnota supports them.
 
@@ -232,10 +234,10 @@ CyCapture is distributed under the **GNU Affero General Public License v3.0 only
 
 ## Local packaging dependency
 
-Pass the path to the CyAnnota portable executable explicitly when packaging:
+Pass the path to the CyAnnota portable executable explicitly when packaging. If Inno Setup is not installed in its standard location, also pass `-InnoCompiler`:
 
 ```powershell
-./scripts/publish-windows-local.ps1 -CyAnnotaSource "../CyAnnota/release/CyAnnota-0.3.9-portable.exe"
+./scripts/publish-windows-local.ps1 -CyAnnotaSource "../CyAnnota/release/CyAnnota-0.4.4-portable.exe"
 ```
 
 The repository does not store a developer-specific installation path.

@@ -5,6 +5,7 @@ using System.Xml.Linq;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Fonts.Inter;
+using Avalonia.LogicalTree;
 using Avalonia.Media.Imaging;
 using Avalonia.Threading;
 using CyCapture.Models;
@@ -111,37 +112,44 @@ internal static class Program
 
     private static void CheckUpdates()
     {
-        const string fullName = "CyCapture-1.4.8-windows-x64.exe";
-        const string liteName = "CyCapture-1.4.8-windows-x64-without-CyAnnota.exe";
+        const string fullName = "CyCapture-1.4.9-windows-x64-portable.exe";
+        const string liteName = "CyCapture-1.4.9-windows-x64-portable-without-CyAnnota.exe";
+        const string installerName = "CyCapture-1.4.9-windows-x64-installer.exe";
         const string fullHash = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
         const string liteHash = "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB";
+        const string installerHash = "CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC";
         var json = JsonSerializer.Serialize(new
         {
-            tag_name = "v1.4.8",
-            html_url = "https://github.com/MrMybal/CyCapture/releases/tag/v1.4.8",
+            tag_name = "v1.4.9",
+            html_url = "https://github.com/MrMybal/CyCapture/releases/tag/v1.4.9",
             assets = new object[]
             {
-                new { name = fullName, browser_download_url = $"https://github.com/MrMybal/CyCapture/releases/download/v1.4.8/{fullName}", size = 123L, digest = $"sha256:{fullHash}" },
-                new { name = liteName, browser_download_url = $"https://github.com/MrMybal/CyCapture/releases/download/v1.4.8/{liteName}", size = 456L, digest = $"sha256:{liteHash}" }
+                new { name = fullName, browser_download_url = $"https://github.com/MrMybal/CyCapture/releases/download/v1.4.9/{fullName}", size = 123L, digest = $"sha256:{fullHash}" },
+                new { name = liteName, browser_download_url = $"https://github.com/MrMybal/CyCapture/releases/download/v1.4.9/{liteName}", size = 456L, digest = $"sha256:{liteHash}" },
+                new { name = installerName, browser_download_url = $"https://github.com/MrMybal/CyCapture/releases/download/v1.4.9/{installerName}", size = 789L, digest = $"sha256:{installerHash}" }
             }
         });
         var parse = AppAssembly.GetType("CyCapture.Services.UpdateService")!
             .GetMethod("ParseLatestRelease", PrivateStatic)!;
 
-        var full = parse.Invoke(null, [json, new Version(1, 4, 7), true])!;
+        var full = parse.Invoke(null, [json, new Version(1, 4, 8), true, false])!;
         Require(Equals(Property(full, "IsUpdateAvailable"), true), "A newer GitHub release was not detected.");
         Require(Property(full, "AssetName").ToString() == fullName, "The full edition selected the wrong update asset.");
         Require(Property(full, "Sha256").ToString() == fullHash, "The full update digest was not preserved.");
 
-        var lite = parse.Invoke(null, [json, new Version(1, 4, 7), false])!;
+        var lite = parse.Invoke(null, [json, new Version(1, 4, 8), false, false])!;
         Require(Property(lite, "AssetName").ToString() == liteName, "The edition without CyAnnota selected the wrong update asset.");
         Require(Property(lite, "Sha256").ToString() == liteHash, "The lite update digest was not preserved.");
 
-        var current = parse.Invoke(null, [json, new Version(1, 4, 8), true])!;
+        var installer = parse.Invoke(null, [json, new Version(1, 4, 8), true, true])!;
+        Require(Property(installer, "AssetName").ToString() == installerName, "The installed edition selected the wrong update asset.");
+        Require(Property(installer, "Sha256").ToString() == installerHash, "The installer update digest was not preserved.");
+
+        var current = parse.Invoke(null, [json, new Version(1, 4, 9), true, false])!;
         Require(Equals(Property(current, "IsUpdateAvailable"), false), "The current version was reported as outdated.");
 
         var unsafeJson = json.Replace("https://github.com/MrMybal/CyCapture/releases/download/", "https://example.invalid/");
-        var unsafeUpdate = parse.Invoke(null, [unsafeJson, new Version(1, 4, 7), true])!;
+        var unsafeUpdate = parse.Invoke(null, [unsafeJson, new Version(1, 4, 8), true, false])!;
         Require(PropertyOrNull(unsafeUpdate, "DownloadUrl") is null, "An untrusted update download URL was accepted.");
     }
 
@@ -246,6 +254,7 @@ internal static class Program
     {
         AppBuilder.Configure<CyCapture.App>().UsePlatformDetect().WithInterFont().SetupWithoutStarting();
         // No desktop lifetime: no controller, tray, keyboard hook, recording or real preference writes.
+        CheckQuickAnnotationToolbar();
         var processorType = AppAssembly.GetType("CyCapture.Services.PostProcessingService")!;
         var processors = Activator.CreateInstance(processorType, PrivateInstance, null, new object?[] { Path.Combine(output, "plugins"), false, null }, null)!;
         var preferences = IndependentPreferences();
@@ -258,7 +267,7 @@ internal static class Program
         var versionText = settings.FindControl<TextBlock>("AppVersionText")!.Text ?? string.Empty;
         var editionLabel = (string)AppAssembly.GetType("CyCapture.Services.AppBuildInfo")!
             .GetProperty("EditionLabel", PrivateStatic)!.GetValue(null)!;
-        Require(versionText.Contains("1.4.7", StringComparison.Ordinal),
+        Require(versionText.Contains("1.4.8", StringComparison.Ordinal),
             "The settings window does not show the application version.");
         Require(versionText.Contains(editionLabel, StringComparison.Ordinal),
             "The settings window does not show the compiled edition.");
@@ -290,6 +299,53 @@ internal static class Program
         RenderWindowContent(quickContent, 720, 500, Path.Combine(output, "quick-window.png"));
         settings.Close();
         quick.Close();
+    }
+
+    private static void CheckQuickAnnotationToolbar()
+    {
+        using var screenshot = new RenderTargetBitmap(new PixelSize(64, 64), new Vector(96, 96));
+        var bounds = new PixelBounds(0, 0, 64, 64);
+        var monitor = new MonitorDescriptor(0, "TEST", "Test", bounds, bounds, 1, true);
+        var sessionType = AppAssembly.GetType("CyCapture.Views.QuickAnnotationSession")!;
+        var session = Activator.CreateInstance(sessionType, nonPublic: true)!;
+        var overlayType = AppAssembly.GetType("CyCapture.Views.SelectionOverlayWindow")!;
+        var overlay = (Window)Activator.CreateInstance(
+            overlayType,
+            PrivateInstance,
+            binder: null,
+            args:
+            [
+                screenshot,
+                null,
+                monitor,
+                Array.Empty<SelectableRegion>(),
+                Array.Empty<SelectableWindowLayer>(),
+                CaptureSelectionMode.Smart,
+                true,
+                session
+            ],
+            culture: null)!;
+
+        var content = (Control)overlay.Content!;
+        var buttons = content.GetLogicalDescendants()
+            .OfType<Button>()
+            .Where(button => !string.IsNullOrWhiteSpace(button.Name))
+            .ToDictionary(button => button.Name!);
+        foreach (var name in new[]
+                 {
+                     "QuickAnnotationSelectionButton",
+                     "QuickAnnotationFreehandButton",
+                     "QuickAnnotationRectangleButton",
+                     "QuickAnnotationArrowButton",
+                     "QuickAnnotationTextButton"
+                 })
+        {
+            if (!buttons.TryGetValue(name, out var button))
+                throw new InvalidOperationException($"The quick-annotation toolbar is missing {name}.");
+            Require(button.ClickMode == ClickMode.Press, $"{name} does not react on the first pointer press.");
+        }
+
+        overlay.Close();
     }
 
     private static void RenderWindowContent(Control content, int width, int height, string path)

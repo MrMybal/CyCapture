@@ -23,7 +23,11 @@ internal static class AppBuildInfo
 #endif
         }
     }
-    internal static string EditionLabel => IncludesCyAnnota ? "AVEC CYANNOTA" : "SANS CYANNOTA";
+    internal static bool IsInstalled =>
+        File.Exists(Path.Combine(AppContext.BaseDirectory, "unins000.exe"));
+    internal static string EditionLabel => IsInstalled
+        ? "INSTALLÉE AVEC CYANNOTA"
+        : IncludesCyAnnota ? "PORTABLE AVEC CYANNOTA" : "PORTABLE SANS CYANNOTA";
 
     private static Version Normalize(Version? version) => new(
         Math.Max(0, version?.Major ?? 0),
@@ -54,7 +58,7 @@ internal sealed class UpdateService
         using var response = await Client.GetAsync(LatestReleaseApi, timeout.Token);
         response.EnsureSuccessStatusCode();
         var json = await response.Content.ReadAsStringAsync(timeout.Token);
-        return ParseLatestRelease(json, AppBuildInfo.Version, AppBuildInfo.IncludesCyAnnota);
+        return ParseLatestRelease(json, AppBuildInfo.Version, AppBuildInfo.IncludesCyAnnota, AppBuildInfo.IsInstalled);
     }
 
     internal async Task DownloadAsync(
@@ -134,7 +138,8 @@ internal sealed class UpdateService
     internal static UpdateCheckResult ParseLatestRelease(
         string json,
         Version currentVersion,
-        bool includesCyAnnota)
+        bool includesCyAnnota,
+        bool installed = false)
     {
         var release = JsonSerializer.Deserialize<GitHubRelease>(json)
             ?? throw new InvalidDataException("La réponse GitHub est vide.");
@@ -151,8 +156,10 @@ internal sealed class UpdateService
         var releaseUrl = ValidatedGitHubUrl(release.HtmlUrl, $"/MrMybal/CyCapture/releases/tag/{tag}")
             ?? "https://github.com/MrMybal/CyCapture/releases/latest";
         var available = latestVersion > currentVersion;
-        var expectedName = $"CyCapture-{latestVersion:3}-windows-x64"
-            + (includesCyAnnota ? string.Empty : "-without-CyAnnota") + ".exe";
+        var expectedName = installed
+            ? $"CyCapture-{latestVersion:3}-windows-x64-installer.exe"
+            : $"CyCapture-{latestVersion:3}-windows-x64-portable"
+              + (includesCyAnnota ? string.Empty : "-without-CyAnnota") + ".exe";
         var asset = release.Assets?.FirstOrDefault(item =>
             string.Equals(item.Name, expectedName, StringComparison.OrdinalIgnoreCase));
         var downloadUrl = asset is null

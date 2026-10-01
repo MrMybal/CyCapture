@@ -7,15 +7,15 @@
     <PlatformTarget>x64</PlatformTarget>
     <AssemblyName>CyCapture.Plugin.CyAnnota</AssemblyName>
     <RootNamespace>CyCapture.Plugins</RootNamespace>
-    <Version>0.3.9</Version>
+    <Version>0.4.4</Version>
     <Authors>CyberAlien</Authors>
     <Description>Plugin de post-édition CyAnnota pour CyCapture.</Description>
     <PackageLicenseExpression>AGPL-3.0-only</PackageLicenseExpression>
     <RepositoryUrl>https://github.com/MrMybal/CyCapture</RepositoryUrl>
-    <CyAnnotaBundleVersion>0.3.9</CyAnnotaBundleVersion>
+    <CyAnnotaBundleVersion>0.4.4</CyAnnotaBundleVersion>
     <CyAnnotaBundleFileName>CyAnnota-$(CyAnnotaBundleVersion)-portable.exe</CyAnnotaBundleFileName>
     <CyAnnotaBundleUrl>https://github.com/MrMybal/CyAnnota/releases/download/v$(CyAnnotaBundleVersion)/$(CyAnnotaBundleFileName)</CyAnnotaBundleUrl>
-    <CyAnnotaBundleSha256>0EE600E3554C0B3DE3187172A90FBEE63F47AF99B6DD20C0436D1734EFF3D59F</CyAnnotaBundleSha256>
+    <CyAnnotaBundleSha256>B239CB3DC3E1A2B5266AF1DCA70A152AB6F4F5D45C49F54F1D6871CB350E35E2</CyAnnotaBundleSha256>
     <CyAnnotaBundleCacheDirectory>$(BaseIntermediateOutputPath)cyannota</CyAnnotaBundleCacheDirectory>
     <CyAnnotaBundlePath>$(CyAnnotaBundleCacheDirectory)\$(CyAnnotaBundleFileName)</CyAnnotaBundlePath>
     <BundleCyAnnota Condition="'$(BundleCyAnnota)' == '' and '$(Configuration)' == 'Release'">true</BundleCyAnnota>

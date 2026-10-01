@@ -162,6 +162,7 @@ internal sealed class SelectionOverlayWindow : Window
             var button = new Button
             {
                 Content = label,
+                ClickMode = ClickMode.Press,
                 MinWidth = 32,
                 Height = 32,
                 Padding = new Thickness(8, 3),
@@ -174,12 +175,14 @@ internal sealed class SelectionOverlayWindow : Window
         Button ToolButton(string label, string tooltip, QuickAnnotationKind tool)
         {
             var button = CompactButton(label, tooltip);
+            button.Name = $"QuickAnnotation{tool}Button";
             button.Click += (_, _) => SelectTool(tool);
             tools[tool] = button;
             return button;
         }
 
         var directButton = CompactButton("⌖", "Mode sélection : choisissez ensuite ce que vous voulez capturer");
+        directButton.Name = "QuickAnnotationSelectionButton";
         directButton.Click += (_, _) => SelectDirectCapture();
         var freehandButton = ToolButton("✎", "Dessin libre", QuickAnnotationKind.Freehand);
         var rectangleButton = ToolButton("□", "Cadre", QuickAnnotationKind.Rectangle);
@@ -199,6 +202,7 @@ internal sealed class SelectionOverlayWindow : Window
             {
                 Width = 20,
                 Height = 20,
+                ClickMode = ClickMode.Press,
                 Padding = new Thickness(0),
                 CornerRadius = new CornerRadius(10),
                 Background = new SolidColorBrush(Color.Parse(value)),
