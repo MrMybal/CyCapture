@@ -84,9 +84,9 @@ dotnet build CyCapture.sln -c Release
 
 Le script place dans `dist-local` :
 
-- `CyCapture-1.4.8-windows-x64-installer.exe`, installateur Windows avec CyAnnota et son plugin ;
-- `CyCapture-1.4.8-windows-x64-portable.exe`, édition portable complète avec CyAnnota ;
-- `CyCapture-1.4.8-windows-x64-portable-without-CyAnnota.exe`, édition portable légère sans CyAnnota ni son entrée de plugin ;
+- `CyCapture-1.4.9-windows-x64-installer.exe`, installateur Windows avec CyAnnota et son plugin ;
+- `CyCapture-1.4.9-windows-x64-portable.exe`, édition portable complète avec CyAnnota ;
+- `CyCapture-1.4.9-windows-x64-portable-without-CyAnnota.exe`, édition portable légère sans CyAnnota ni son entrée de plugin ;
 - `CyCapture.Plugin.CyAnnota-0.4.4.dll` et son archive ZIP, installables dans `%LOCALAPPDATA%\CyCapture\Plugins`.
 
 Les éditions portables sont autonomes et produites en fichier unique. L’installateur place CyCapture dans `Program Files`, crée les raccourcis Windows et fournit une désinstallation standard. Le moteur LibVLC est inclus pour la lecture directe des médias dans la galerie. ScreenRecorderLib utilise Media Foundation et demande le Media Feature Pack sur une édition Windows N/KN qui ne l’inclut pas.
@@ -197,9 +197,9 @@ dotnet build CyCapture.sln -c Release
 
 The script writes the following assets to `dist-local`:
 
-- `CyCapture-1.4.8-windows-x64-installer.exe`, the Windows installer with CyAnnota and its plugin;
-- `CyCapture-1.4.8-windows-x64-portable.exe`, the full portable CyAnnota edition;
-- `CyCapture-1.4.8-windows-x64-portable-without-CyAnnota.exe`, the portable edition without CyAnnota or its plugin entry;
+- `CyCapture-1.4.9-windows-x64-installer.exe`, the Windows installer with CyAnnota and its plugin;
+- `CyCapture-1.4.9-windows-x64-portable.exe`, the full portable CyAnnota edition;
+- `CyCapture-1.4.9-windows-x64-portable-without-CyAnnota.exe`, the portable edition without CyAnnota or its plugin entry;
 - `CyCapture.Plugin.CyAnnota-0.4.4.dll` and its ZIP archive, installable in `%LOCALAPPDATA%\CyCapture\Plugins`.
 
 The portable editions are self-contained single files. The installer deploys CyCapture to `Program Files`, creates Windows shortcuts and provides standard uninstallation. LibVLC is included for direct gallery playback. ScreenRecorderLib uses Media Foundation and requires the Media Feature Pack on Windows N/KN editions that do not include it.

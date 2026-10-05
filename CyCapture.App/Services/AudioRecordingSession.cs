@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using System.Reflection;
 using NAudio.CoreAudioApi;
 using NAudio.Wave;
 using NAudio.Wave.SampleProviders;
@@ -29,12 +28,12 @@ internal sealed class AudioRecordingSession : IDisposable
         {
             if (includeSystemAudio)
                 _tracks.Add(new AudioCaptureTrack(
-                    new EventDrivenLoopbackCapture(),
+                    new WasapiLoopbackCapture(),
                     Path.Combine(_temporaryDirectory, "system.wav"),
                     _clock));
             if (includeMicrophone)
                 _tracks.Add(new AudioCaptureTrack(
-                    new WasapiCapture(WasapiCapture.GetDefaultCaptureDevice(), true, 100),
+                    new WasapiCapture(),
                     Path.Combine(_temporaryDirectory, "microphone.wav"),
                     _clock));
 
@@ -165,15 +164,14 @@ internal sealed class AudioRecordingSession : IDisposable
     private sealed class AudioCaptureTrack : IDisposable
     {
         private static readonly byte[] Silence = new byte[16_384];
-        private static readonly FieldInfo? WasapiFrameEventField = typeof(WasapiCapture).GetField(
-            "frameEventWaitHandle",
-            BindingFlags.Instance | BindingFlags.NonPublic);
+        private const int MissingAudioToleranceMilliseconds = 50;
         private readonly object _sync = new();
         private readonly IWaveIn _capture;
         private readonly Stopwatch _clock;
         private readonly TaskCompletionSource<Exception?> _stopped = new(TaskCreationOptions.RunContinuationsAsynchronously);
         private WaveFileWriter? _writer;
         private long _bytesWritten;
+        private TimeSpan _lastPacketTimestamp;
         private bool _started;
         private bool _acceptingData;
 
@@ -198,7 +196,6 @@ internal sealed class AudioRecordingSession : IDisposable
 
         internal void RequestStop()
         {
-            lock (_sync) _acceptingData = false;
             if (!_started)
             {
                 _stopped.TrySetResult(null);
@@ -207,7 +204,6 @@ internal sealed class AudioRecordingSession : IDisposable
             try
             {
                 _capture.StopRecording();
-                WakeWasapiCapture();
             }
             catch (Exception error)
             {
@@ -238,46 +234,42 @@ internal sealed class AudioRecordingSession : IDisposable
             {
                 if (!_acceptingData || _writer is null || args.BytesRecorded <= 0) return;
                 var blockAlign = _capture.WaveFormat.BlockAlign;
-                var expectedEnd = BytesAt(_clock.Elapsed);
-                var untrimmedStart = expectedEnd - args.BytesRecorded;
-                var packetStart = Math.Max(0, untrimmedStart);
-                var sourceOffset = (int)Math.Min(args.BytesRecorded, Math.Max(0, -untrimmedStart));
-
-                if (_bytesWritten > packetStart)
-                {
-                    var overlap = Math.Min(args.BytesRecorded - sourceOffset, _bytesWritten - packetStart);
-                    sourceOffset += (int)overlap;
-                    packetStart += overlap;
-                }
-
-                sourceOffset -= sourceOffset % blockAlign;
-                packetStart -= packetStart % blockAlign;
-                FillSilenceUntil(packetStart);
-                var available = args.BytesRecorded - sourceOffset;
-                var remainingTimeline = Math.Max(0, expectedEnd - _bytesWritten);
-                var count = (int)Math.Min(available, remainingTimeline);
-                count -= count % blockAlign;
+                var count = args.BytesRecorded - args.BytesRecorded % blockAlign;
                 if (count <= 0) return;
-                _writer.Write(args.Buffer, sourceOffset, count);
+
+                var packetTimestamp = _clock.Elapsed;
+                var observedInterval = packetTimestamp - _lastPacketTimestamp;
+                _lastPacketTimestamp = packetTimestamp;
+                var missingBytes = CalculateMissingBytes(
+                    observedInterval,
+                    count,
+                    blockAlign,
+                    _capture.WaveFormat.AverageBytesPerSecond);
+                FillSilenceUntil(_bytesWritten + missingBytes);
+                _writer.Write(args.Buffer, 0, count);
                 _bytesWritten += count;
             }
         }
 
-        private void RecordingStopped(object? sender, StoppedEventArgs args) =>
-            _stopped.TrySetResult(args.Exception);
-
-        private void WakeWasapiCapture()
+        private void RecordingStopped(object? sender, StoppedEventArgs args)
         {
-            try
-            {
-                if (_capture is WasapiCapture wasapi
-                    && WasapiFrameEventField?.GetValue(wasapi) is EventWaitHandle frameEvent)
-                    frameEvent.Set();
-            }
-            catch
-            {
-                // The timeout in WaitForStopAsync remains the safety net if a future NAudio version changes internals.
-            }
+            lock (_sync) _acceptingData = false;
+            _stopped.TrySetResult(args.Exception);
+        }
+
+        private static long CalculateMissingBytes(
+            TimeSpan observedInterval,
+            int packetBytes,
+            int blockAlign,
+            int averageBytesPerSecond)
+        {
+            var intervalBytes = (long)Math.Round(observedInterval.TotalSeconds * averageBytesPerSecond);
+            intervalBytes -= intervalBytes % blockAlign;
+            var missingBytes = intervalBytes - packetBytes;
+            var toleranceBytes = (long)Math.Ceiling(
+                averageBytesPerSecond * MissingAudioToleranceMilliseconds / 1000d);
+            toleranceBytes -= toleranceBytes % blockAlign;
+            return missingBytes > toleranceBytes ? missingBytes - missingBytes % blockAlign : 0;
         }
 
         private long BytesAt(TimeSpan elapsed)
@@ -303,6 +295,7 @@ internal sealed class AudioRecordingSession : IDisposable
 
         public void Dispose()
         {
+            lock (_sync) _acceptingData = false;
             _capture.DataAvailable -= DataAvailable;
             _capture.RecordingStopped -= RecordingStopped;
             try { if (_started) _capture.StopRecording(); }
@@ -314,17 +307,6 @@ internal sealed class AudioRecordingSession : IDisposable
                 _writer = null;
             }
         }
-    }
-
-    private sealed class EventDrivenLoopbackCapture : WasapiCapture
-    {
-        internal EventDrivenLoopbackCapture()
-            : base(WasapiLoopbackCapture.GetDefaultLoopbackCaptureDevice(), true, 100)
-        {
-        }
-
-        protected override AudioClientStreamFlags GetAudioClientStreamFlags() =>
-            AudioClientStreamFlags.Loopback | base.GetAudioClientStreamFlags();
     }
 
     private sealed class ChannelConversionSampleProvider : ISampleProvider

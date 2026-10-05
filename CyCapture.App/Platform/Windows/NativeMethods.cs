@@ -19,7 +19,10 @@ internal static class NativeMethods
     private const uint CwpSkipTransparent = 0x0004;
     private const uint MonitorinfofPrimary = 1;
     private const uint MonitorDefaultToNearest = 2;
+    private const uint SwpNoActivate = 0x0010;
+    private const uint SwpShowWindow = 0x0040;
     private static readonly nint DpiAwarenessContextPerMonitorAwareV2 = new(-4);
+    private static readonly nint HwndTopmost = new(-1);
 
     internal delegate bool EnumWindowsProc(nint window, nint state);
     private delegate bool MonitorEnumProc(nint monitor, nint hdc, nint rect, nint data);
@@ -154,6 +157,17 @@ internal static class NativeMethods
     internal static extern bool SetWindowDisplayAffinity(nint window, uint affinity);
 
     [DllImport("user32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool SetWindowPos(
+        nint window,
+        nint insertAfter,
+        int x,
+        int y,
+        int width,
+        int height,
+        uint flags);
+
+    [DllImport("user32.dll", SetLastError = true)]
     internal static extern nint SetWindowsHookEx(int hookId, LowLevelKeyboardProc callback, nint module, uint threadId);
 
     [DllImport("user32.dll", SetLastError = true)]
@@ -174,6 +188,19 @@ internal static class NativeMethods
     {
         try { SetProcessDpiAwarenessContext(DpiAwarenessContextPerMonitorAwareV2); }
         catch { /* Le manifeste reste le repli sur les anciennes versions de Windows. */ }
+    }
+
+    internal static void SetWindowBounds(nint window, PixelBounds bounds)
+    {
+        if (window == 0 || bounds.Width <= 0 || bounds.Height <= 0) return;
+        SetWindowPos(
+            window,
+            HwndTopmost,
+            bounds.X,
+            bounds.Y,
+            bounds.Width,
+            bounds.Height,
+            SwpNoActivate | SwpShowWindow);
     }
 
     internal static void SignalExistingInstance()

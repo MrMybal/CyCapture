@@ -9,12 +9,15 @@ namespace CyCapture.Views;
 
 internal sealed class RecordingIndicatorWindow : Window
 {
+    private readonly PixelBounds _pixelBounds;
     private readonly TextBlock? _timer;
 
     internal RecordingIndicatorWindow(PixelBounds bounds, double scale, bool hud)
     {
-        Width = Math.Max(1, bounds.Width / scale);
-        Height = Math.Max(1, bounds.Height / scale);
+        _pixelBounds = bounds;
+        var effectiveScale = scale > 0 ? scale : 1;
+        Width = Math.Max(1, bounds.Width) / effectiveScale;
+        Height = Math.Max(1, bounds.Height) / effectiveScale;
         Position = new PixelPoint(bounds.X, bounds.Y);
         WindowStartupLocation = WindowStartupLocation.Manual;
         WindowDecorations = Avalonia.Controls.WindowDecorations.None;
@@ -50,9 +53,12 @@ internal sealed class RecordingIndicatorWindow : Window
             Content = new Border { Background = new SolidColorBrush(Color.FromRgb(255, 40, 55)) };
         }
 
-        Opened += (_, _) => NativeMethods.SetWindowDisplayAffinity(
-            TryGetPlatformHandle()?.Handle ?? 0,
-            NativeMethods.WdaExcludeFromCapture);
+        Opened += (_, _) =>
+        {
+            var handle = TryGetPlatformHandle()?.Handle ?? 0;
+            NativeMethods.SetWindowDisplayAffinity(handle, NativeMethods.WdaExcludeFromCapture);
+            NativeMethods.SetWindowBounds(handle, _pixelBounds);
+        };
     }
 
     internal void UpdateElapsed(TimeSpan elapsed)

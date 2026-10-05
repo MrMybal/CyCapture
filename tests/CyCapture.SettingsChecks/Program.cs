@@ -27,12 +27,14 @@ internal static class Program
             Directory.CreateDirectory(output);
             CheckPreferences();
             CheckRecorderOptions();
+            CheckAudioPacketTimeline();
+            CheckRecordingFrameLayout();
             CheckUpdates();
             CheckSmartSelectionZOrder();
             CheckNativeWindowSnapshot();
             CheckXamlGroups(projectRoot);
             CheckWindows(output);
-            Console.WriteLine("PASS: preferences, recorder routing, updates, smart-selection Z-order, XAML groups and window construction.");
+            Console.WriteLine("PASS: preferences, recorder routing, audio packet timeline, recording frame, updates, smart-selection Z-order, XAML groups and window construction.");
             return 0;
         }
         catch (Exception error)
@@ -106,6 +108,38 @@ internal static class Program
         preferences.IncludeSystemAudio = true;
         var gif = build.Invoke(null, [CaptureMode.Gif, selection, preferences])!;
         Require(Equals(Property(Property(gif, "AudioOptions"), "IsAudioEnabled"), false), "GIF audio is not disabled.");
+    }
+
+    private static void CheckRecordingFrameLayout()
+    {
+        var calculate = AppAssembly.GetType("CyCapture.Services.RecordingIndicatorService")!
+            .GetMethod("CalculateFrameBounds", PrivateStatic)!;
+        var screen = new PixelBounds(-1920, 0, 1920, 1080);
+        var capture = new PixelBounds(-1800, 100, 800, 600);
+        var bars = (IReadOnlyList<PixelBounds>)calculate.Invoke(null, [capture, screen])!;
+        Require(bars.Count == 4, "The recording frame is incomplete away from screen edges.");
+        Require(bars.Contains(new PixelBounds(-1800, 99, 800, 1)), "The top recording bar is offset or too thick.");
+        Require(bars.Contains(new PixelBounds(-1800, 700, 800, 1)), "The bottom recording bar is offset or too thick.");
+        Require(bars.Contains(new PixelBounds(-1801, 100, 1, 600)), "The left recording bar is offset or too thick.");
+        Require(bars.Contains(new PixelBounds(-1000, 100, 1, 600)), "The right recording bar is offset or too thick.");
+    }
+
+    private static void CheckAudioPacketTimeline()
+    {
+        var calculate = AppAssembly.GetType("CyCapture.Services.AudioRecordingSession+AudioCaptureTrack")!
+            .GetMethod("CalculateMissingBytes", PrivateStatic)!;
+        const int blockAlign = 8;
+        const int averageBytesPerSecond = 384_000;
+        const int tenMillisecondPacket = 3_840;
+        var schedulingJitter = (long)calculate.Invoke(
+            null,
+            [TimeSpan.FromMilliseconds(14), tenMillisecondPacket, blockAlign, averageBytesPerSecond])!;
+        Require(schedulingJitter == 0, "Normal WASAPI callback jitter inserted silence into the audio stream.");
+        var realGap = (long)calculate.Invoke(
+            null,
+            [TimeSpan.FromMilliseconds(200), tenMillisecondPacket, blockAlign, averageBytesPerSecond])!;
+        Require(realGap == 72_960 && realGap % blockAlign == 0,
+            "A real WASAPI packet gap was not preserved on the audio timeline.");
     }
 
     private static object Property(object target, string name) => target.GetType().GetProperty(name)!.GetValue(target)!;
@@ -267,7 +301,7 @@ internal static class Program
         var versionText = settings.FindControl<TextBlock>("AppVersionText")!.Text ?? string.Empty;
         var editionLabel = (string)AppAssembly.GetType("CyCapture.Services.AppBuildInfo")!
             .GetProperty("EditionLabel", PrivateStatic)!.GetValue(null)!;
-        Require(versionText.Contains("1.4.8", StringComparison.Ordinal),
+        Require(versionText.Contains("1.4.9", StringComparison.Ordinal),
             "The settings window does not show the application version.");
         Require(versionText.Contains(editionLabel, StringComparison.Ordinal),
             "The settings window does not show the compiled edition.");
