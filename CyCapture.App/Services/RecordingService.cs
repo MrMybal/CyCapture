@@ -174,7 +174,7 @@ internal sealed class RecordingService : IDisposable
         var local = selection.LocalBounds;
         var source = new DisplayRecordingSource(selection.Monitor.DeviceName)
         {
-            RecorderApi = RecorderApi.DesktopDuplication,
+            RecorderApi = RecorderApi.WindowsGraphicsCapture,
             IsCursorCaptureEnabled = true,
             IsBorderRequired = false,
             SourceRect = new ScreenRect(local.X, local.Y, local.Width, local.Height)

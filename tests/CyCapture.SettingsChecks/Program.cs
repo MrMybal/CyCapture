@@ -102,6 +102,10 @@ internal static class Program
         var selection = new CaptureSelection(bounds, monitor, SelectionKind.Region, "Settings check");
         var build = AppAssembly.GetType("CyCapture.Services.RecordingService")!.GetMethod("BuildOptions", PrivateStatic)!;
         var video = build.Invoke(null, [CaptureMode.Video, selection, preferences])!;
+        var videoSources = (System.Collections.IEnumerable)Property(Property(video, "SourceOptions"), "RecordingSources");
+        var videoSource = videoSources.Cast<object>().Single();
+        Require(Property(videoSource, "RecorderApi").ToString() == "WindowsGraphicsCapture",
+            "Video capture did not use the Windows Graphics Capture backend.");
         var videoAudio = Property(video, "AudioOptions");
         Require(Equals(Property(videoAudio, "IsAudioEnabled"), false), "A muted video inherited audio-only sources.");
         Require(Property(videoAudio, "Bitrate").ToString() == "bitrate_96kbps", "Video did not use its own audio profile.");
@@ -146,21 +150,21 @@ internal static class Program
 
     private static void CheckUpdates()
     {
-        const string fullName = "CyCapture-1.4.9-windows-x64-portable.exe";
-        const string liteName = "CyCapture-1.4.9-windows-x64-portable-without-CyAnnota.exe";
-        const string installerName = "CyCapture-1.4.9-windows-x64-installer.exe";
+        const string fullName = "CyCapture-1.4.10-windows-x64-portable.exe";
+        const string liteName = "CyCapture-1.4.10-windows-x64-portable-without-CyAnnota.exe";
+        const string installerName = "CyCapture-1.4.10-windows-x64-installer.exe";
         const string fullHash = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
         const string liteHash = "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB";
         const string installerHash = "CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC";
         var json = JsonSerializer.Serialize(new
         {
-            tag_name = "v1.4.9",
-            html_url = "https://github.com/MrMybal/CyCapture/releases/tag/v1.4.9",
+            tag_name = "v1.4.10",
+            html_url = "https://github.com/MrMybal/CyCapture/releases/tag/v1.4.10",
             assets = new object[]
             {
-                new { name = fullName, browser_download_url = $"https://github.com/MrMybal/CyCapture/releases/download/v1.4.9/{fullName}", size = 123L, digest = $"sha256:{fullHash}" },
-                new { name = liteName, browser_download_url = $"https://github.com/MrMybal/CyCapture/releases/download/v1.4.9/{liteName}", size = 456L, digest = $"sha256:{liteHash}" },
-                new { name = installerName, browser_download_url = $"https://github.com/MrMybal/CyCapture/releases/download/v1.4.9/{installerName}", size = 789L, digest = $"sha256:{installerHash}" }
+                new { name = fullName, browser_download_url = $"https://github.com/MrMybal/CyCapture/releases/download/v1.4.10/{fullName}", size = 123L, digest = $"sha256:{fullHash}" },
+                new { name = liteName, browser_download_url = $"https://github.com/MrMybal/CyCapture/releases/download/v1.4.10/{liteName}", size = 456L, digest = $"sha256:{liteHash}" },
+                new { name = installerName, browser_download_url = $"https://github.com/MrMybal/CyCapture/releases/download/v1.4.10/{installerName}", size = 789L, digest = $"sha256:{installerHash}" }
             }
         });
         var parse = AppAssembly.GetType("CyCapture.Services.UpdateService")!
@@ -179,7 +183,7 @@ internal static class Program
         Require(Property(installer, "AssetName").ToString() == installerName, "The installed edition selected the wrong update asset.");
         Require(Property(installer, "Sha256").ToString() == installerHash, "The installer update digest was not preserved.");
 
-        var current = parse.Invoke(null, [json, new Version(1, 4, 9), true, false])!;
+        var current = parse.Invoke(null, [json, new Version(1, 4, 10), true, false])!;
         Require(Equals(Property(current, "IsUpdateAvailable"), false), "The current version was reported as outdated.");
 
         var unsafeJson = json.Replace("https://github.com/MrMybal/CyCapture/releases/download/", "https://example.invalid/");
@@ -301,7 +305,7 @@ internal static class Program
         var versionText = settings.FindControl<TextBlock>("AppVersionText")!.Text ?? string.Empty;
         var editionLabel = (string)AppAssembly.GetType("CyCapture.Services.AppBuildInfo")!
             .GetProperty("EditionLabel", PrivateStatic)!.GetValue(null)!;
-        Require(versionText.Contains("1.4.9", StringComparison.Ordinal),
+        Require(versionText.Contains("1.4.10", StringComparison.Ordinal),
             "The settings window does not show the application version.");
         Require(versionText.Contains(editionLabel, StringComparison.Ordinal),
             "The settings window does not show the compiled edition.");
