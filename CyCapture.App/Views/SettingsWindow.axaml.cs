@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Markup.Xaml;
@@ -21,6 +22,7 @@ public sealed partial class SettingsWindow : Window
     private readonly TextBlock _appVersionText;
     private readonly TextBlock _updateStatusText;
     private readonly Button _updateButton;
+    private readonly ComboBox _documentationLanguageCombo;
     private readonly TextBlock _outputPathText;
     private readonly ComboBox _videoQualityCombo;
     private readonly ComboBox _videoEncodingQualityCombo;
@@ -67,6 +69,7 @@ public sealed partial class SettingsWindow : Window
         _appVersionText = RequireControl<TextBlock>("AppVersionText");
         _updateStatusText = RequireControl<TextBlock>("UpdateStatusText");
         _updateButton = RequireControl<Button>("UpdateButton");
+        _documentationLanguageCombo = RequireControl<ComboBox>("DocumentationLanguageCombo");
         _appVersionText.Text = $"VERSION {AppBuildInfo.DisplayVersion} · BÊTA · {AppBuildInfo.EditionLabel}";
         _outputPathText = RequireControl<TextBlock>("OutputPathText");
         _videoQualityCombo = RequireControl<ComboBox>("VideoQualityCombo");
@@ -95,6 +98,7 @@ public sealed partial class SettingsWindow : Window
         _startupStatusText = RequireControl<TextBlock>("StartupStatusText");
         _audioOnlySourceHint = RequireControl<TextBlock>("AudioOnlySourceHint");
         _pluginsPanel = RequireControl<StackPanel>("PluginsPanel");
+        SelectByTag(_documentationLanguageCombo, preferences.DocumentationLanguage);
         _outputPathText.Text = preferences.EffectiveOutputDirectory;
         SelectByTag(_videoQualityCombo, preferences.VideoQualityLevel.ToString());
         SelectByTag(_videoEncodingQualityCombo, preferences.VideoEncodingQuality.ToString());
@@ -131,14 +135,29 @@ public sealed partial class SettingsWindow : Window
             _updateCancellation.Cancel();
             _updateCancellation.Dispose();
         };
+        KeyDown += (_, args) =>
+        {
+            if (args.Key != Key.F1) return;
+            DocumentationRequested?.Invoke(this, EventArgs.Empty);
+            args.Handled = true;
+        };
     }
 
     public event EventHandler<CaptureMode>? CaptureRequested;
+    public event EventHandler? DocumentationRequested;
 
     private void ImageClick(object? sender, RoutedEventArgs args) => Request(CaptureMode.Image);
     private void VideoClick(object? sender, RoutedEventArgs args) => Request(CaptureMode.Video);
     private void GifClick(object? sender, RoutedEventArgs args) => Request(CaptureMode.Gif);
     private void AudioClick(object? sender, RoutedEventArgs args) => Request(CaptureMode.Audio);
+    private void DocumentationClick(object? sender, RoutedEventArgs args) => DocumentationRequested?.Invoke(this, EventArgs.Empty);
+
+    private async void DocumentationLanguageChanged(object? sender, SelectionChangedEventArgs args)
+    {
+        if (_initializing || _documentationLanguageCombo.SelectedItem is not ComboBoxItem item) return;
+        _preferences.DocumentationLanguage = CyDocHelpService.NormalizeLocale(item.Tag?.ToString());
+        await _preferences.SaveAsync();
+    }
 
     private void Request(CaptureMode mode)
     {

@@ -25,6 +25,19 @@ Les bibliothèques natives et les plugins de codecs fournis par les paquets offi
 
 ---
 
+## CyDoc 0.1.0
+
+CyCapture utilise CyDoc pour générer et afficher sa documentation locale bilingue. Le lecteur, les pages compilées, les schémas et les ressources nécessaires sont embarqués dans l’exécutable puis ouverts directement avec une URL `file://`.
+
+- Projet et code source : <https://github.com/MrMybal/CyDoc>
+- Version : 0.1.0
+- Licence : MIT
+- Copyright © 2026 CyDoc contributors
+
+Les modules distribués sont limités à `image` et `gallery`. Les dépendances Node.js servent uniquement à la génération et ne sont pas requises pour lire l’aide.
+
+---
+
 ## CyAnnota 0.4.4
 
 Les builds Windows Release de CyCapture embarquent la distribution Windows **CyAnnota 0.4.4** afin que le post-traitement fonctionne sans installation séparée ni association de protocole Windows. La distribution unpacked est privilégiée : elle est extraite une seule fois en arrière-plan, puis CyCapture lance directement `CyAnnota.exe`.
@@ -64,6 +77,19 @@ CyCapture uses the official LibVLCSharp Avalonia views and the Windows LibVLC en
 - Copyright © VideoLAN and contributors
 
 The native libraries and codec plugins supplied by the official VideoLAN packages are included in both Windows editions of CyCapture.
+
+---
+
+## CyDoc 0.1.0
+
+CyCapture uses CyDoc to generate and display its local bilingual documentation. The reader, compiled pages, diagrams and required resources are embedded in the executable and opened directly through a `file://` URL.
+
+- Project and source code: <https://github.com/MrMybal/CyDoc>
+- Version: 0.1.0
+- License: MIT
+- Copyright © 2026 CyDoc contributors
+
+Only the `image` and `gallery` modules are distributed. Node.js dependencies are used at generation time only and are not required to read the help.
 
 ---
 

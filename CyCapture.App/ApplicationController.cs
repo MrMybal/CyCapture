@@ -109,6 +109,13 @@ internal sealed class ApplicationController
             ShowSettings();
         if (_desktop.Args?.Contains("--gallery", StringComparer.OrdinalIgnoreCase) == true)
             ShowGallery();
+        var documentationPageIndex = Array.FindIndex(_desktop.Args ?? [], argument =>
+            argument.Equals("--documentation-page", StringComparison.OrdinalIgnoreCase));
+        if (documentationPageIndex >= 0 && documentationPageIndex + 1 < (_desktop.Args?.Length ?? 0))
+            ShowDocumentation(ParseDocumentationRoute(_desktop.Args![documentationPageIndex + 1]));
+        else if (_desktop.Args?.Contains("--documentation", StringComparer.OrdinalIgnoreCase) == true
+                 || _desktop.Args?.Contains("--help", StringComparer.OrdinalIgnoreCase) == true)
+            ShowDocumentation();
         if (_desktop.Args?.Contains("--quick", StringComparer.OrdinalIgnoreCase) == true)
             ShowQuickMenu();
     }
@@ -137,6 +144,7 @@ internal sealed class ApplicationController
                 _recordingMenuItem,
                 new NativeMenuItemSeparator(),
                 new NativeMenuItem { Header = "Ouvrir CyCapture · Galerie", Command = new ActionCommand(ShowGallery) },
+                new NativeMenuItem { Header = "Documentation / Aide", Command = new ActionCommand(ShowDocumentation) },
                 new NativeMenuItem { Header = "Réglages…", Command = new ActionCommand(ShowSettings) },
                 new NativeMenuItem { Header = "Dossier des captures", Command = new ActionCommand(OpenOutputDirectory) },
                 new NativeMenuItem { Header = "Dossier des plugins", Command = new ActionCommand(OpenPluginsDirectory) },
@@ -268,6 +276,7 @@ internal sealed class ApplicationController
         {
             _quickWindow = new QuickCaptureWindow(_preferences, _postProcessing) { Icon = _idleIcon };
             _quickWindow.CaptureRequested += QuickCaptureRequested;
+            _quickWindow.HelpRequested += (_, _) => ShowDocumentation();
             _quickWindow.Closed += (_, _) => _quickWindow = null;
             _quickWindow.Show();
         }
@@ -455,6 +464,7 @@ internal sealed class ApplicationController
             }
             _settingsWindow = new SettingsWindow(_preferences, _postProcessing) { Icon = _idleIcon };
             _settingsWindow.CaptureRequested += SettingsCaptureRequested;
+            _settingsWindow.DocumentationRequested += (_, _) => ShowDocumentation(new CyDocRoute("settings"));
             _settingsWindow.Closed += (_, _) => _settingsWindow = null;
             _settingsWindow.Show();
             _settingsWindow.Activate();
@@ -478,6 +488,7 @@ internal sealed class ApplicationController
                 return;
             }
             _galleryWindow = new GalleryWindow(_preferences, _history) { Icon = _idleIcon };
+            _galleryWindow.HelpRequested += (_, _) => ShowDocumentation(new CyDocRoute("gallery"));
             _galleryWindow.Closed += (_, _) => _galleryWindow = null;
             _galleryWindow.Show();
             _galleryWindow.Activate();
@@ -488,6 +499,33 @@ internal sealed class ApplicationController
             LogUiError("gallery", error);
             ShowToast("Galerie indisponible", error.Message, true);
         }
+    }
+
+    private void ShowDocumentation()
+        => ShowDocumentation(CyDocRoute.Home);
+
+    private void ShowDocumentation(CyDocRoute route)
+        => _ = OpenDocumentationAsync(route);
+
+    private async Task OpenDocumentationAsync(CyDocRoute route)
+    {
+        try
+        {
+            await CyDocHelpService.OpenAsync(_preferences.DocumentationLanguage, route, _shutdown.Token);
+        }
+        catch (Exception error)
+        {
+            LogUiError("documentation", error);
+            ShowToast("Documentation indisponible", error.Message, true);
+        }
+    }
+
+    private static CyDocRoute ParseDocumentationRoute(string value)
+    {
+        var parts = value.Split('#', 2, StringSplitOptions.TrimEntries);
+        return new CyDocRoute(
+            string.IsNullOrWhiteSpace(parts[0]) ? CyDocRoute.Home.PageId : parts[0],
+            parts.Length > 1 && !string.IsNullOrWhiteSpace(parts[1]) ? parts[1] : null);
     }
 
     private void ShowToast(string title, string message, bool error, string? filePath = null)

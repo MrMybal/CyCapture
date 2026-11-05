@@ -20,6 +20,8 @@ namespace CyCapture.Views;
 
 public sealed partial class GalleryWindow : Window
 {
+    public event EventHandler? HelpRequested;
+
     private enum DateFilter
     {
         Today,
@@ -534,6 +536,12 @@ public sealed partial class GalleryWindow : Window
 
     private void WindowKeyDown(object? sender, KeyEventArgs args)
     {
+        if (args.Key == Key.F1)
+        {
+            HelpRequested?.Invoke(this, EventArgs.Empty);
+            args.Handled = true;
+            return;
+        }
         if (!_viewerOverlay.IsVisible) return;
         switch (args.Key)
         {

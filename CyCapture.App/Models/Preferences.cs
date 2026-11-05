@@ -77,6 +77,7 @@ public sealed class Preferences
     public bool SeparateCaptureTypes { get; set; }
     public bool CreateDailyCaptureFolders { get; set; }
     public bool StartWithWindows { get; set; }
+    public string DocumentationLanguage { get; set; } = "en";
 
     public static string DataDirectory => Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
@@ -169,6 +170,9 @@ public sealed class Preferences
         value.PrintScreenHoldDelayMilliseconds = ((clampedHoldDelay + 50) / 100) * 100;
         if (!string.IsNullOrWhiteSpace(value.OutputDirectory) && !Path.IsPathFullyQualified(value.OutputDirectory))
             value.OutputDirectory = null;
+        value.DocumentationLanguage = string.Equals(value.DocumentationLanguage, "fr", StringComparison.OrdinalIgnoreCase)
+            ? "fr"
+            : "en";
         return value;
     }
 }

@@ -32,6 +32,24 @@
         </Grid>
       </Border>
 
+      <Border Padding="14" CornerRadius="12" Background="#111817" BorderBrush="#314139" BorderThickness="1">
+        <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="10">
+          <StackPanel Spacing="5">
+            <TextBlock Text="DOCUMENTATION" FontSize="10" FontWeight="Bold" Foreground="#9BFF28" LetterSpacing="1.4" />
+            <TextBlock Text="Guide CyDoc local en anglais et français, avec recherche, médias, schémas et dépannage."
+                       TextWrapping="Wrap" Foreground="#9DAEAA" FontSize="11" />
+          </StackPanel>
+          <ComboBox x:Name="DocumentationLanguageCombo" Grid.Column="1" Width="116"
+                    SelectionChanged="DocumentationLanguageChanged" VerticalAlignment="Center">
+            <ComboBoxItem Content="English" Tag="en" />
+            <ComboBoxItem Content="Français" Tag="fr" />
+          </ComboBox>
+          <Button x:Name="DocumentationButton" Grid.Column="2"
+                  Content="Documentation / Aide" Click="DocumentationClick"
+                  Padding="16,9" VerticalAlignment="Center" />
+        </Grid>
+      </Border>
+
       <Border Padding="16" CornerRadius="12" Background="#111817" BorderBrush="#263331" BorderThickness="1">
         <StackPanel Spacing="12">
           <TextBlock Text="CAPTURE RAPIDE" FontSize="10" FontWeight="Bold" Foreground="#9BFF28" LetterSpacing="1.4" />

@@ -1,5 +1,6 @@
 using System.Reflection;
 using System.IO;
+using System.IO.Compression;
 using System.Text.Json;
 using System.Xml.Linq;
 using Avalonia;
@@ -34,7 +35,7 @@ internal static class Program
             CheckNativeWindowSnapshot();
             CheckXamlGroups(projectRoot);
             CheckWindows(output);
-            Console.WriteLine("PASS: preferences, recorder routing, audio packet timeline, recording frame, updates, smart-selection Z-order, XAML groups and window construction.");
+            Console.WriteLine("PASS: preferences, recorder routing, audio packet timeline, recording frame, updates, documentation, smart-selection Z-order, XAML groups and window construction.");
             return 0;
         }
         catch (Exception error)
@@ -78,6 +79,11 @@ internal static class Program
             Require(Audio(roundTrip, mode).SystemAudio == false && Audio(roundTrip, mode).Microphone == false, "A silent mode has an audio source.");
         var defaults = Normalize(new Preferences());
         Require(Audio(defaults, CaptureMode.Audio) == (true, false, AudioEncodingQuality.Balanced), "Default audio-only settings changed.");
+        Require(defaults.DocumentationLanguage == "en", "English is not the default documentation language.");
+        var frenchDocumentation = Normalize(new Preferences { DocumentationLanguage = "FR" });
+        Require(frenchDocumentation.DocumentationLanguage == "fr", "French documentation language was not preserved.");
+        var invalidDocumentation = Normalize(new Preferences { DocumentationLanguage = "de" });
+        Require(invalidDocumentation.DocumentationLanguage == "en", "An unsupported documentation language was not sanitized.");
         defaults.AudioOnlyEncodingQuality = (AudioEncodingQuality)999;
         Require(Audio(Normalize(defaults), CaptureMode.Audio).Quality == AudioEncodingQuality.Balanced, "Invalid audio profile was not sanitized.");
     }
@@ -298,6 +304,7 @@ internal static class Program
         var preferences = IndependentPreferences();
         var settings = (SettingsWindow)Activator.CreateInstance(typeof(SettingsWindow), PrivateInstance, null, new object?[] { preferences, processors }, null)!;
         var quick = (QuickCaptureWindow)Activator.CreateInstance(typeof(QuickCaptureWindow), PrivateInstance, null, new object?[] { preferences, processors }, null)!;
+        CheckCyDocBundle();
         Require(settings.FindControl<CheckBox>("SystemAudioCheck")!.IsChecked == false, "Video source initialized incorrectly.");
         Require(settings.FindControl<CheckBox>("AudioOnlySystemCheck")!.IsChecked == true, "Audio-only source initialized incorrectly.");
         Require(settings.FindControl<CheckBox>("FrameCheck")!.IsChecked == false && settings.FindControl<CheckBox>("GifFrameCheck")!.IsChecked == true,
@@ -311,6 +318,10 @@ internal static class Program
             "The settings window does not show the compiled edition.");
         Require(settings.FindControl<Button>("UpdateButton") is not null,
             "The settings window has no update button.");
+        Require(settings.FindControl<Button>("DocumentationButton") is not null,
+            "The settings window has no documentation button.");
+        Require(((ComboBoxItem)settings.FindControl<ComboBox>("DocumentationLanguageCombo")!.SelectedItem!).Tag?.ToString() == "en",
+            "The CyDoc language selector did not use the default English locale.");
         Require(((ComboBoxItem)quick.FindControl<ComboBox>("AudioEncodingQualityCombo")!.SelectedItem!).Tag?.ToString() == "Compact", "Quick video quality mismatch.");
         Require(((ComboBoxItem)quick.FindControl<ComboBox>("AudioOnlyEncodingQualityCombo")!.SelectedItem!).Tag?.ToString() == "High", "Quick audio-only quality mismatch.");
         var tabs = settings.FindControl<TabControl>("CaptureSettingsTabs")!;
@@ -337,6 +348,66 @@ internal static class Program
         RenderWindowContent(quickContent, 720, 500, Path.Combine(output, "quick-window.png"));
         settings.Close();
         quick.Close();
+    }
+
+    private static void CheckCyDocBundle()
+    {
+        using var stream = AppAssembly.GetManifestResourceStream("CyCapture.Bundled.CyDocHelp.zip");
+        Require(stream is not null, "The CyDoc help archive is not embedded in CyCapture.");
+        using var archive = new ZipArchive(stream!, ZipArchiveMode.Read, leaveOpen: false);
+        var names = archive.Entries.Select(entry => entry.FullName.Replace('\\', '/')).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        foreach (var required in new[]
+                 {
+                     "index.html", "viewer.js", "viewer.css", "data.js", "manifest.json", "translation-report.json",
+                     "media-image.js", "media-gallery.js", "assets/cycapture-logo.svg", "assets/licenses/CyDoc-MIT.txt"
+                 })
+            Require(names.Contains(required), $"CyDoc bundle is missing {required}.");
+        Require(!names.Contains("media-video.js") && !names.Contains("media-gif.js")
+                && !names.Contains("media-mesh.js") && !names.Contains("media-graph.js"),
+            "CyDoc contains an unselected media module.");
+
+        using var manifestReader = new StreamReader(archive.GetEntry("manifest.json")!.Open());
+        using var manifest = JsonDocument.Parse(manifestReader.ReadToEnd());
+        Require(manifest.RootElement.GetProperty("defaultLocale").GetString() == "en", "CyDoc default locale is not English.");
+        var pages = manifest.RootElement.GetProperty("pages").EnumerateArray().ToArray();
+        var englishIds = pages.Where(page => page.GetProperty("locale").GetString() == "en")
+            .Select(page => page.GetProperty("id").GetString()).ToHashSet();
+        var frenchIds = pages.Where(page => page.GetProperty("locale").GetString() == "fr")
+            .Select(page => page.GetProperty("id").GetString()).ToHashSet();
+        Require(englishIds.SetEquals(frenchIds), "CyDoc page identifiers differ between English and French.");
+        Require(new[] { "getting-started", "video", "gallery", "plugins", "plugin-api", "troubleshooting", "development", "licenses" }.All(englishIds.Contains),
+            "CyDoc is missing a required help page.");
+
+        using var reportReader = new StreamReader(archive.GetEntry("translation-report.json")!.Open());
+        using var report = JsonDocument.Parse(reportReader.ReadToEnd());
+        Require(report.RootElement.GetProperty("missing").GetArrayLength() == 0
+                && report.RootElement.GetProperty("outdated").GetArrayLength() == 0
+                && report.RootElement.GetProperty("untracked").GetArrayLength() == 0,
+            "CyDoc translation report is not current.");
+
+        var routeType = AppAssembly.GetType("CyCapture.Services.CyDocRoute")!;
+        var route = Activator.CreateInstance(
+            routeType,
+            BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic,
+            null,
+            new object?[] { "video", "recording", new Dictionary<string, string> { ["media"] = "intro clip", ["time"] = "1.25" } },
+            null)!;
+        var serviceType = AppAssembly.GetType("CyCapture.Services.CyDocHelpService")!;
+        var createUri = serviceType.GetMethod("CreateUri", PrivateStatic)!;
+        var uri = (Uri)createUri.Invoke(null, new object?[] { Path.Combine(Path.GetTempPath(), "CyCapture Help", "index.html"), "fr", route })!;
+        Require(uri.IsFile && uri.AbsoluteUri.Contains("#/fr/video/recording?media=intro%20clip&time=1.25", StringComparison.Ordinal),
+            "CyDoc contextual file URL is invalid or unstable.");
+
+        var prepareUri = serviceType.GetMethod("PrepareUriAsync", PrivateStatic)!;
+        var extractedUri = Task.Run(async () =>
+        {
+            var preparation = (Task<Uri>)prepareUri.Invoke(null, new object?[] { "fr", route, CancellationToken.None })!;
+            return await preparation.ConfigureAwait(false);
+        }).GetAwaiter().GetResult();
+        Require(extractedUri.IsFile && File.Exists(extractedUri.LocalPath), "The embedded CyDoc reader was not extracted to a local file URL.");
+        Require(File.Exists(Path.Combine(Path.GetDirectoryName(extractedUri.LocalPath)!, "media-image.js"))
+                && File.Exists(Path.Combine(Path.GetDirectoryName(extractedUri.LocalPath)!, "media-gallery.js")),
+            "The extracted CyDoc reader is missing selected modules.");
     }
 
     private static void CheckQuickAnnotationToolbar()

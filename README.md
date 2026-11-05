@@ -12,6 +12,8 @@
 
 CyCapture is a discreet screen-capture tool built with **C# and Avalonia 12**, with Windows as its current priority. [CyAnnota](https://github.com/MrMybal/CyAnnota) remains a separate project; opening completed captures in it is handled only by an optional CyCapture plugin.
 
+**[Read the complete documentation in English](https://mrmybal.github.io/CyCapture/#/en/getting-started)**
+
 ### Usage
 
 CyCapture starts in the notification area without forcing a large main window to open.
@@ -61,13 +63,14 @@ The same menu provides separate **Gallery** and **Settings** entries. Clicking a
 - optional plugin contributions as global toggles in the tray and quick palette;
 - full edition with the **CyAnnota Post Edit** plugin and CyAnnota 0.4.4 bundled, a CyAnnota-free edition and a separately distributable plugin;
 - compact settings window accessible from the tray;
+- complete modular CyDoc help available offline from the tray, Settings, F1 and the command line, with search, 17 bilingual pages, SVG diagrams, an interface gallery, English by default and a remembered French option;
 - version and edition shown in Settings, with built-in GitHub update checks and verified downloads;
 - optional launch with Windows directly into the current user’s notification area;
 - single-instance behavior: starting CyCapture again opens the settings of the running instance.
 
 ### Build
 
-Requirements: .NET 8 SDK or newer, Inno Setup 6 and Windows x64.
+Requirements: .NET 8 SDK or newer, Node.js 22 or newer with npm, authenticated Git access to the private CyDoc repository, Inno Setup 6 and Windows x64. The first build fetches the pinned CyDoc commit, creates its local package and restores the generation dependencies.
 
 ```powershell
 git clone https://github.com/MrMybal/CyCapture.git
@@ -75,6 +78,14 @@ cd CyCapture
 dotnet restore CyCapture.sln --runtime win-x64
 dotnet build CyCapture.sln -c Release
 ```
+
+To regenerate and validate only the local help:
+
+```powershell
+./scripts/build-documentation.ps1
+```
+
+The build creates a self-contained CyDoc export, archives it and embeds it into `CyCapture.exe`. When help is opened, CyCapture extracts that version into its local application data and opens `index.html` directly through a `file://` URL, without a server, CDN or Internet connection.
 
 ### Create the local Windows packages
 
@@ -133,6 +144,8 @@ The repository does not store a developer-specific installation path.
 
 CyCapture est un outil de capture discret écrit en **C# avec Avalonia 12** et ciblant Windows en priorité. [CyAnnota](https://github.com/MrMybal/CyAnnota) reste un projet séparé ; son ouverture après capture passe uniquement par un plugin CyCapture facultatif.
 
+**[Consulter la documentation complète en français](https://mrmybal.github.io/CyCapture/#/fr/getting-started)**
+
 ### Utilisation
 
 Au lancement, CyCapture reste dans la zone de notification et n’ouvre pas une grande interface.
@@ -182,13 +195,14 @@ Le même menu contient maintenant des entrées séparées pour la **Galerie** et
 - contribution facultative des plugins sous forme de case globale dans le tray et la palette rapide ;
 - édition complète avec le plugin **CyAnnota Post Edit** et CyAnnota 0.4.4 intégrés, édition sans CyAnnota et plugin autonome distribuable séparément ;
 - petite fenêtre de réglages accessible depuis le tray ;
+- documentation CyDoc complète, modulaire et hors ligne, accessible depuis le tray, les réglages, F1 et la ligne de commande, avec recherche, 17 pages bilingues, schémas SVG, galerie d’interface, anglais par défaut et français mémorisé ;
 - version et édition affichées dans les réglages, avec vérification et téléchargement sécurisé des mises à jour GitHub ;
 - lancement facultatif de CyCapture avec Windows, directement dans la zone de notification de l’utilisateur courant ;
 - instance unique : relancer CyCapture ouvre les réglages de l’instance existante.
 
 ### Compiler
 
-Prérequis : SDK .NET 8 ou plus récent, Inno Setup 6 et Windows x64.
+Prérequis : SDK .NET 8 ou plus récent, Node.js 22 ou plus récent avec npm, Git authentifié pour accéder au dépôt privé CyDoc, Inno Setup 6 et Windows x64. Le premier build récupère le commit CyDoc épinglé, crée son archive locale puis restaure les dépendances de génération.
 
 ```powershell
 git clone https://github.com/MrMybal/CyCapture.git
@@ -196,6 +210,14 @@ cd CyCapture
 dotnet restore CyCapture.sln --runtime win-x64
 dotnet build CyCapture.sln -c Release
 ```
+
+Pour régénérer et valider uniquement l’aide locale :
+
+```powershell
+./scripts/build-documentation.ps1
+```
+
+Le build crée un export CyDoc autonome, l’archive et l’embarque dans `CyCapture.exe`. À l’ouverture de l’aide, CyCapture extrait cette version dans ses données locales et ouvre directement `index.html` par une URL `file://`, sans serveur, CDN ni connexion Internet.
 
 ### Produire les paquets Windows locaux
 

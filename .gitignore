@@ -7,6 +7,8 @@ dist-packages/
 dist-native/
 dist-local/
 artifacts/
+docs/cydoc/.output/
+docs/cydoc/vendor/*.tgz
 **/bin/
 **/obj/
 *.user

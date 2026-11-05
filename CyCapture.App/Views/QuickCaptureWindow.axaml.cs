@@ -69,10 +69,16 @@ public sealed partial class QuickCaptureWindow : Window
         KeyDown += (_, args) =>
         {
             if (args.Key == Avalonia.Input.Key.Escape) Close();
+            else if (args.Key == Avalonia.Input.Key.F1)
+            {
+                HelpRequested?.Invoke(this, EventArgs.Empty);
+                args.Handled = true;
+            }
         };
     }
 
     public event EventHandler<CaptureRequest>? CaptureRequested;
+    public event EventHandler? HelpRequested;
 
     private void OnOpened(object? sender, EventArgs args)
     {
