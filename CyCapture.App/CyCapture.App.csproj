@@ -72,6 +72,8 @@
              CopyToOutputDirectory="PreserveNewest"
              CopyToPublishDirectory="PreserveNewest"
              ExcludeFromSingleFile="true" />
+    <EmbeddedResource Include="$(CyDocOutputDirectory)\**\*"
+                      LogicalName="CyCapture.Bundled.Documentation/%(RecursiveDir)%(Filename)%(Extension)" />
     <EmbeddedResource Include="$(CyAnnotaBundlePath)" LogicalName="CyCapture.Bundled.$(CyAnnotaBundleFileName)"
                       Condition="'$(BundleCyAnnota)' == 'true' and '$(CyAnnotaUnpackedDirectory)' == ''" />
     <EmbeddedResource Include="$(CyAnnotaUnpackedArchivePath)" LogicalName="CyCapture.Bundled.$(CyAnnotaUnpackedArchiveFileName)"

@@ -13,6 +13,8 @@ internal sealed record CyDocRoute(
 
 internal static class CyDocHelpService
 {
+    private const string BundledDocumentationPrefix = "CyCapture.Bundled.Documentation/";
+
     internal static string NormalizeLocale(string? locale) =>
         string.Equals(locale, "fr", StringComparison.OrdinalIgnoreCase) ? "fr" : "en";
 
@@ -62,21 +64,71 @@ internal static class CyDocHelpService
 
     private static string ResolveDocumentationPath()
     {
-        var documentationRoot = Path.Combine(AppContext.BaseDirectory, "Documentation");
-        var documentationPath = Path.Combine(documentationRoot, "Documentation.html");
-        foreach (var required in new[]
+        var distributedRoot = Path.Combine(AppContext.BaseDirectory, "Documentation");
+        if (IsComplete(distributedRoot))
+            return Path.Combine(distributedRoot, "Documentation.html");
+
+        var assembly = typeof(CyDocHelpService).Assembly;
+        var resources = assembly.GetManifestResourceNames()
+            .Where(name => name.StartsWith(BundledDocumentationPrefix, StringComparison.Ordinal))
+            .OrderBy(name => name, StringComparer.Ordinal)
+            .ToArray();
+        if (resources.Length == 0)
+            throw new FileNotFoundException("The local CyDoc documentation distribution is incomplete.",
+                Path.Combine(distributedRoot, "Documentation.html"));
+
+        var version = assembly.GetName().Version?.ToString(3) ?? "current";
+        var extractedRoot = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "CyCapture", "Bundled", "Documentation", version);
+        ExtractBundledDocumentation(assembly, resources, extractedRoot);
+        if (!IsComplete(extractedRoot))
+            throw new FileNotFoundException("The bundled CyDoc documentation distribution is incomplete.",
+                Path.Combine(extractedRoot, "Documentation.html"));
+        return Path.Combine(extractedRoot, "Documentation.html");
+    }
+
+    private static bool IsComplete(string root)
+    {
+        foreach (var relativePath in new[]
                  {
-                     documentationPath,
-                     Path.Combine(documentationRoot, "DocAI.md"),
-                     Path.Combine(documentationRoot, "DocData", "data.js"),
-                     Path.Combine(documentationRoot, "DocData", "viewer.js"),
-                     Path.Combine(documentationRoot, "DocData", "viewer.css"),
-                     Path.Combine(documentationRoot, "DocData", "manifest.json")
+                     "Documentation.html",
+                     "DocAI.md",
+                     Path.Combine("DocData", "data.js"),
+                     Path.Combine("DocData", "viewer.js"),
+                     Path.Combine("DocData", "viewer.css"),
+                     Path.Combine("DocData", "manifest.json")
                  })
         {
-            if (!File.Exists(required))
-                throw new FileNotFoundException("The local CyDoc documentation distribution is incomplete.", required);
+            if (!File.Exists(Path.Combine(root, relativePath)))
+                return false;
         }
-        return documentationPath;
+        return true;
+    }
+
+    private static void ExtractBundledDocumentation(
+        System.Reflection.Assembly assembly,
+        IReadOnlyList<string> resources,
+        string destinationRoot)
+    {
+        var normalizedRoot = Path.GetFullPath(destinationRoot)
+            .TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)
+            + Path.DirectorySeparatorChar;
+        Directory.CreateDirectory(normalizedRoot);
+        foreach (var resourceName in resources)
+        {
+            var relativePath = resourceName[BundledDocumentationPrefix.Length..]
+                .Replace('/', Path.DirectorySeparatorChar)
+                .Replace('\\', Path.DirectorySeparatorChar);
+            var targetPath = Path.GetFullPath(Path.Combine(normalizedRoot, relativePath));
+            if (!targetPath.StartsWith(normalizedRoot, StringComparison.OrdinalIgnoreCase))
+                throw new InvalidDataException("A bundled documentation resource has an invalid path.");
+
+            Directory.CreateDirectory(Path.GetDirectoryName(targetPath)!);
+            using var source = assembly.GetManifestResourceStream(resourceName)
+                ?? throw new InvalidDataException($"Bundled documentation resource not found: {resourceName}");
+            using var target = File.Create(targetPath);
+            source.CopyTo(target);
+        }
     }
 }

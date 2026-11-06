@@ -351,6 +351,14 @@ internal static class Program
 
     private static void CheckCyDocDistribution()
     {
+        var bundledDocumentation = AppAssembly.GetManifestResourceNames()
+            .Where(name => name.StartsWith("CyCapture.Bundled.Documentation/", StringComparison.Ordinal))
+            .Select(name => name.Replace('\\', '/'))
+            .ToArray();
+        Require(bundledDocumentation.Any(name => name.EndsWith("Documentation.html", StringComparison.Ordinal))
+                && bundledDocumentation.Any(name => name.EndsWith("DocData/manifest.json", StringComparison.Ordinal)),
+            "The standalone portable executable is missing its bundled CyDoc fallback.");
+
         var documentationRoot = Path.Combine(AppContext.BaseDirectory, "Documentation");
         foreach (var required in new[]
                  {
@@ -394,6 +402,23 @@ internal static class Program
             new object?[] { "video", "recording", new Dictionary<string, string> { ["media"] = "intro clip", ["time"] = "1.25" } },
             null)!;
         var serviceType = AppAssembly.GetType("CyCapture.Services.CyDocHelpService")!;
+        var extractionRoot = Path.Combine(Path.GetTempPath(), $"CyCapture-Documentation-{Guid.NewGuid():N}");
+        try
+        {
+            var extract = serviceType.GetMethod("ExtractBundledDocumentation", PrivateStatic)!;
+            extract.Invoke(null, new object?[] { AppAssembly, AppAssembly.GetManifestResourceNames()
+                .Where(name => name.StartsWith("CyCapture.Bundled.Documentation/", StringComparison.Ordinal))
+                .OrderBy(name => name, StringComparer.Ordinal).ToArray(), extractionRoot });
+            Require(File.Exists(Path.Combine(extractionRoot, "Documentation.html"))
+                    && File.Exists(Path.Combine(extractionRoot, "DocData", "manifest.json")),
+                "The portable CyDoc fallback could not be extracted.");
+        }
+        finally
+        {
+            if (Directory.Exists(extractionRoot))
+                Directory.Delete(extractionRoot, recursive: true);
+        }
+
         var createUri = serviceType.GetMethod("CreateUri", PrivateStatic)!;
         var uri = (Uri)createUri.Invoke(null, new object?[] { Path.Combine(Path.GetTempPath(), "CyCapture Help", "Documentation.html"), "fr", route })!;
         Require(uri.IsFile && uri.AbsoluteUri.Contains("#/fr/video/recording?media=intro%20clip&time=1.25", StringComparison.Ordinal),
