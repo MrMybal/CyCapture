@@ -12,7 +12,7 @@
 
 CyCapture is a discreet screen-capture tool built with **C# and Avalonia 12**, with Windows as its current priority. [CyAnnota](https://github.com/MrMybal/CyAnnota) remains a separate project; opening completed captures in it is handled only by an optional CyCapture plugin.
 
-**[Read the complete documentation in English](https://mrmybal.github.io/CyCapture/#/en/getting-started)**
+**[Read the complete documentation in English](https://mrmybal.github.io/CyCapture/Documentation.html#/en/getting-started)**
 
 ### Usage
 
@@ -63,7 +63,7 @@ The same menu provides separate **Gallery** and **Settings** entries. Clicking a
 - optional plugin contributions as global toggles in the tray and quick palette;
 - full edition with the **CyAnnota Post Edit** plugin and CyAnnota 0.4.4 bundled, a CyAnnota-free edition and a separately distributable plugin;
 - compact settings window accessible from the tray;
-- complete modular CyDoc help available offline from the tray, Settings, F1 and the command line, with search, 17 bilingual pages, SVG diagrams, an interface gallery, English by default and a remembered French option;
+- complete modular CyDoc help available offline from the tray, Settings, F1 and the command line, with search, a hierarchical bilingual manual, public plugin API references, SVG diagrams, an interface gallery, English by default and a remembered French option;
 - version and edition shown in Settings, with built-in GitHub update checks and verified downloads;
 - optional launch with Windows directly into the current user’s notification area;
 - single-instance behavior: starting CyCapture again opens the settings of the running instance.
@@ -85,7 +85,7 @@ To regenerate and validate only the local help:
 ./scripts/build-documentation.ps1
 ```
 
-The build creates a self-contained CyDoc export, archives it and embeds it into `CyCapture.exe`. When help is opened, CyCapture extracts that version into its local application data and opens `index.html` directly through a `file://` URL, without a server, CDN or Internet connection.
+The build creates and validates `CyCapture.App/Documentation`. CyCapture distributes that complete directory beside the application and opens `Documentation.html` directly through a `file://` URL, without a server, CDN or Internet connection. Authoring sources and build tooling remain under `CyCapture.App/.CyDocBuild` and are not shipped.
 
 ### Create the local Windows packages
 
@@ -95,9 +95,9 @@ The build creates a self-contained CyDoc export, archives it and embeds it into 
 
 The script writes the following assets to `dist-local`:
 
-- `CyCapture-1.4.10-windows-x64-installer.exe`, the Windows installer with CyAnnota and its plugin;
-- `CyCapture-1.4.10-windows-x64-portable.exe`, the full portable CyAnnota edition;
-- `CyCapture-1.4.10-windows-x64-portable-without-CyAnnota.exe`, the portable edition without CyAnnota or its plugin entry;
+- `CyCapture-1.4.11-windows-x64-installer.exe`, the Windows installer with CyAnnota and its plugin;
+- `CyCapture-1.4.11-windows-x64-portable.exe`, the full portable CyAnnota edition;
+- `CyCapture-1.4.11-windows-x64-portable-without-CyAnnota.exe`, the portable edition without CyAnnota or its plugin entry;
 - `CyCapture.Plugin.CyAnnota-0.4.4.dll` and its ZIP archive, installable in `%LOCALAPPDATA%\CyCapture\Plugins`.
 
 The portable editions are self-contained single files. The installer deploys CyCapture to `Program Files`, creates Windows shortcuts and provides standard uninstallation. LibVLC is included for direct gallery playback. ScreenRecorderLib uses Media Foundation and requires the Media Feature Pack on Windows N/KN editions that do not include it.
@@ -144,7 +144,7 @@ The repository does not store a developer-specific installation path.
 
 CyCapture est un outil de capture discret écrit en **C# avec Avalonia 12** et ciblant Windows en priorité. [CyAnnota](https://github.com/MrMybal/CyAnnota) reste un projet séparé ; son ouverture après capture passe uniquement par un plugin CyCapture facultatif.
 
-**[Consulter la documentation complète en français](https://mrmybal.github.io/CyCapture/#/fr/getting-started)**
+**[Consulter la documentation complète en français](https://mrmybal.github.io/CyCapture/Documentation.html#/fr/getting-started)**
 
 ### Utilisation
 
@@ -195,7 +195,7 @@ Le même menu contient maintenant des entrées séparées pour la **Galerie** et
 - contribution facultative des plugins sous forme de case globale dans le tray et la palette rapide ;
 - édition complète avec le plugin **CyAnnota Post Edit** et CyAnnota 0.4.4 intégrés, édition sans CyAnnota et plugin autonome distribuable séparément ;
 - petite fenêtre de réglages accessible depuis le tray ;
-- documentation CyDoc complète, modulaire et hors ligne, accessible depuis le tray, les réglages, F1 et la ligne de commande, avec recherche, 17 pages bilingues, schémas SVG, galerie d’interface, anglais par défaut et français mémorisé ;
+- documentation CyDoc complète, modulaire et hors ligne, accessible depuis le tray, les réglages, F1 et la ligne de commande, avec recherche, manuel bilingue hiérarchisé, références de l’API publique des plugins, schémas SVG, galerie d’interface, anglais par défaut et français mémorisé ;
 - version et édition affichées dans les réglages, avec vérification et téléchargement sécurisé des mises à jour GitHub ;
 - lancement facultatif de CyCapture avec Windows, directement dans la zone de notification de l’utilisateur courant ;
 - instance unique : relancer CyCapture ouvre les réglages de l’instance existante.
@@ -217,7 +217,7 @@ Pour régénérer et valider uniquement l’aide locale :
 ./scripts/build-documentation.ps1
 ```
 
-Le build crée un export CyDoc autonome, l’archive et l’embarque dans `CyCapture.exe`. À l’ouverture de l’aide, CyCapture extrait cette version dans ses données locales et ouvre directement `index.html` par une URL `file://`, sans serveur, CDN ni connexion Internet.
+Le build crée et valide `CyCapture.App/Documentation`. CyCapture distribue ce dossier complet à côté de l’application et ouvre directement `Documentation.html` par une URL `file://`, sans serveur, CDN ni connexion Internet. Les sources et l’outillage restent dans `CyCapture.App/.CyDocBuild` et ne sont pas livrés.
 
 ### Produire les paquets Windows locaux
 
@@ -227,9 +227,9 @@ Le build crée un export CyDoc autonome, l’archive et l’embarque dans `CyCap
 
 Le script place dans `dist-local` :
 
-- `CyCapture-1.4.10-windows-x64-installer.exe`, installateur Windows avec CyAnnota et son plugin ;
-- `CyCapture-1.4.10-windows-x64-portable.exe`, édition portable complète avec CyAnnota ;
-- `CyCapture-1.4.10-windows-x64-portable-without-CyAnnota.exe`, édition portable légère sans CyAnnota ni son entrée de plugin ;
+- `CyCapture-1.4.11-windows-x64-installer.exe`, installateur Windows avec CyAnnota et son plugin ;
+- `CyCapture-1.4.11-windows-x64-portable.exe`, édition portable complète avec CyAnnota ;
+- `CyCapture-1.4.11-windows-x64-portable-without-CyAnnota.exe`, édition portable légère sans CyAnnota ni son entrée de plugin ;
 - `CyCapture.Plugin.CyAnnota-0.4.4.dll` et son archive ZIP, installables dans `%LOCALAPPDATA%\CyCapture\Plugins`.
 
 Les éditions portables sont autonomes et produites en fichier unique. L’installateur place CyCapture dans `Program Files`, crée les raccourcis Windows et fournit une désinstallation standard. Le moteur LibVLC est inclus pour la lecture directe des médias dans la galerie. ScreenRecorderLib utilise Media Foundation et demande le Media Feature Pack sur une édition Windows N/KN qui ne l’inclut pas.

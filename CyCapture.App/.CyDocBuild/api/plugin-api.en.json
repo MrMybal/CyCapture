@@ -1,0 +1,120 @@
+{
+  "symbols": [
+    {
+      "key": "ICapturePostProcessor",
+      "name": "ICapturePostProcessor",
+      "kind": "interface",
+      "language": "csharp",
+      "signature": "public interface ICapturePostProcessor",
+      "description": "Required contract for a post-processing plugin. CyCapture discovers concrete implementations from DLL files in the current user's Plugins directory.",
+      "references": [
+        { "key": "ICapturePostProcessor.ProcessAsync", "name": "ICapturePostProcessor.ProcessAsync" },
+        { "key": "CaptureArtifact", "name": "CaptureArtifact" }
+      ]
+    },
+    {
+      "key": "ICapturePostProcessor.ProcessAsync",
+      "name": "ICapturePostProcessor.ProcessAsync",
+      "kind": "method",
+      "language": "csharp",
+      "signature": "ValueTask ProcessAsync(CaptureArtifact artifact, CancellationToken cancellationToken)",
+      "description": "Runs after the capture file has been finalized. A plugin should leave the original file usable if processing fails and should honor cancellation when practical.",
+      "parameters": [
+        { "name": "artifact", "type": "CaptureArtifact", "description": "Completed capture and its selection metadata." },
+        { "name": "cancellationToken", "type": "CancellationToken", "description": "Token signaled when CyCapture is shutting down or cancels the pipeline." }
+      ],
+      "returnType": "ValueTask",
+      "returns": "A task that completes when post-processing has finished.",
+      "references": [
+        { "key": "CaptureArtifact", "name": "CaptureArtifact" }
+      ]
+    },
+    {
+      "key": "ICapturePluginMetadata",
+      "name": "ICapturePluginMetadata",
+      "kind": "interface",
+      "language": "csharp",
+      "signature": "public interface ICapturePluginMetadata",
+      "description": "Optional metadata and configuration contract. It supplies the description, default state, quick-access label and generated settings shown by CyCapture.",
+      "references": [
+        { "key": "CapturePluginSettingDefinition", "name": "CapturePluginSettingDefinition" }
+      ]
+    },
+    {
+      "key": "ICapturePluginHostAware.InitializeHost",
+      "name": "ICapturePluginHostAware.InitializeHost",
+      "kind": "method",
+      "language": "csharp",
+      "signature": "void InitializeHost(string dataDirectory)",
+      "description": "Optional initialization callback that provides the plugin with CyCapture's per-user data directory.",
+      "parameters": [
+        { "name": "dataDirectory", "type": "string", "description": "Absolute path to the current user's CyCapture data directory." }
+      ],
+      "returnType": "void",
+      "returns": "No value."
+    },
+    {
+      "key": "ICapturePluginPreparable.PrepareAsync",
+      "name": "ICapturePluginPreparable.PrepareAsync",
+      "kind": "method",
+      "language": "csharp",
+      "signature": "ValueTask PrepareAsync(CancellationToken cancellationToken)",
+      "description": "Optional background preparation performed after CyCapture starts, before the first completed capture is sent to the plugin.",
+      "parameters": [
+        { "name": "cancellationToken", "type": "CancellationToken", "description": "Token signaled when application shutdown cancels preparation." }
+      ],
+      "returnType": "ValueTask",
+      "returns": "A task that completes when the plugin is ready."
+    },
+    {
+      "key": "CapturePluginSettingDefinition",
+      "name": "CapturePluginSettingDefinition",
+      "kind": "record",
+      "language": "csharp",
+      "signature": "public sealed record CapturePluginSettingDefinition(string Key, string Label, CapturePluginSettingKind Kind, string DefaultValue = \"\", IReadOnlyList<string>? Choices = null)",
+      "description": "Describes one setting rendered automatically in the CyCapture Settings window. Supported kinds are Text, Boolean and Choice.",
+      "parameters": [
+        { "name": "Key", "type": "string", "description": "Stable storage key." },
+        { "name": "Label", "type": "string", "description": "Human-readable field label." },
+        { "name": "Kind", "type": "CapturePluginSettingKind", "description": "Editor type: Text, Boolean or Choice." },
+        { "name": "DefaultValue", "type": "string", "default": "\"\"", "description": "Value used when no user setting exists." },
+        { "name": "Choices", "type": "IReadOnlyList<string>?", "default": "null", "description": "Allowed values for a Choice field." }
+      ]
+    },
+    {
+      "key": "CaptureArtifact",
+      "name": "CaptureArtifact",
+      "kind": "record",
+      "language": "csharp",
+      "signature": "public sealed record CaptureArtifact(string Path, CaptureMode Mode, CaptureSelection Selection, DateTimeOffset StartedAt, DateTimeOffset FinishedAt)",
+      "description": "Immutable description of a finalized image, video, GIF or audio capture passed to post-processors.",
+      "parameters": [
+        { "name": "Path", "type": "string", "description": "Absolute path to the completed media file." },
+        { "name": "Mode", "type": "CaptureMode", "description": "Image, Video, Gif or Audio." },
+        { "name": "Selection", "type": "CaptureSelection", "description": "Selected visual bounds; audio uses an empty selection descriptor." },
+        { "name": "StartedAt", "type": "DateTimeOffset", "description": "Capture start time." },
+        { "name": "FinishedAt", "type": "DateTimeOffset", "description": "Capture completion time." }
+      ],
+      "references": [
+        { "key": "CaptureMode", "name": "CaptureMode" },
+        { "key": "CaptureSelection", "name": "CaptureSelection" }
+      ]
+    },
+    {
+      "key": "CaptureSelection",
+      "name": "CaptureSelection",
+      "kind": "record",
+      "language": "csharp",
+      "signature": "public sealed record CaptureSelection(PixelBounds Bounds, MonitorDescriptor Monitor, SelectionKind Kind, string Title, nint WindowHandle = 0, byte[]? FrozenFramePng = null, QuickAnnotationDocument? QuickAnnotations = null)",
+      "description": "The target chosen for a visual capture, including desktop coordinates, monitor information and optional frozen-frame annotations."
+    },
+    {
+      "key": "CaptureMode",
+      "name": "CaptureMode",
+      "kind": "enum",
+      "language": "csharp",
+      "signature": "public enum CaptureMode { Image, Video, Gif, Audio }",
+      "description": "Identifies the four capture pipelines available to users and plugins."
+    }
+  ]
+}

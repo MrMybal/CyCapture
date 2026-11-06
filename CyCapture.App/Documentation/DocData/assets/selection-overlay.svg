@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 520" role="img" aria-labelledby="title desc">
+  <title id="title">Smart multi-monitor selection</title><desc id="desc">Fictional two-monitor desktop with a highlighted visible window and a compact selection toolbar.</desc>
+  <rect width="960" height="520" rx="24" fill="#06100e"/><rect x="25" y="70" width="550" height="360" rx="12" fill="#16201e" stroke="#40534d" stroke-width="3"/><rect x="600" y="105" width="335" height="270" rx="12" fill="#111a19" stroke="#40534d" stroke-width="3"/>
+  <rect x="86" y="120" width="405" height="235" rx="8" fill="#263330"/><rect x="86" y="120" width="405" height="35" rx="8" fill="#34423f"/><circle cx="110" cy="138" r="6" fill="#79ff2c"/><rect x="105" y="180" width="335" height="120" rx="8" fill="#101817"/><rect x="78" y="112" width="421" height="251" rx="12" fill="none" stroke="#79ff2c" stroke-width="4" stroke-dasharray="12 8"/>
+  <path d="M338 245l15 40 10-15 16 18 10-9-17-17 17-9z" fill="#fff" stroke="#07110f" stroke-width="3"/>
+  <g font-family="Segoe UI,Arial" font-size="16" fill="#fff"><rect x="160" y="454" width="640" height="48" rx="16" fill="#17211f" stroke="#30413b"/><text x="195" y="484" fill="#79ff2c">⌖ Smart</text><text x="350" y="484">Window</text><text x="505" y="484">Screen</text><text x="650" y="484">Free region</text></g>
+  <text x="25" y="45" fill="#8fa7a1" font-family="Segoe UI,Arial" font-size="16">Visible target · Z-order · per-monitor DPI</text>
+</svg>

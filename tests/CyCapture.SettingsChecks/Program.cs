@@ -1,6 +1,5 @@
 using System.Reflection;
 using System.IO;
-using System.IO.Compression;
 using System.Text.Json;
 using System.Xml.Linq;
 using Avalonia;
@@ -156,21 +155,21 @@ internal static class Program
 
     private static void CheckUpdates()
     {
-        const string fullName = "CyCapture-1.4.10-windows-x64-portable.exe";
-        const string liteName = "CyCapture-1.4.10-windows-x64-portable-without-CyAnnota.exe";
-        const string installerName = "CyCapture-1.4.10-windows-x64-installer.exe";
+        const string fullName = "CyCapture-1.4.11-windows-x64-portable.exe";
+        const string liteName = "CyCapture-1.4.11-windows-x64-portable-without-CyAnnota.exe";
+        const string installerName = "CyCapture-1.4.11-windows-x64-installer.exe";
         const string fullHash = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
         const string liteHash = "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB";
         const string installerHash = "CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC";
         var json = JsonSerializer.Serialize(new
         {
-            tag_name = "v1.4.10",
-            html_url = "https://github.com/MrMybal/CyCapture/releases/tag/v1.4.10",
+            tag_name = "v1.4.11",
+            html_url = "https://github.com/MrMybal/CyCapture/releases/tag/v1.4.11",
             assets = new object[]
             {
-                new { name = fullName, browser_download_url = $"https://github.com/MrMybal/CyCapture/releases/download/v1.4.10/{fullName}", size = 123L, digest = $"sha256:{fullHash}" },
-                new { name = liteName, browser_download_url = $"https://github.com/MrMybal/CyCapture/releases/download/v1.4.10/{liteName}", size = 456L, digest = $"sha256:{liteHash}" },
-                new { name = installerName, browser_download_url = $"https://github.com/MrMybal/CyCapture/releases/download/v1.4.10/{installerName}", size = 789L, digest = $"sha256:{installerHash}" }
+                new { name = fullName, browser_download_url = $"https://github.com/MrMybal/CyCapture/releases/download/v1.4.11/{fullName}", size = 123L, digest = $"sha256:{fullHash}" },
+                new { name = liteName, browser_download_url = $"https://github.com/MrMybal/CyCapture/releases/download/v1.4.11/{liteName}", size = 456L, digest = $"sha256:{liteHash}" },
+                new { name = installerName, browser_download_url = $"https://github.com/MrMybal/CyCapture/releases/download/v1.4.11/{installerName}", size = 789L, digest = $"sha256:{installerHash}" }
             }
         });
         var parse = AppAssembly.GetType("CyCapture.Services.UpdateService")!
@@ -189,7 +188,7 @@ internal static class Program
         Require(Property(installer, "AssetName").ToString() == installerName, "The installed edition selected the wrong update asset.");
         Require(Property(installer, "Sha256").ToString() == installerHash, "The installer update digest was not preserved.");
 
-        var current = parse.Invoke(null, [json, new Version(1, 4, 10), true, false])!;
+        var current = parse.Invoke(null, [json, new Version(1, 4, 11), true, false])!;
         Require(Equals(Property(current, "IsUpdateAvailable"), false), "The current version was reported as outdated.");
 
         var unsafeJson = json.Replace("https://github.com/MrMybal/CyCapture/releases/download/", "https://example.invalid/");
@@ -304,7 +303,7 @@ internal static class Program
         var preferences = IndependentPreferences();
         var settings = (SettingsWindow)Activator.CreateInstance(typeof(SettingsWindow), PrivateInstance, null, new object?[] { preferences, processors }, null)!;
         var quick = (QuickCaptureWindow)Activator.CreateInstance(typeof(QuickCaptureWindow), PrivateInstance, null, new object?[] { preferences, processors }, null)!;
-        CheckCyDocBundle();
+        CheckCyDocDistribution();
         Require(settings.FindControl<CheckBox>("SystemAudioCheck")!.IsChecked == false, "Video source initialized incorrectly.");
         Require(settings.FindControl<CheckBox>("AudioOnlySystemCheck")!.IsChecked == true, "Audio-only source initialized incorrectly.");
         Require(settings.FindControl<CheckBox>("FrameCheck")!.IsChecked == false && settings.FindControl<CheckBox>("GifFrameCheck")!.IsChecked == true,
@@ -312,7 +311,7 @@ internal static class Program
         var versionText = settings.FindControl<TextBlock>("AppVersionText")!.Text ?? string.Empty;
         var editionLabel = (string)AppAssembly.GetType("CyCapture.Services.AppBuildInfo")!
             .GetProperty("EditionLabel", PrivateStatic)!.GetValue(null)!;
-        Require(versionText.Contains("1.4.10", StringComparison.Ordinal),
+        Require(versionText.Contains("1.4.11", StringComparison.Ordinal),
             "The settings window does not show the application version.");
         Require(versionText.Contains(editionLabel, StringComparison.Ordinal),
             "The settings window does not show the compiled edition.");
@@ -350,24 +349,24 @@ internal static class Program
         quick.Close();
     }
 
-    private static void CheckCyDocBundle()
+    private static void CheckCyDocDistribution()
     {
-        using var stream = AppAssembly.GetManifestResourceStream("CyCapture.Bundled.CyDocHelp.zip");
-        Require(stream is not null, "The CyDoc help archive is not embedded in CyCapture.");
-        using var archive = new ZipArchive(stream!, ZipArchiveMode.Read, leaveOpen: false);
-        var names = archive.Entries.Select(entry => entry.FullName.Replace('\\', '/')).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var documentationRoot = Path.Combine(AppContext.BaseDirectory, "Documentation");
         foreach (var required in new[]
                  {
-                     "index.html", "viewer.js", "viewer.css", "data.js", "manifest.json", "translation-report.json",
-                     "media-image.js", "media-gallery.js", "assets/cycapture-logo.svg", "assets/licenses/CyDoc-MIT.txt"
+                     "Documentation.html", "DocAI.md", "DocData/viewer.js", "DocData/viewer.css", "DocData/data.js",
+                     "DocData/manifest.json", "DocData/translation-report.json", "DocData/media-image.js",
+                     "DocData/media-gallery.js", "DocData/assets/cycapture-logo.svg", "DocData/assets/licenses/CyDoc-MIT.txt"
                  })
-            Require(names.Contains(required), $"CyDoc bundle is missing {required}.");
-        Require(!names.Contains("media-video.js") && !names.Contains("media-gif.js")
-                && !names.Contains("media-mesh.js") && !names.Contains("media-graph.js"),
-            "CyDoc contains an unselected media module.");
+            Require(File.Exists(Path.Combine(documentationRoot, required.Replace('/', Path.DirectorySeparatorChar))),
+                $"CyDoc distribution is missing {required}.");
+        Require(!File.Exists(Path.Combine(documentationRoot, "DocData", "media-video.js"))
+                && !File.Exists(Path.Combine(documentationRoot, "DocData", "media-gif.js"))
+                && !File.Exists(Path.Combine(documentationRoot, "DocData", "media-mesh.js"))
+                && !File.Exists(Path.Combine(documentationRoot, "DocData", "media-graph.js")),
+            "CyDoc distribution contains an unselected media module.");
 
-        using var manifestReader = new StreamReader(archive.GetEntry("manifest.json")!.Open());
-        using var manifest = JsonDocument.Parse(manifestReader.ReadToEnd());
+        using var manifest = JsonDocument.Parse(File.ReadAllText(Path.Combine(documentationRoot, "DocData", "manifest.json")));
         Require(manifest.RootElement.GetProperty("defaultLocale").GetString() == "en", "CyDoc default locale is not English.");
         var pages = manifest.RootElement.GetProperty("pages").EnumerateArray().ToArray();
         var englishIds = pages.Where(page => page.GetProperty("locale").GetString() == "en")
@@ -375,11 +374,13 @@ internal static class Program
         var frenchIds = pages.Where(page => page.GetProperty("locale").GetString() == "fr")
             .Select(page => page.GetProperty("id").GetString()).ToHashSet();
         Require(englishIds.SetEquals(frenchIds), "CyDoc page identifiers differ between English and French.");
-        Require(new[] { "getting-started", "video", "gallery", "plugins", "plugin-api", "troubleshooting", "development", "licenses" }.All(englishIds.Contains),
+        Require(new[] { "getting-started", "video", "gallery", "plugins", "plugin-api", "troubleshooting", "licenses" }.All(englishIds.Contains),
             "CyDoc is missing a required help page.");
+        Require(!englishIds.Contains("development"), "Internal maintenance content leaked into the human manual.");
+        Require(pages.All(page => !page.TryGetProperty("kind", out var kind) || kind.GetString() != "source"),
+            "CyDoc exposes a raw source browsing page.");
 
-        using var reportReader = new StreamReader(archive.GetEntry("translation-report.json")!.Open());
-        using var report = JsonDocument.Parse(reportReader.ReadToEnd());
+        using var report = JsonDocument.Parse(File.ReadAllText(Path.Combine(documentationRoot, "DocData", "translation-report.json")));
         Require(report.RootElement.GetProperty("missing").GetArrayLength() == 0
                 && report.RootElement.GetProperty("outdated").GetArrayLength() == 0
                 && report.RootElement.GetProperty("untracked").GetArrayLength() == 0,
@@ -394,20 +395,20 @@ internal static class Program
             null)!;
         var serviceType = AppAssembly.GetType("CyCapture.Services.CyDocHelpService")!;
         var createUri = serviceType.GetMethod("CreateUri", PrivateStatic)!;
-        var uri = (Uri)createUri.Invoke(null, new object?[] { Path.Combine(Path.GetTempPath(), "CyCapture Help", "index.html"), "fr", route })!;
+        var uri = (Uri)createUri.Invoke(null, new object?[] { Path.Combine(Path.GetTempPath(), "CyCapture Help", "Documentation.html"), "fr", route })!;
         Require(uri.IsFile && uri.AbsoluteUri.Contains("#/fr/video/recording?media=intro%20clip&time=1.25", StringComparison.Ordinal),
             "CyDoc contextual file URL is invalid or unstable.");
 
         var prepareUri = serviceType.GetMethod("PrepareUriAsync", PrivateStatic)!;
-        var extractedUri = Task.Run(async () =>
+        var preparedUri = Task.Run(async () =>
         {
             var preparation = (Task<Uri>)prepareUri.Invoke(null, new object?[] { "fr", route, CancellationToken.None })!;
             return await preparation.ConfigureAwait(false);
         }).GetAwaiter().GetResult();
-        Require(extractedUri.IsFile && File.Exists(extractedUri.LocalPath), "The embedded CyDoc reader was not extracted to a local file URL.");
-        Require(File.Exists(Path.Combine(Path.GetDirectoryName(extractedUri.LocalPath)!, "media-image.js"))
-                && File.Exists(Path.Combine(Path.GetDirectoryName(extractedUri.LocalPath)!, "media-gallery.js")),
-            "The extracted CyDoc reader is missing selected modules.");
+        Require(preparedUri.IsFile && File.Exists(preparedUri.LocalPath), "The distributed CyDoc reader did not resolve to a local file URL.");
+        Require(File.Exists(Path.Combine(Path.GetDirectoryName(preparedUri.LocalPath)!, "DocData", "media-image.js"))
+                && File.Exists(Path.Combine(Path.GetDirectoryName(preparedUri.LocalPath)!, "DocData", "media-gallery.js")),
+            "The distributed CyDoc reader is missing selected modules.");
     }
 
     private static void CheckQuickAnnotationToolbar()

@@ -12,7 +12,7 @@ transmises à l'encodeur, le respect du Z-order par la sélection intelligente e
 le regroupement des contrôles dans les quatre onglets. Il valide également la
 détection des mises à jour, le choix du bon binaire avec/sans CyAnnota, le rejet
 des URL non fiables, ainsi que la présence du numéro de version et du bouton de
-mise à jour dans les réglages. Il inspecte aussi l’archive CyDoc embarquée,
+mise à jour dans les réglages. Il inspecte aussi la distribution CyDoc locale,
 les langues, les pages, le rapport de traduction, les modules sélectionnés et
 la construction des URL contextuelles `file://`.
 Il instancie les fenêtres Avalonia concernées et génère des aperçus PNG dans

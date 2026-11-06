@@ -7,8 +7,8 @@ dist-packages/
 dist-native/
 dist-local/
 artifacts/
-docs/cydoc/.output/
-docs/cydoc/vendor/*.tgz
+CyCapture.App/.CyDocBuild/node_modules/
+CyCapture.App/.CyDocBuild/vendor/*.tgz
 **/bin/
 **/obj/
 *.user

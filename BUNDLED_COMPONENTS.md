@@ -27,7 +27,7 @@ Les bibliothèques natives et les plugins de codecs fournis par les paquets offi
 
 ## CyDoc 0.1.0
 
-CyCapture utilise CyDoc pour générer et afficher sa documentation locale bilingue. Le lecteur, les pages compilées, les schémas et les ressources nécessaires sont embarqués dans l’exécutable puis ouverts directement avec une URL `file://`.
+CyCapture utilise CyDoc pour générer et afficher sa documentation locale bilingue. Le lecteur, les pages compilées, les schémas et les ressources nécessaires sont distribués dans le dossier `Documentation` puis ouverts directement avec une URL `file://`.
 
 - Projet et code source : <https://github.com/MrMybal/CyDoc>
 - Version : 0.1.0
@@ -82,7 +82,7 @@ The native libraries and codec plugins supplied by the official VideoLAN package
 
 ## CyDoc 0.1.0
 
-CyCapture uses CyDoc to generate and display its local bilingual documentation. The reader, compiled pages, diagrams and required resources are embedded in the executable and opened directly through a `file://` URL.
+CyCapture uses CyDoc to generate and display its local bilingual documentation. The reader, compiled pages, diagrams and required resources are distributed in the `Documentation` directory and opened directly through a `file://` URL.
 
 - Project and source code: <https://github.com/MrMybal/CyDoc>
 - Version: 0.1.0

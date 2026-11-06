@@ -14,7 +14,7 @@
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
     <AssemblyName>CyCapture</AssemblyName>
     <RootNamespace>CyCapture</RootNamespace>
-    <Version>1.4.10</Version>
+    <Version>1.4.11</Version>
     <Authors>CyberAlien</Authors>
     <Copyright>Copyright © 2026 CyberAlien</Copyright>
     <Product>CyCapture</Product>
@@ -40,10 +40,8 @@
     <IncludeCyAnnotaPlugin Condition="'$(IncludeCyAnnotaPlugin)' == ''">true</IncludeCyAnnotaPlugin>
     <DefineConstants Condition="'$(IncludeCyAnnotaPlugin)' == 'true'">$(DefineConstants);CYCAPTURE_CYANNOTA_PLUGIN</DefineConstants>
     <BuildCyDoc Condition="'$(BuildCyDoc)' == ''">true</BuildCyDoc>
-    <CyDocProjectDirectory>$(MSBuildProjectDirectory)\..\docs\cydoc</CyDocProjectDirectory>
-    <CyDocOutputDirectory>$(CyDocProjectDirectory)\.output\help</CyDocOutputDirectory>
-    <CyDocArchiveDirectory>$(BaseIntermediateOutputPath)cydoc</CyDocArchiveDirectory>
-    <CyDocArchivePath>$(CyDocArchiveDirectory)\CyCapture.Help.zip</CyDocArchivePath>
+    <CyDocProjectDirectory>$(MSBuildProjectDirectory)\.CyDocBuild</CyDocProjectDirectory>
+    <CyDocOutputDirectory>$(MSBuildProjectDirectory)\Documentation</CyDocOutputDirectory>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)' == 'Release'">
@@ -69,8 +67,11 @@
   <ItemGroup>
     <Content Include="..\LICENSE" Link="LICENSE" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" ExcludeFromSingleFile="true" />
     <Content Include="..\BUNDLED_COMPONENTS.md" Link="BUNDLED_COMPONENTS.md" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" ExcludeFromSingleFile="true" />
-    <EmbeddedResource Include="$(CyDocArchivePath)" LogicalName="CyCapture.Bundled.CyDocHelp.zip"
-                      Condition="'$(BuildCyDoc)' == 'true'" />
+    <Content Include="$(CyDocOutputDirectory)\**\*"
+             Link="Documentation\%(RecursiveDir)%(Filename)%(Extension)"
+             CopyToOutputDirectory="PreserveNewest"
+             CopyToPublishDirectory="PreserveNewest"
+             ExcludeFromSingleFile="true" />
     <EmbeddedResource Include="$(CyAnnotaBundlePath)" LogicalName="CyCapture.Bundled.$(CyAnnotaBundleFileName)"
                       Condition="'$(BundleCyAnnota)' == 'true' and '$(CyAnnotaUnpackedDirectory)' == ''" />
     <EmbeddedResource Include="$(CyAnnotaUnpackedArchivePath)" LogicalName="CyCapture.Bundled.$(CyAnnotaUnpackedArchiveFileName)"
@@ -103,9 +104,7 @@
           Condition="'$(BuildCyDoc)' == 'true' and '$(DesignTimeBuild)' != 'true'">
     <Exec WorkingDirectory="$(MSBuildProjectDirectory)\.."
           Command="&quot;$(SystemRoot)\System32\WindowsPowerShell\v1.0\powershell.exe&quot; -NoProfile -ExecutionPolicy Bypass -File &quot;$(MSBuildProjectDirectory)\..\scripts\build-documentation.ps1&quot;" />
-    <MakeDir Directories="$(CyDocArchiveDirectory)" />
-    <ZipDirectory SourceDirectory="$(CyDocOutputDirectory)" DestinationFile="$(CyDocArchivePath)" Overwrite="true" />
-    <Message Importance="high" Text="Documentation CyDoc locale intégrée depuis $(CyDocOutputDirectory)." />
+    <Message Importance="high" Text="Documentation CyDoc locale générée dans $(CyDocOutputDirectory)." />
   </Target>
 
   <Target Name="RemovePublishedDebugSymbols" AfterTargets="Publish" Condition="'$(Configuration)' == 'Release'">

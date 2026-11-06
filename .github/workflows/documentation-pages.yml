@@ -27,7 +27,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: MrMybal/CyDoc
-          ref: 774f2a7eabf7dd181a98ffc5add115b580b67f42
+          ref: 6ddf9a582defb2f11fbb3f992afef6f98dcadc93
           token: ${{ secrets.CYDOC_REPOSITORY_TOKEN }}
           path: .cydoc-source
           persist-credentials: false
@@ -39,23 +39,25 @@ jobs:
           cache: npm
           cache-dependency-path: |
             .cydoc-source/package-lock.json
-            docs/cydoc/package-lock.json
+            CyCapture.App/.CyDocBuild/package-lock.json
 
       - name: Pack the pinned CyDoc version
         working-directory: .cydoc-source
         run: |
           npm ci --no-audit --no-fund
-          mkdir -p "$GITHUB_WORKSPACE/docs/cydoc/vendor"
-          npm pack --pack-destination "$GITHUB_WORKSPACE/docs/cydoc/vendor"
+          mkdir -p "$GITHUB_WORKSPACE/CyCapture.App/.CyDocBuild/vendor"
+          npm pack --pack-destination "$GITHUB_WORKSPACE/CyCapture.App/.CyDocBuild/vendor"
+          mv "$GITHUB_WORKSPACE/CyCapture.App/.CyDocBuild/vendor/cydoc-0.1.0.tgz" \
+             "$GITHUB_WORKSPACE/CyCapture.App/.CyDocBuild/vendor/cydoc-0.1.0-6ddf9a582def.tgz"
 
       - name: Generate and check the complete documentation export
-        working-directory: docs/cydoc
+        working-directory: CyCapture.App/.CyDocBuild
         run: |
           npm ci --no-audit --no-fund
           npm run check
 
       - name: Verify links, translations and local resources
-        run: node scripts/verify-documentation.mjs docs/cydoc/.output/help docs/cydoc/cydoc.config.json
+        run: node scripts/verify-documentation.mjs CyCapture.App/Documentation CyCapture.App/.CyDocBuild/cydoc.config.json
 
       - name: Configure GitHub Pages
         uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
@@ -66,7 +68,7 @@ jobs:
       - name: Upload only the CyDoc export
         uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         with:
-          path: docs/cydoc/.output/help
+          path: CyCapture.App/Documentation
 
   deploy:
     environment:
