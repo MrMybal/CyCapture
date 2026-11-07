@@ -11,7 +11,7 @@ L’icône de la zone de notification est la surface de contrôle principale de 
 
 ## Menu du tray {#menu}
 
-- Ouvrez la palette ou démarrez directement une Image, une Vidéo, un GIF ou un Audio.
+- Ouvrez la palette, démarrez directement une Image, une Vidéo, un GIF ou un Audio, ou traduisez une zone.
 - Ouvrez la Galerie, les Réglages, la documentation ou les dossiers de capture et de plugins.
 - Activez les actions rapides des plugins comme CyAnnota Post Edit.
 - Arrêtez un enregistrement actif.

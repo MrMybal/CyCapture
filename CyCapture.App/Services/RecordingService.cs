@@ -47,7 +47,10 @@ internal sealed class RecordingService : IDisposable
                 try
                 {
                     var audioSettings = preferences.GetAudioSettings(CaptureMode.Audio);
-                    _audioSession.Start(audioSettings.SystemAudio, audioSettings.Microphone);
+                    _audioSession.Start(
+                        audioSettings.SystemAudio,
+                        audioSettings.Microphone,
+                        preferences.AudioOnlyIgnoreSystemVolume);
                 }
                 catch
                 {

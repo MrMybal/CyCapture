@@ -50,7 +50,13 @@ internal sealed class RecordingIndicatorWindow : Window
         }
         else
         {
-            Content = new Border { Background = new SolidColorBrush(Color.FromRgb(255, 40, 55)) };
+            Content = new Border
+            {
+                Background = Brushes.Transparent,
+                BorderBrush = new SolidColorBrush(Color.FromArgb(225, 255, 64, 80)),
+                BorderThickness = new Thickness(1.25),
+                CornerRadius = new CornerRadius(5)
+            };
         }
 
         Opened += (_, _) =>

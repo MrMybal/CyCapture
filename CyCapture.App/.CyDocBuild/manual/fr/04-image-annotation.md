@@ -5,12 +5,12 @@ description: Capturez en PNG ou JPEG et annotez le bureau figé avant la sélect
 section: Capture
 parent: selection
 order: 40
-sourceRevision: 2
+sourceRevision: 3
 ---
 
 ## Formats d’image {#formats}
 
-Le PNG est sans perte. Le JPEG propose des profils compact, équilibré et haute qualité. Le PNG ignore la qualité JPEG. Les images peuvent être copiées automatiquement dans le presse-papiers.
+Le PNG est sans perte. Le JPEG propose des profils compact, équilibré et haute qualité. Le PNG ignore la qualité JPEG. Les images sont copiées automatiquement dans le presse-papiers par défaut ; ce comportement peut être désactivé dans l’onglet Image.
 
 ## Parcours d’annotation {#annotation-workflow}
 

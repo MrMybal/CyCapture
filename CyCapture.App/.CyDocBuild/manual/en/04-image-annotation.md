@@ -5,12 +5,12 @@ description: Capture PNG or JPEG and annotate the frozen desktop before selectin
 section: Capture
 parent: selection
 order: 40
-revision: 2
+revision: 3
 ---
 
 ## Image formats {#formats}
 
-PNG is lossless. JPEG offers compact, balanced and high-quality profiles. PNG ignores the JPEG quality setting. Images can be copied automatically to the clipboard.
+PNG is lossless. JPEG offers compact, balanced and high-quality profiles. PNG ignores the JPEG quality setting. Images are copied automatically to the clipboard by default; this can be disabled in the Image tab.
 
 ## Annotation workflow {#annotation-workflow}
 

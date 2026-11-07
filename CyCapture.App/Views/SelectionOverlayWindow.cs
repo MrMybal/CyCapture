@@ -6,6 +6,7 @@ using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using CyCapture.Models;
 using CyCapture.Platform.Windows;
+using CyCapture.Services;
 
 namespace CyCapture.Views;
 
@@ -151,7 +152,7 @@ internal sealed class SelectionOverlayWindow : Window
         {
             Width = 140,
             Height = 32,
-            PlaceholderText = "Texte à ajouter…",
+            PlaceholderText = UiLocalization.Text("Texte à ajouter…", "Text to add…"),
             VerticalContentAlignment = VerticalAlignment.Center,
             IsVisible = false
         };
@@ -181,13 +182,13 @@ internal sealed class SelectionOverlayWindow : Window
             return button;
         }
 
-        var directButton = CompactButton("⌖", "Mode sélection : choisissez ensuite ce que vous voulez capturer");
+        var directButton = CompactButton("⌖", UiLocalization.Text("Mode sélection : choisissez ensuite ce que vous voulez capturer", "Selection mode: then choose what you want to capture"));
         directButton.Name = "QuickAnnotationSelectionButton";
         directButton.Click += (_, _) => SelectDirectCapture();
-        var freehandButton = ToolButton("✎", "Dessin libre", QuickAnnotationKind.Freehand);
-        var rectangleButton = ToolButton("□", "Cadre", QuickAnnotationKind.Rectangle);
-        var arrowButton = ToolButton("→", "Flèche", QuickAnnotationKind.Arrow);
-        var textButton = ToolButton("T", "Texte", QuickAnnotationKind.Text);
+        var freehandButton = ToolButton("✎", UiLocalization.Text("Dessin libre", "Freehand"), QuickAnnotationKind.Freehand);
+        var rectangleButton = ToolButton("□", UiLocalization.Text("Cadre", "Box"), QuickAnnotationKind.Rectangle);
+        var arrowButton = ToolButton("→", UiLocalization.Text("Flèche", "Arrow"), QuickAnnotationKind.Arrow);
+        var textButton = ToolButton("T", UiLocalization.Text("Texte", "Text"), QuickAnnotationKind.Text);
 
         var colorRow = new StackPanel
         {
@@ -214,9 +215,9 @@ internal sealed class SelectionOverlayWindow : Window
             colorRow.Children.Add(colorButton);
         }
 
-        var undoButton = CompactButton("↶", "Annuler la dernière annotation (Ctrl+Z)");
+        var undoButton = CompactButton("↶", UiLocalization.Text("Annuler la dernière annotation (Ctrl+Z)", "Undo the last annotation (Ctrl+Z)"));
         undoButton.Click += (_, _) => surface.UndoAnnotation();
-        var clearButton = CompactButton("×", "Effacer toutes les annotations");
+        var clearButton = CompactButton("×", UiLocalization.Text("Effacer toutes les annotations", "Clear all annotations"));
         clearButton.Click += (_, _) => surface.ClearAnnotations();
 
         var separator = new Border
@@ -319,35 +320,35 @@ internal sealed class SelectionOverlayWindow : Window
             instructionText.Text = annotationMode
                 ? surface.AnnotationCount switch
                 {
-                    0 => "Mode annotation multi-écrans · Dessinez, puis revenez sur ⌖",
-                    1 => "1 annotation · Revenez sur ⌖ pour sélectionner la capture",
-                    _ => $"{surface.AnnotationCount} annotations · Revenez sur ⌖ pour sélectionner la capture"
+                    0 => UiLocalization.Text("Mode annotation multi-écrans · Dessinez, puis revenez sur ⌖", "Multi-screen annotation mode · Draw, then return to ⌖"),
+                    1 => UiLocalization.Text("1 annotation · Revenez sur ⌖ pour sélectionner la capture", "1 annotation · Return to ⌖ to select the capture"),
+                    _ => UiLocalization.Text($"{surface.AnnotationCount} annotations · Revenez sur ⌖ pour sélectionner la capture", $"{surface.AnnotationCount} annotations · Return to ⌖ to select the capture")
                 }
                 : surface.AnnotationCount switch
                 {
                     0 => DirectCaptureInstruction(selectionMode),
-                    1 => "Mode sélection · 1 annotation sera incluse dans la capture",
-                    _ => $"Mode sélection · {surface.AnnotationCount} annotations seront incluses dans la capture"
+                    1 => UiLocalization.Text("Mode sélection · 1 annotation sera incluse dans la capture", "Selection mode · 1 annotation will be included in the capture"),
+                    _ => UiLocalization.Text($"Mode sélection · {surface.AnnotationCount} annotations seront incluses dans la capture", $"Selection mode · {surface.AnnotationCount} annotations will be included in the capture")
                 };
         }
     }
 
     private static string SelectionModeLabel(CaptureSelectionMode mode) => mode switch
     {
-        CaptureSelectionMode.Window => "Sélection de fenêtre",
-        CaptureSelectionMode.Screen => "Sélection d’écran",
-        CaptureSelectionMode.Region => "Zone libre",
-        _ => "Sélection intelligente"
+        CaptureSelectionMode.Window => UiLocalization.Text("Sélection de fenêtre", "Window selection"),
+        CaptureSelectionMode.Screen => UiLocalization.Text("Sélection d’écran", "Screen selection"),
+        CaptureSelectionMode.Region => UiLocalization.Text("Zone libre", "Free region"),
+        _ => UiLocalization.Text("Sélection intelligente", "Smart selection")
     };
 
     private static string SelectionInstruction(CaptureSelectionMode mode) => mode switch
     {
-        CaptureSelectionMode.Window => "Cliquez la fenêtre à capturer · Échap pour annuler",
-        CaptureSelectionMode.Screen => "Cliquez l’écran à capturer · Échap pour annuler",
-        CaptureSelectionMode.Region => "Glissez pour dessiner la zone à capturer · Échap pour annuler",
-        _ => "Cliquez une fenêtre ou un contenu · Glissez pour une zone libre · Échap pour annuler"
+        CaptureSelectionMode.Window => UiLocalization.Text("Cliquez la fenêtre à capturer · Échap pour annuler", "Click the window to capture · Esc to cancel"),
+        CaptureSelectionMode.Screen => UiLocalization.Text("Cliquez l’écran à capturer · Échap pour annuler", "Click the screen to capture · Esc to cancel"),
+        CaptureSelectionMode.Region => UiLocalization.Text("Glissez pour dessiner la zone à capturer · Échap pour annuler", "Drag to draw the capture region · Esc to cancel"),
+        _ => UiLocalization.Text("Cliquez une fenêtre ou un contenu · Glissez pour une zone libre · Échap pour annuler", "Click a window or content · Drag for a free region · Esc to cancel")
     };
 
     private static string DirectCaptureInstruction(CaptureSelectionMode mode) =>
-        $"{SelectionInstruction(mode)} · Outil ✓ = capture directe";
+        $"{SelectionInstruction(mode)} · {UiLocalization.Text("Outil ✓ = capture directe", "✓ tool = direct capture")}";
 }

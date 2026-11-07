@@ -11,7 +11,10 @@ internal sealed class SelectionService
 
     internal bool IsSelecting => _pending is not null;
 
-    internal async Task<CaptureSelection?> SelectAsync(CaptureSelectionMode selectionMode, bool enableQuickAnnotations = false)
+    internal async Task<CaptureSelection?> SelectAsync(
+        CaptureSelectionMode selectionMode,
+        bool enableQuickAnnotations = false,
+        bool preserveFrozenFrame = false)
     {
         if (_pending is not null) return null;
         var monitors = NativeMethods.GetMonitors();
@@ -30,7 +33,9 @@ internal sealed class SelectionService
         {
             using var drawingBitmap = capture.Bitmap;
             var screenshot = ScreenCapture.ToAvaloniaBitmap(drawingBitmap);
-            var frozenFrame = enableQuickAnnotations ? ScreenCapture.ToPngBytes(drawingBitmap) : null;
+            var frozenFrame = enableQuickAnnotations || preserveFrozenFrame
+                ? ScreenCapture.ToPngBytes(drawingBitmap)
+                : null;
             var window = new SelectionOverlayWindow(
                 screenshot,
                 frozenFrame,

@@ -18,7 +18,7 @@ internal sealed class AudioRecordingSession : IDisposable
     private bool _started;
     private bool _stopping;
 
-    internal void Start(bool includeSystemAudio, bool includeMicrophone)
+    internal void Start(bool includeSystemAudio, bool includeMicrophone, bool ignoreSystemVolume)
     {
         if (!includeSystemAudio && !includeMicrophone)
             throw new InvalidOperationException("Activez le son du système, le microphone, ou les deux dans les réglages.");
@@ -30,12 +30,14 @@ internal sealed class AudioRecordingSession : IDisposable
                 _tracks.Add(new AudioCaptureTrack(
                     new WasapiLoopbackCapture(),
                     Path.Combine(_temporaryDirectory, "system.wav"),
-                    _clock));
+                    _clock,
+                    ignoreSystemVolume));
             if (includeMicrophone)
                 _tracks.Add(new AudioCaptureTrack(
                     new WasapiCapture(),
                     Path.Combine(_temporaryDirectory, "microphone.wav"),
-                    _clock));
+                    _clock,
+                    false));
 
             _clock.Start();
             foreach (var track in _tracks) track.Start();
@@ -89,7 +91,13 @@ internal sealed class AudioRecordingSession : IDisposable
             {
                 var reader = new AudioFileReader(track.Path);
                 readers.Add(reader);
-                inputs.Add(Normalize(reader, TargetSampleRate, targetChannels));
+                ISampleProvider input = Normalize(reader, TargetSampleRate, targetChannels);
+                if (track.UseAutomaticGain)
+                {
+                    var gain = CalculateAutomaticGain(MeasurePeak(reader));
+                    if (gain > 1f) input = new VolumeSampleProvider(input) { Volume = gain };
+                }
+                inputs.Add(input);
             }
 
             if (inputs.Count == 0)
@@ -139,6 +147,29 @@ internal sealed class AudioRecordingSession : IDisposable
         return result;
     }
 
+    private static float MeasurePeak(AudioFileReader reader)
+    {
+        reader.Position = 0;
+        var samples = new float[16_384];
+        var peak = 0f;
+        int read;
+        while ((read = reader.Read(samples, 0, samples.Length)) > 0)
+        {
+            for (var index = 0; index < read; index++)
+                peak = Math.Max(peak, Math.Abs(samples[index]));
+        }
+        reader.Position = 0;
+        return peak;
+    }
+
+    internal static float CalculateAutomaticGain(float peak)
+    {
+        const float targetPeak = 0.92f;
+        const float maximumGain = 100f;
+        if (!float.IsFinite(peak) || peak <= 0.000_001f || peak >= targetPeak) return 1f;
+        return Math.Clamp(targetPeak / peak, 1f, maximumGain);
+    }
+
     private void CleanupTemporaryDirectory()
     {
         try
@@ -175,17 +206,19 @@ internal sealed class AudioRecordingSession : IDisposable
         private bool _started;
         private bool _acceptingData;
 
-        internal AudioCaptureTrack(IWaveIn capture, string path, Stopwatch clock)
+        internal AudioCaptureTrack(IWaveIn capture, string path, Stopwatch clock, bool useAutomaticGain)
         {
             _capture = capture;
             _clock = clock;
             Path = path;
+            UseAutomaticGain = useAutomaticGain;
             _writer = new WaveFileWriter(path, capture.WaveFormat);
             _capture.DataAvailable += DataAvailable;
             _capture.RecordingStopped += RecordingStopped;
         }
 
         internal string Path { get; }
+        internal bool UseAutomaticGain { get; }
 
         internal void Start()
         {

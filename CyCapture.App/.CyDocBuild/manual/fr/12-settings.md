@@ -5,7 +5,7 @@ description: Configurez chaque média séparément tout en gardant CyCapture dis
 section: Application
 parent: tray
 order: 120
-sourceRevision: 2
+sourceRevision: 3
 ---
 
 ```image
@@ -14,7 +14,9 @@ sourceRevision: 2
 
 ## Réglages par mode {#per-mode}
 
-Image, Vidéo, GIF et Audio possèdent des onglets et profils indépendants. Le son Vidéo ne modifie pas l’Audio seul, et les cadres Vidéo/GIF sont séparés. La palette rapide expose les qualités les plus utiles avant la capture.
+Image, Vidéo, GIF, Audio et Traduction possèdent des onglets et profils indépendants. Le son Vidéo ne modifie pas l’Audio seul, et les cadres Vidéo/GIF sont séparés. Les réglages Traduction choisissent les langues source/cible et ouvrent le gestionnaire de modèles locaux. La palette rapide expose les contrôles les plus utiles avant la capture.
+
+Chaque mode possède également sa propre option de presse-papiers. Les pixels des images, les fichiers Vidéo/GIF/Audio terminés et le texte traduit sont copiés automatiquement par défaut ; décochez uniquement les modes que vous ne souhaitez pas copier.
 
 ## Impr. écran {#print-screen}
 

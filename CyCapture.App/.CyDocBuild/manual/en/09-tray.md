@@ -11,7 +11,7 @@ The notification-area icon is the main control surface of CyCapture.
 
 ## Tray menu {#menu}
 
-- Open the quick palette or start Image, Video, GIF or Audio directly.
+- Open the quick palette, start Image, Video, GIF or Audio directly, or translate an area.
 - Open Gallery, Settings, documentation, the capture folder or the plugins folder.
 - Toggle plugin quick actions such as CyAnnota Post Edit.
 - Stop an active recording.

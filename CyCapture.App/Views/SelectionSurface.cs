@@ -6,6 +6,7 @@ using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using CyCapture.Models;
 using CyCapture.Platform.Windows;
+using CyCapture.Services;
 
 namespace CyCapture.Views;
 
@@ -222,7 +223,7 @@ internal sealed class SelectionSurface : Control
         var globalPosition = ToGlobal(position);
         if (!_monitor.Bounds.Contains(globalPosition.X, globalPosition.Y))
         {
-            AnnotationHint?.Invoke(this, "Placez l’annotation à l’intérieur de l’écran.");
+            AnnotationHint?.Invoke(this, UiLocalization.Text("Placez l’annotation à l’intérieur de l’écran.", "Place the annotation inside the screen."));
             args.Handled = true;
             return;
         }
@@ -400,10 +401,11 @@ internal sealed class SelectionSurface : Control
         var clipped = bounds.Intersect(_monitor.Bounds);
         if (clipped.Width <= 0 || clipped.Height <= 0) return;
         var selection = new CaptureSelection(clipped, _monitor, kind, title, handle);
+        if (_frozenFramePng is not null)
+            selection = selection with { FrozenFramePng = _frozenFramePng };
         if (_quickAnnotationsEnabled)
             selection = selection with
             {
-                FrozenFramePng = _frozenFramePng,
                 QuickAnnotations = new QuickAnnotationDocument(_annotationSession.Annotations.ToArray())
             };
         SelectionCompleted?.Invoke(this, selection);
@@ -443,8 +445,8 @@ internal sealed class SelectionSurface : Control
     private static string CandidateLabel(SelectableRegion? candidate) => candidate?.Kind switch
     {
         SelectionKind.Client => $"CONTENU · {candidate.Title}",
-        SelectionKind.Control => $"CONTRÔLE · {candidate.Title}",
-        SelectionKind.Window => $"FENÊTRE · {candidate.Title}",
-        _ => $"ÉCRAN · {candidate?.Title ?? string.Empty}"
+        SelectionKind.Control => $"{UiLocalization.Text("CONTRÔLE", "CONTROL")} · {candidate.Title}",
+        SelectionKind.Window => $"{UiLocalization.Text("FENÊTRE", "WINDOW")} · {candidate.Title}",
+        _ => $"{UiLocalization.Text("ÉCRAN", "SCREEN")} · {candidate?.Title ?? string.Empty}"
     };
 }

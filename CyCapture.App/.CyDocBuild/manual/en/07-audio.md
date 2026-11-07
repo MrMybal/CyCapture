@@ -5,7 +5,7 @@ description: Record system sound, microphone, or both without capturing the scre
 section: Capture
 parent: getting-started
 order: 70
-revision: 2
+revision: 3
 ---
 
 ## Sources {#sources}
@@ -25,5 +25,7 @@ At least one source must be enabled in the Audio tab.
 Profiles range from 96 kbit/s mono to 192 kbit/s stereo. CyCapture writes MP3 and falls back to WAV if MP3 finalization is unavailable.
 
 Audio starts immediately because no screen selection is required. Press Print Screen again or use the tray Stop command to finish.
+
+Enable **Copy audio captures to the clipboard as files** to paste the finished recording into applications that accept file attachments. This option is enabled by default.
 
 Audio-only sources and quality are independent from the audio settings used inside [Video](doc:video#audio).

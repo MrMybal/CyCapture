@@ -12,6 +12,31 @@ Le paquet NuGet et ses bibliothèques nécessaires sont inclus dans les builds a
 
 ---
 
+## Tesseract .NET / Tesseract OCR 5.2.0
+
+CyCapture utilise Tesseract pour reconnaître localement le texte des zones choisies dans le mode Traduction.
+
+- Wrapper .NET et code source : <https://github.com/charlesw/tesseract>
+- Moteur OCR et données de langues : <https://github.com/tesseract-ocr/tesseract>
+- Licence : Apache License 2.0
+
+Le moteur natif est distribué avec l’application. Les fichiers `tessdata_fast` des langues choisies sont téléchargés à la demande depuis le dépôt officiel Tesseract et conservés dans les données locales de CyCapture ; ils ne sont pas inclus dans le dépôt source.
+
+---
+
+## BergamotTranslatorSharp / Bergamot 0.7.0
+
+CyCapture utilise Bergamot pour traduire localement le texte reconnu et l’afficher par-dessus l’écran figé.
+
+- Wrapper .NET : <https://github.com/Freeesia/BergamotTranslatorSharp>
+- Moteur Bergamot : <https://github.com/browsermt/bergamot-translator>
+- Registre officiel des modèles Mozilla : <https://mozilla.github.io/translations/model-registry/>
+- Licence du wrapper et du moteur : Mozilla Public License 2.0
+
+La bibliothèque native est distribuée avec l’application. Les modèles de traduction sont téléchargés à la demande depuis le registre officiel Mozilla, vérifiés lorsque le registre fournit une empreinte, puis conservés dans les données locales de CyCapture.
+
+---
+
 ## LibVLCSharp 3.10.1 et LibVLC 3.0.23.1
 
 CyCapture utilise les vues Avalonia officielles LibVLCSharp et le moteur LibVLC Windows pour lire directement les vidéos, GIF animés et fichiers audio dans la galerie.
@@ -64,6 +89,31 @@ CyCapture uses NAudio for WASAPI audio capture (system audio and microphone) and
 - Copyright © Mark Heath and NAudio contributors
 
 The NuGet package and its required libraries are included in CyCapture self-contained builds.
+
+---
+
+## Tesseract .NET / Tesseract OCR 5.2.0
+
+CyCapture uses Tesseract to recognize text locally inside areas selected in Translation mode.
+
+- .NET wrapper and source code: <https://github.com/charlesw/tesseract>
+- OCR engine and language data: <https://github.com/tesseract-ocr/tesseract>
+- License: Apache License 2.0
+
+The native engine is distributed with the application. Language files from the official `tessdata_fast` repository are downloaded on demand and retained in CyCapture local data; they are not included in the source repository.
+
+---
+
+## BergamotTranslatorSharp / Bergamot 0.7.0
+
+CyCapture uses Bergamot to translate recognized text locally and display it over the frozen screen.
+
+- .NET wrapper: <https://github.com/Freeesia/BergamotTranslatorSharp>
+- Bergamot engine: <https://github.com/browsermt/bergamot-translator>
+- Official Mozilla model registry: <https://mozilla.github.io/translations/model-registry/>
+- Wrapper and engine license: Mozilla Public License 2.0
+
+The native library is distributed with the application. Translation models are downloaded on demand from Mozilla's official registry, verified when the registry provides a digest, and retained in CyCapture local data.
 
 ---
 

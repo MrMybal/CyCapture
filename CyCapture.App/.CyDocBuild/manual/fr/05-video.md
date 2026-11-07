@@ -5,7 +5,7 @@ description: Enregistrez une zone ou un écran en MP4/H.264 avec du son facultat
 section: Capture
 parent: selection
 order: 50
-sourceRevision: 2
+sourceRevision: 3
 ---
 
 ## Démarrer et arrêter {#recording}
@@ -29,6 +29,6 @@ Le son système et le microphone sont deux options Vidéo indépendantes. Sans s
 
 ## Cadre et presse-papiers {#frame}
 
-Le cadre rouge fin et le minuteur facultatifs indiquent la zone active et sont exclus de la capture. Le cadre Vidéo se règle séparément du cadre GIF. Une vidéo peut être copiée dans le presse-papiers Windows comme pièce jointe.
+Le cadre rouge fin et le minuteur facultatifs indiquent la zone active et sont exclus de la capture. Le cadre Vidéo se règle séparément du cadre GIF. Les vidéos terminées sont copiées par défaut dans le presse-papiers Windows comme pièces jointes ; ce comportement peut être désactivé dans l’onglet Vidéo.
 
 Attendez la notification de finalisation avant d’ouvrir un long enregistrement.

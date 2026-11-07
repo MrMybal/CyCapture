@@ -21,6 +21,9 @@ internal sealed class ApplicationController
     private readonly RecordingIndicatorService _indicator = new();
     private readonly PostProcessingService _postProcessing = new();
     private readonly HistoryService _history = new();
+    private readonly UpdateService _updateService = new();
+    private readonly TranslationModelService _translationModels = new();
+    private readonly OcrTranslationService _translation;
     private readonly DispatcherTimer _recordingTimer;
     private readonly DispatcherTimer _printScreenHoldTimer;
     private readonly CancellationTokenSource _shutdown = new();
@@ -36,6 +39,9 @@ internal sealed class ApplicationController
     private GalleryWindow? _galleryWindow;
     private SettingsWindow? _settingsWindow;
     private ToastWindow? _toast;
+    private UpdateAvailableWindow? _updatePrompt;
+    private TranslationProgressWindow? _translationProgress;
+    private TranslationOverlayWindow? _translationWindow;
     private bool _captureFlowActive;
     private bool _printScreenHybridPending;
     private bool _testMode;
@@ -44,6 +50,7 @@ internal sealed class ApplicationController
     internal ApplicationController(IClassicDesktopStyleApplicationLifetime desktop)
     {
         _desktop = desktop;
+        _translation = new OcrTranslationService(_translationModels);
         _recording.StateChanged += (_, _) => Dispatcher.UIThread.Post(UpdateTrayState);
         _postProcessing.PluginsChanged += (_, _) => Dispatcher.UIThread.Post(UpdatePluginTrayItems);
         _recordingTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
@@ -60,6 +67,19 @@ internal sealed class ApplicationController
 
     private async Task StartAsync()
     {
+        var translationSelfTestIndex = Array.FindIndex(_desktop.Args ?? [], argument =>
+            argument.Equals("--translation-self-test", StringComparison.OrdinalIgnoreCase));
+        if (translationSelfTestIndex >= 0)
+        {
+            var reportPath = translationSelfTestIndex + 1 < (_desktop.Args?.Length ?? 0)
+                ? _desktop.Args![translationSelfTestIndex + 1]
+                : Path.Combine(Path.GetTempPath(), "CyCapture", "translation-self-test.json");
+            await new TranslationSelfTestService().RunAsync(reportPath);
+            _existingInstanceSignal.Dispose();
+            _desktop.Shutdown();
+            return;
+        }
+
         var selfTestIndex = Array.FindIndex(_desktop.Args ?? [], argument =>
             argument.Equals("--self-test", StringComparison.OrdinalIgnoreCase));
         if (selfTestIndex >= 0)
@@ -74,6 +94,7 @@ internal sealed class ApplicationController
         }
 
         _preferences = await Preferences.LoadAsync();
+        UiLocalization.Use(_preferences.ApplicationLanguage);
         if (_preferences.StartWithWindows)
             WindowsStartup.TrySetEnabled(true, out _);
         var testOutputIndex = Array.FindIndex(_desktop.Args ?? [], argument =>
@@ -84,6 +105,9 @@ internal sealed class ApplicationController
             _preferences.OutputDirectory = Path.GetFullPath(_desktop.Args![testOutputIndex + 1]);
             _preferences.CopyScreenshotsToClipboard = false;
             _preferences.CopyVideosToClipboard = false;
+            _preferences.CopyGifsToClipboard = false;
+            _preferences.CopyAudioToClipboard = false;
+            _preferences.CopyTranslationsToClipboard = false;
             _preferences.IncludeSystemAudio = false;
             _preferences.IncludeMicrophone = false;
             _preferences.AudioOnlyIncludeSystemAudio = false;
@@ -118,6 +142,7 @@ internal sealed class ApplicationController
             ShowDocumentation();
         if (_desktop.Args?.Contains("--quick", StringComparer.OrdinalIgnoreCase) == true)
             ShowQuickMenu();
+        if (!_testMode) _ = CheckForUpdatesOnStartupAsync();
     }
 
     private void CreateTray()
@@ -126,7 +151,7 @@ internal sealed class ApplicationController
         _recordingIcon = CreateWindowIcon(true);
         _recordingMenuItem = new NativeMenuItem
         {
-            Header = "Aucun enregistrement en cours",
+            Header = UiLocalization.Translate("Aucun enregistrement en cours"),
             IsEnabled = false,
             Command = new ActionCommand(() => _ = StopRecordingAsync())
         };
@@ -134,25 +159,26 @@ internal sealed class ApplicationController
         {
             Items =
             {
-                new NativeMenuItem { Header = "Capture rapide · Impr écran", Command = new ActionCommand(ShowQuickMenu) },
+                new NativeMenuItem { Header = UiLocalization.Translate("Capture rapide · Impr écran"), Command = new ActionCommand(ShowQuickMenu) },
                 new NativeMenuItemSeparator(),
-                new NativeMenuItem { Header = "Capturer une image", Command = new ActionCommand(() => StartDirectCapture(CaptureMode.Image)) },
-                new NativeMenuItem { Header = "Démarrer une capture vidéo", Command = new ActionCommand(() => StartDirectCapture(CaptureMode.Video)) },
-                new NativeMenuItem { Header = "Créer un GIF", Command = new ActionCommand(() => StartDirectCapture(CaptureMode.Gif)) },
-                new NativeMenuItem { Header = "Démarrer une capture audio", Command = new ActionCommand(() => StartDirectCapture(CaptureMode.Audio)) },
+                new NativeMenuItem { Header = UiLocalization.Translate("Capturer une image"), Command = new ActionCommand(() => StartDirectCapture(CaptureMode.Image)) },
+                new NativeMenuItem { Header = UiLocalization.Translate("Démarrer une capture vidéo"), Command = new ActionCommand(() => StartDirectCapture(CaptureMode.Video)) },
+                new NativeMenuItem { Header = UiLocalization.Translate("Créer un GIF"), Command = new ActionCommand(() => StartDirectCapture(CaptureMode.Gif)) },
+                new NativeMenuItem { Header = UiLocalization.Translate("Démarrer une capture audio"), Command = new ActionCommand(() => StartDirectCapture(CaptureMode.Audio)) },
+                new NativeMenuItem { Header = UiLocalization.Text("Traduire une zone", "Translate an area"), Command = new ActionCommand(() => _ = BeginTranslationAsync()) },
                 new NativeMenuItemSeparator(),
                 _recordingMenuItem,
                 new NativeMenuItemSeparator(),
-                new NativeMenuItem { Header = "Ouvrir CyCapture · Galerie", Command = new ActionCommand(ShowGallery) },
-                new NativeMenuItem { Header = "Documentation / Aide", Command = new ActionCommand(ShowDocumentation) },
-                new NativeMenuItem { Header = "Réglages…", Command = new ActionCommand(ShowSettings) },
-                new NativeMenuItem { Header = "Dossier des captures", Command = new ActionCommand(OpenOutputDirectory) },
-                new NativeMenuItem { Header = "Dossier des plugins", Command = new ActionCommand(OpenPluginsDirectory) },
+                new NativeMenuItem { Header = UiLocalization.Translate("Ouvrir CyCapture · Galerie"), Command = new ActionCommand(ShowGallery) },
+                new NativeMenuItem { Header = UiLocalization.Translate("Documentation / Aide"), Command = new ActionCommand(ShowDocumentation) },
+                new NativeMenuItem { Header = UiLocalization.Translate("Réglages…"), Command = new ActionCommand(ShowSettings) },
+                new NativeMenuItem { Header = UiLocalization.Translate("Dossier des captures"), Command = new ActionCommand(OpenOutputDirectory) },
+                new NativeMenuItem { Header = UiLocalization.Translate("Dossier des plugins"), Command = new ActionCommand(OpenPluginsDirectory) },
                 new NativeMenuItemSeparator(),
-                new NativeMenuItem { Header = "Quitter CyCapture", Command = new ActionCommand(Quit) }
+                new NativeMenuItem { Header = UiLocalization.Translate("Quitter CyCapture"), Command = new ActionCommand(Quit) }
             }
         };
-        var pluginInsertIndex = 6;
+        var pluginInsertIndex = 7;
         var quickAccessPlugins = _postProcessing.GetPlugins()
             .Where(plugin => !string.IsNullOrWhiteSpace(plugin.QuickAccessLabel))
             .ToList();
@@ -175,7 +201,7 @@ internal sealed class ApplicationController
         _tray = new TrayIcon
         {
             Icon = _idleIcon,
-            ToolTipText = "CyCapture — Impr écran pour capturer",
+            ToolTipText = UiLocalization.Text("CyCapture — Impr écran pour capturer", "CyCapture — Print Screen to capture"),
             Menu = menu,
             Command = new ActionCommand(ShowQuickMenu),
             IsVisible = true
@@ -223,6 +249,9 @@ internal sealed class ApplicationController
                 break;
             case PrintScreenBehavior.CaptureAudio:
                 await BeginCaptureAsync(CaptureMode.Audio);
+                break;
+            case PrintScreenBehavior.CaptureTranslation:
+                await BeginTranslationAsync();
                 break;
             default:
                 ShowQuickMenu();
@@ -290,12 +319,61 @@ internal sealed class ApplicationController
 
     private async void QuickCaptureRequested(object? sender, CaptureRequest request)
     {
-        await BeginCaptureAsync(request.Mode, request.SelectionMode);
+        if (request.TranslateSelection)
+            await BeginTranslationAsync(request.SelectionMode);
+        else
+            await BeginCaptureAsync(request.Mode, request.SelectionMode);
     }
 
-    private async void SettingsCaptureRequested(object? sender, CaptureMode mode)
+    private async Task BeginTranslationAsync(CaptureSelectionMode? selectionMode = null)
     {
-        await BeginCaptureAsync(mode, _preferences.SelectionMode);
+        if (_captureFlowActive || _recording.IsActive || _recording.IsFinishing) return;
+        _captureFlowActive = true;
+        _translationWindow?.Close();
+        _translationWindow = null;
+        try
+        {
+            var selection = await _selection.SelectAsync(
+                selectionMode ?? _preferences.SelectionMode,
+                enableQuickAnnotations: false,
+                preserveFrozenFrame: true);
+            if (selection is null) return;
+
+            using var cancellation = CancellationTokenSource.CreateLinkedTokenSource(_shutdown.Token);
+            _translationProgress = new TranslationProgressWindow(cancellation) { Icon = _idleIcon };
+            var reporter = new Progress<TranslationProgress>(value => _translationProgress?.Report(value));
+            _translationProgress.Show();
+            ScreenTranslationResult result;
+            try
+            {
+                result = await _translation.TranslateAsync(selection, _preferences, reporter, cancellation.Token);
+            }
+            finally
+            {
+                _translationProgress?.CompleteAndClose();
+                _translationProgress = null;
+            }
+            cancellation.Token.ThrowIfCancellationRequested();
+            if (_preferences.CopyTranslationsToClipboard && !string.IsNullOrWhiteSpace(result.PlainText))
+            {
+                try { WindowsClipboard.CopyText(result.PlainText); }
+                catch { /* La traduction reste visible même si une application verrouille le presse-papiers. */ }
+            }
+            _translationWindow = new TranslationOverlayWindow(result) { Icon = _idleIcon };
+            _translationWindow.Closed += (_, _) => _translationWindow = null;
+            _translationWindow.Show();
+        }
+        catch (OperationCanceledException)
+        {
+        }
+        catch (Exception error)
+        {
+            ShowToast(UiLocalization.Text("Traduction impossible", "Translation failed"), error.Message, true);
+        }
+        finally
+        {
+            _captureFlowActive = false;
+        }
     }
 
     private async Task BeginCaptureAsync(CaptureMode mode, CaptureSelectionMode? selectionMode = null)
@@ -370,14 +448,23 @@ internal sealed class ApplicationController
     {
         if (!_recording.IsActive) return;
         _indicator.Hide();
+        _translationProgress?.Close();
+        _translationWindow?.Close();
         UpdateTrayState();
         try
         {
             var artifact = await _recording.StopAsync();
-            if (artifact.Mode == CaptureMode.Video && _preferences.CopyVideosToClipboard)
+            var copyToClipboard = artifact.Mode switch
+            {
+                CaptureMode.Video => _preferences.CopyVideosToClipboard,
+                CaptureMode.Gif => _preferences.CopyGifsToClipboard,
+                CaptureMode.Audio => _preferences.CopyAudioToClipboard,
+                _ => false
+            };
+            if (copyToClipboard)
             {
                 try { WindowsClipboard.CopyFile(artifact.Path); }
-                catch { /* La vidéo reste enregistrée même si une application verrouille le presse-papiers. */ }
+                catch { /* Le fichier reste enregistré même si une application verrouille le presse-papiers. */ }
             }
             await CompleteArtifactAsync(artifact);
             ShowToast(
@@ -422,8 +509,8 @@ internal sealed class ApplicationController
         else if (_recording.IsFinishing)
         {
             _tray.Icon = _recordingIcon;
-            _tray.ToolTipText = "CyCapture — Finalisation en cours…";
-            _recordingMenuItem.Header = "Finalisation en cours…";
+            _tray.ToolTipText = UiLocalization.Text("CyCapture — Finalisation en cours…", "CyCapture — Finishing…");
+            _recordingMenuItem.Header = UiLocalization.Text("Finalisation en cours…", "Finishing…");
             _recordingMenuItem.IsEnabled = false;
             _recordingTimer.Stop();
         }
@@ -431,8 +518,8 @@ internal sealed class ApplicationController
         {
             _recordingTimer.Stop();
             _tray.Icon = _idleIcon;
-            _tray.ToolTipText = "CyCapture — Impr écran pour capturer";
-            _recordingMenuItem.Header = "Aucun enregistrement en cours";
+            _tray.ToolTipText = UiLocalization.Text("CyCapture — Impr écran pour capturer", "CyCapture — Print Screen to capture");
+            _recordingMenuItem.Header = UiLocalization.Translate("Aucun enregistrement en cours");
             _recordingMenuItem.IsEnabled = false;
         }
     }
@@ -446,25 +533,74 @@ internal sealed class ApplicationController
         {
             CaptureMode.Gif => "GIF",
             CaptureMode.Audio => "AUDIO",
-            _ => "VIDÉO"
+            _ => UiLocalization.Text("VIDÉO", "VIDEO")
         };
-        _tray.ToolTipText = $"CyCapture — ● REC {time} · Impr écran pour arrêter";
-        _recordingMenuItem.Header = $"■ Arrêter {kind} · {time}";
+        _tray.ToolTipText = UiLocalization.Text(
+            $"CyCapture — ● REC {time} · Impr écran pour arrêter",
+            $"CyCapture — ● REC {time} · Print Screen to stop");
+        _recordingMenuItem.Header = UiLocalization.Text($"■ Arrêter {kind} · {time}", $"■ Stop {kind} · {time}");
         _indicator.UpdateElapsed(elapsed);
     }
 
-    private void ShowSettings()
+    private async Task CheckForUpdatesOnStartupAsync()
+    {
+        try
+        {
+            var update = await _updateService.CheckAsync(_shutdown.Token);
+            if (update.IsUpdateAvailable && !_shutdown.IsCancellationRequested)
+                ShowUpdatePrompt(update);
+        }
+        catch (OperationCanceledException) when (_shutdown.IsCancellationRequested)
+        {
+        }
+        catch
+        {
+            // A network failure must never prevent the tray application from starting.
+        }
+    }
+
+    private void ShowUpdatePrompt(UpdateCheckResult update)
+    {
+        if (_updatePrompt is { IsVisible: true })
+        {
+            _updatePrompt.Activate();
+            return;
+        }
+        _updatePrompt = new UpdateAvailableWindow(update) { Icon = _idleIcon };
+        _updatePrompt.Accepted += (_, _) => ShowSettings(update);
+        _updatePrompt.Closed += (_, _) => _updatePrompt = null;
+        _updatePrompt.Show();
+        _updatePrompt.Activate();
+    }
+
+    private void RefreshInterfaceLanguage()
+    {
+        if (_tray?.Menu is { } menu)
+        {
+            foreach (var item in menu.Items.OfType<NativeMenuItem>())
+                item.Header = UiLocalization.Translate(item.Header ?? string.Empty);
+        }
+        if (_quickWindow is not null) UiLocalization.ApplyTo(_quickWindow);
+        if (_galleryWindow is not null) UiLocalization.ApplyTo(_galleryWindow);
+        UpdateTrayState();
+    }
+
+    private void ShowSettings() => ShowSettings(null);
+
+    private void ShowSettings(UpdateCheckResult? update)
     {
         try
         {
             if (_settingsWindow is { IsVisible: true })
             {
+                if (update is not null) _settingsWindow.OfferUpdate(update);
                 _settingsWindow.Activate();
                 return;
             }
             _settingsWindow = new SettingsWindow(_preferences, _postProcessing) { Icon = _idleIcon };
-            _settingsWindow.CaptureRequested += SettingsCaptureRequested;
+            if (update is not null) _settingsWindow.OfferUpdate(update);
             _settingsWindow.DocumentationRequested += (_, _) => ShowDocumentation(new CyDocRoute("settings"));
+            _settingsWindow.InterfaceLanguageChanged += (_, _) => RefreshInterfaceLanguage();
             _settingsWindow.Closed += (_, _) => _settingsWindow = null;
             _settingsWindow.Show();
             _settingsWindow.Activate();

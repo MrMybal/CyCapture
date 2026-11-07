@@ -5,7 +5,7 @@ description: Record a selected area or screen to MP4/H.264 with optional audio.
 section: Capture
 parent: selection
 order: 50
-revision: 2
+revision: 3
 ---
 
 ## Start and stop {#recording}
@@ -29,6 +29,6 @@ System audio and microphone are independent Video options. If neither is enabled
 
 ## Recording frame and clipboard {#frame}
 
-The optional thin red frame and timer indicate the active region and are excluded from capture. The Video frame is configured separately from the GIF frame. Video files can optionally be copied to the Windows clipboard as file attachments.
+The optional thin red frame and timer indicate the active region and are excluded from capture. The Video frame is configured separately from the GIF frame. Finished video files are copied to the Windows clipboard as file attachments by default; this can be disabled in the Video tab.
 
 Wait for the finalization notification before opening a long recording.

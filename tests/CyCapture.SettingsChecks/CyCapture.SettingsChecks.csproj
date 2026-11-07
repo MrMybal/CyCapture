@@ -11,5 +11,7 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="../../CyCapture.App/CyCapture.App.csproj" />
+    <PackageReference Include="BergamotTranslatorSharp" Version="0.7.0" />
+    <PackageReference Include="Tesseract" Version="5.2.0" />
   </ItemGroup>
 </Project>

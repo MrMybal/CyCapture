@@ -1,6 +1,6 @@
 {
   "name": "CyCapture",
-  "version": "1.4.11",
+  "version": "1.5.0",
   "defaultLocale": "en",
   "homePage": "getting-started",
   "locales": [
@@ -26,6 +26,8 @@
     "help": "getting-started",
     "image": "image-annotation",
     "recording": "video",
+    "translation": "screen-translation",
+    "ocr": "screen-translation#translate-area",
     "folders": "storage",
     "development": "plugin-api#contract",
     "source-sources-plugincontracts-public-cs": "plugin-api#contract",

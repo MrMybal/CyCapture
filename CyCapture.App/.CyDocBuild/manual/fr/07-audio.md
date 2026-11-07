@@ -5,7 +5,7 @@ description: Enregistrez le son système, le microphone ou les deux sans capture
 section: Capture
 parent: getting-started
 order: 70
-sourceRevision: 2
+sourceRevision: 3
 ---
 
 ## Sources {#sources}
@@ -25,5 +25,7 @@ Au moins une source doit être activée dans l’onglet Audio.
 Les profils vont de 96 kbit/s mono à 192 kbit/s stéréo. CyCapture écrit du MP3 et se replie sur WAV si la finalisation MP3 est indisponible.
 
 L’audio démarre immédiatement car aucune sélection d’écran n’est nécessaire. Appuyez de nouveau sur Impr. écran ou utilisez Arrêter dans le tray.
+
+Activez **Copier les captures audio dans le presse-papiers comme fichiers** pour coller l’enregistrement terminé dans les applications acceptant les pièces jointes. Cette option est cochée par défaut.
 
 Les sources et la qualité Audio seul sont indépendantes des réglages de son de la [Vidéo](doc:video#audio).

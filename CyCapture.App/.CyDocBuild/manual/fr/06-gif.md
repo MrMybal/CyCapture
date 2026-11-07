@@ -5,7 +5,7 @@ description: Créez directement une animation prête à partager depuis une zone
 section: Capture
 parent: selection
 order: 60
-sourceRevision: 2
+sourceRevision: 3
 ---
 
 La capture GIF est silencieuse et possède ses propres profils de dimension et de fluidité.
@@ -21,6 +21,8 @@ La capture GIF est silencieuse et possède ses propres profils de dimension et d
 ## Enregistrement {#recording}
 
 Sélectionnez Intelligente, Fenêtre, Écran ou Zone libre comme pour une vidéo. Un cadre rouge propre au GIF peut être activé ou désactivé. Appuyez de nouveau sur Impr. écran pour arrêter et laisser CyCapture encoder l’animation.
+
+Activez **Copier les GIF dans le presse-papiers comme fichiers** pour rendre immédiatement l’animation finale disponible dans les applications acceptant les pièces jointes. Cette option est cochée par défaut.
 
 ```diagram
 {"type":"flow","title":"Pipeline GIF","nodes":[{"id":"select","label":"Sélectionner","x":0,"y":50},{"id":"frames","label":"Capturer les images","x":240,"y":50},{"id":"optimize","label":"Redimensionner et optimiser","x":490,"y":50},{"id":"gif","label":"GIF","x":750,"y":50}],"edges":[{"from":"select","to":"frames"},{"from":"frames","to":"optimize"},{"from":"optimize","to":"gif"}]}

@@ -10,7 +10,7 @@ sourceRevision: 2
 CyCapture est un outil de capture piloté depuis le tray. Il reste dans la zone de notification Windows et apparaît uniquement lorsque vous en avez besoin.
 
 ```steps
-{"items":[{"title":"Appuyer sur Impr. écran","body":"Ouvrez la palette, sauf si un comportement direct est configuré."},{"title":"Choisir un mode","body":"Sélectionnez Image, Vidéo, GIF ou Audio."},{"title":"Sélectionner","body":"Les modes visuels ouvrent la sélection. L’Audio démarre immédiatement."},{"title":"Terminer","body":"Une image est enregistrée immédiatement. Appuyez de nouveau sur Impr. écran pour arrêter la Vidéo, le GIF ou l’Audio."}]}
+{"items":[{"title":"Appuyer sur Impr. écran","body":"Ouvrez la palette, sauf si un comportement direct est configuré."},{"title":"Choisir un mode","body":"Sélectionnez Image, Vidéo, GIF, Audio ou Traduction."},{"title":"Sélectionner","body":"Les modes visuels et Traduction ouvrent la sélection. L’Audio démarre immédiatement."},{"title":"Terminer","body":"Une image est enregistrée immédiatement, la Traduction apparaît sur l’écran figé et Impr. écran arrête la Vidéo, le GIF ou l’Audio."}]}
 ```
 
 ## Première capture {#first-capture}

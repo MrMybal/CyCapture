@@ -20,10 +20,13 @@ public sealed partial class QuickCaptureWindow : Window
     private readonly CheckBox _videoMicrophoneCheck;
     private readonly CheckBox _audioOnlySystemCheck;
     private readonly CheckBox _audioOnlyMicrophoneCheck;
+    private readonly CheckBox _audioOnlyIgnoreSystemVolumeCheck;
     private readonly ComboBox _imageFormatCombo;
     private readonly ComboBox _imageEncodingQualityCombo;
     private readonly ComboBox _gifQualityCombo;
     private readonly ComboBox _selectionModeCombo;
+    private readonly ComboBox _translationSourceLanguageCombo;
+    private readonly ComboBox _translationTargetLanguageCombo;
     private readonly Border _pluginOptionsBorder;
     private readonly WrapPanel _pluginOptionsPanel;
     private bool _modeChosen;
@@ -36,6 +39,7 @@ public sealed partial class QuickCaptureWindow : Window
     {
         _preferences = preferences;
         _postProcessing = postProcessing;
+        UiLocalization.Use(preferences.ApplicationLanguage);
         AvaloniaXamlLoader.Load(this);
         _videoQualityCombo = RequireControl<ComboBox>("VideoQualityCombo");
         _videoEncodingQualityCombo = RequireControl<ComboBox>("VideoEncodingQualityCombo");
@@ -45,10 +49,13 @@ public sealed partial class QuickCaptureWindow : Window
         _videoMicrophoneCheck = RequireControl<CheckBox>("VideoMicrophoneCheck");
         _audioOnlySystemCheck = RequireControl<CheckBox>("AudioOnlySystemCheck");
         _audioOnlyMicrophoneCheck = RequireControl<CheckBox>("AudioOnlyMicrophoneCheck");
+        _audioOnlyIgnoreSystemVolumeCheck = RequireControl<CheckBox>("AudioOnlyIgnoreSystemVolumeCheck");
         _imageFormatCombo = RequireControl<ComboBox>("ImageFormatCombo");
         _imageEncodingQualityCombo = RequireControl<ComboBox>("ImageEncodingQualityCombo");
         _gifQualityCombo = RequireControl<ComboBox>("GifQualityCombo");
         _selectionModeCombo = RequireControl<ComboBox>("SelectionModeCombo");
+        _translationSourceLanguageCombo = RequireControl<ComboBox>("TranslationSourceLanguageCombo");
+        _translationTargetLanguageCombo = RequireControl<ComboBox>("TranslationTargetLanguageCombo");
         _pluginOptionsBorder = RequireControl<Border>("PluginOptionsBorder");
         _pluginOptionsPanel = RequireControl<WrapPanel>("PluginOptionsPanel");
         SelectByTag(_videoQualityCombo, preferences.VideoQualityLevel.ToString());
@@ -60,11 +67,14 @@ public sealed partial class QuickCaptureWindow : Window
         _videoMicrophoneCheck.IsChecked = preferences.IncludeMicrophone;
         _audioOnlySystemCheck.IsChecked = audioOnly.SystemAudio;
         _audioOnlyMicrophoneCheck.IsChecked = audioOnly.Microphone;
+        _audioOnlyIgnoreSystemVolumeCheck.IsChecked = preferences.AudioOnlyIgnoreSystemVolume;
         SelectByTag(_imageFormatCombo, preferences.ImageFormat);
         SelectByTag(_imageEncodingQualityCombo, preferences.ImageEncodingQuality.ToString());
         SelectByTag(_gifQualityCombo, preferences.GifQuality.ToString());
         SelectByTag(_selectionModeCombo, preferences.SelectionMode.ToString());
+        PopulateTranslationLanguages();
         PopulatePluginOptions();
+        UiLocalization.ApplyTo(this);
         Opened += OnOpened;
         KeyDown += (_, args) =>
         {
@@ -93,7 +103,7 @@ public sealed partial class QuickCaptureWindow : Window
         Activate();
     }
 
-    private async Task SelectAsync(CaptureMode mode)
+    private async Task SelectAsync(CaptureMode mode, bool translateSelection = false)
     {
         if (_modeChosen) return;
         _modeChosen = true;
@@ -113,6 +123,7 @@ public sealed partial class QuickCaptureWindow : Window
         _preferences.IncludeMicrophone = _videoMicrophoneCheck.IsChecked == true;
         _preferences.AudioOnlyIncludeSystemAudio = _audioOnlySystemCheck.IsChecked == true;
         _preferences.AudioOnlyIncludeMicrophone = _audioOnlyMicrophoneCheck.IsChecked == true;
+        _preferences.AudioOnlyIgnoreSystemVolume = _audioOnlyIgnoreSystemVolumeCheck.IsChecked == true;
         if (_imageFormatCombo.SelectedItem is ComboBoxItem imageFormat)
             _preferences.ImageFormat = imageFormat.Tag?.ToString() ?? "png";
         if (_imageEncodingQualityCombo.SelectedItem is ComboBoxItem imageEncoding
@@ -124,6 +135,7 @@ public sealed partial class QuickCaptureWindow : Window
         if (_selectionModeCombo.SelectedItem is ComboBoxItem selectionMode
             && Enum.TryParse<CaptureSelectionMode>(selectionMode.Tag?.ToString(), out var selectedMode))
             _preferences.SelectionMode = selectedMode;
+        SaveTranslationLanguages();
         _preferences.ApplyEncodingProfiles();
         try
         {
@@ -134,7 +146,7 @@ public sealed partial class QuickCaptureWindow : Window
             // A capture must still start when preferences cannot be persisted.
         }
         Hide();
-        CaptureRequested?.Invoke(this, new CaptureRequest(mode, _preferences.SelectionMode));
+        CaptureRequested?.Invoke(this, new CaptureRequest(mode, _preferences.SelectionMode, translateSelection));
         Close();
     }
 
@@ -142,7 +154,51 @@ public sealed partial class QuickCaptureWindow : Window
     private async void VideoClick(object? sender, RoutedEventArgs args) => await SelectAsync(CaptureMode.Video);
     private async void GifClick(object? sender, RoutedEventArgs args) => await SelectAsync(CaptureMode.Gif);
     private async void AudioClick(object? sender, RoutedEventArgs args) => await SelectAsync(CaptureMode.Audio);
+    private async void TranslateClick(object? sender, RoutedEventArgs args)
+    {
+        if (_modeChosen) return;
+        SaveTranslationLanguages();
+        await SelectAsync(CaptureMode.Image, translateSelection: true);
+    }
     private void CloseClick(object? sender, RoutedEventArgs args) => Close();
+
+    private async void ManageTranslationModelsClick(object? sender, RoutedEventArgs args)
+    {
+        SaveTranslationLanguages();
+        try { await _preferences.SaveAsync(); } catch { }
+        var manager = new TranslationModelManagerWindow(_preferences, new TranslationModelService());
+        await manager.ShowDialog(this);
+        PopulateTranslationLanguages();
+    }
+
+    private void PopulateTranslationLanguages()
+    {
+        _translationSourceLanguageCombo.Items.Clear();
+        _translationSourceLanguageCombo.Items.Add(new ComboBoxItem
+        {
+            Content = TranslationLanguageCatalog.DisplayName(TranslationLanguageCatalog.AutomaticCode),
+            Tag = TranslationLanguageCatalog.AutomaticCode
+        });
+        foreach (var language in TranslationLanguageCatalog.Languages)
+        {
+            _translationSourceLanguageCombo.Items.Add(new ComboBoxItem { Content = language.DisplayName, Tag = language.Code });
+        }
+        _translationTargetLanguageCombo.Items.Clear();
+        foreach (var language in TranslationLanguageCatalog.Languages)
+        {
+            _translationTargetLanguageCombo.Items.Add(new ComboBoxItem { Content = language.DisplayName, Tag = language.Code });
+        }
+        SelectByTag(_translationSourceLanguageCombo, _preferences.TranslationSourceLanguage);
+        SelectByTag(_translationTargetLanguageCombo, _preferences.TranslationTargetLanguage);
+    }
+
+    private void SaveTranslationLanguages()
+    {
+        if (_translationSourceLanguageCombo.SelectedItem is ComboBoxItem source)
+            _preferences.TranslationSourceLanguage = TranslationLanguageCatalog.NormalizeSource(source.Tag?.ToString());
+        if (_translationTargetLanguageCombo.SelectedItem is ComboBoxItem target)
+            _preferences.TranslationTargetLanguage = TranslationLanguageCatalog.NormalizeTarget(target.Tag?.ToString());
+    }
 
     private void PopulatePluginOptions()
     {

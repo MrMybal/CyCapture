@@ -10,6 +10,9 @@ using Avalonia.Media.Imaging;
 using Avalonia.Threading;
 using CyCapture.Models;
 using CyCapture.Views;
+using BergamotTranslatorSharp;
+using TessEngine = Tesseract.TesseractEngine;
+using TessEngineMode = Tesseract.EngineMode;
 
 internal static class Program
 {
@@ -34,6 +37,8 @@ internal static class Program
             CheckNativeWindowSnapshot();
             CheckXamlGroups(projectRoot);
             CheckWindows(output);
+            if (args.Contains("--translation-model-check", StringComparer.OrdinalIgnoreCase))
+                Task.Run(CheckTranslationModels).GetAwaiter().GetResult();
             Console.WriteLine("PASS: preferences, recorder routing, audio packet timeline, recording frame, updates, documentation, smart-selection Z-order, XAML groups and window construction.");
             return 0;
         }
@@ -42,6 +47,63 @@ internal static class Program
             Console.Error.WriteLine(error);
             return 1;
         }
+    }
+
+    private static void CheckTranslationModels()
+    {
+        var serviceType = AppAssembly.GetType("CyCapture.Services.TranslationModelService")!;
+        var service = Activator.CreateInstance(serviceType, nonPublic: true)!;
+        var modelsDirectory = (string)serviceType.GetProperty("ModelsDirectory", PrivateStatic)!.GetValue(null)!;
+        Console.WriteLine($"Translation models: {modelsDirectory}");
+        var ensureOcr = serviceType.GetMethod("EnsureOcrAsync", PrivateInstance)!;
+        Console.WriteLine("Downloading/loading Chinese OCR model…");
+        var ocrTask = (Task)ensureOcr.Invoke(service, new object?[] { "zh", null, CancellationToken.None })!;
+        ocrTask.GetAwaiter().GetResult();
+        var ocrLanguage = (string)ocrTask.GetType().GetProperty("Result")!.GetValue(ocrTask)!;
+        var ocrDirectory = (string)serviceType.GetProperty("OcrDirectory", PrivateStatic)!.GetValue(null)!;
+        using (var engine = new TessEngine(ocrDirectory, ocrLanguage, TessEngineMode.LstmOnly))
+            Require(engine.Version is not null, "The Chinese OCR model could not be loaded.");
+
+        var ensureTranslation = serviceType.GetMethod("EnsureTranslationAsync", PrivateInstance)!;
+        Console.WriteLine("Downloading/loading Chinese to French translation models…");
+        var translationTask = (Task)ensureTranslation.Invoke(service, new object?[] { "zh", "fr", null, CancellationToken.None })!;
+        translationTask.GetAwaiter().GetResult();
+        var configs = ((IEnumerable<string>)translationTask.GetType().GetProperty("Result")!.GetValue(translationTask)!).ToArray();
+        Require(configs.Length == 2 && configs.All(File.Exists), "The Chinese to French pivot models were not prepared.");
+        using var translator = new BlockingService(configs[0], configs[1]);
+        var translated = translator.Translate("你好，世界！");
+        Require(!string.IsNullOrWhiteSpace(translated) && translated != "你好，世界！",
+            "The local Chinese to French translation produced no result.");
+        Console.WriteLine($"PASS: local zh→fr model chain ({translated}).");
+
+        using var synthetic = new System.Drawing.Bitmap(720, 180);
+        using (var graphics = System.Drawing.Graphics.FromImage(synthetic))
+        using (var font = new System.Drawing.Font("Microsoft YaHei", 52, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Pixel))
+        {
+            graphics.Clear(System.Drawing.Color.White);
+            graphics.DrawString("你好，世界！", font, System.Drawing.Brushes.Black, new System.Drawing.PointF(24, 45));
+        }
+        byte[] png;
+        using (var stream = new MemoryStream())
+        {
+            synthetic.Save(stream, System.Drawing.Imaging.ImageFormat.Png);
+            png = stream.ToArray();
+        }
+        var bounds = new PixelBounds(0, 0, synthetic.Width, synthetic.Height);
+        var monitor = new MonitorDescriptor(0, "TEST", "Synthetic", bounds, bounds, 1, true);
+        var selection = new CaptureSelection(bounds, monitor, SelectionKind.Region, "Synthetic Chinese", FrozenFramePng: png);
+        var preferences = new Preferences { TranslationSourceLanguage = "zh", TranslationTargetLanguage = "fr" };
+        var ocrServiceType = AppAssembly.GetType("CyCapture.Services.OcrTranslationService")!;
+        var ocrService = Activator.CreateInstance(ocrServiceType, PrivateInstance, null, new[] { service }, null)!;
+        var translateAsync = ocrServiceType.GetMethod("TranslateAsync", PrivateInstance)!;
+        var endToEndTask = (Task)translateAsync.Invoke(
+            ocrService,
+            new object?[] { selection, preferences, null, CancellationToken.None })!;
+        endToEndTask.GetAwaiter().GetResult();
+        var result = (ScreenTranslationResult)endToEndTask.GetType().GetProperty("Result")!.GetValue(endToEndTask)!;
+        Require(result.Lines.Count > 0 && result.PlainText.Length > 0,
+            "The synthetic Chinese screenshot was not recognized and translated.");
+        Console.WriteLine($"PASS: screenshot OCR overlay data ({result.PlainText}).");
     }
 
     private static Preferences Normalize(Preferences preferences) =>
@@ -78,11 +140,48 @@ internal static class Program
             Require(Audio(roundTrip, mode).SystemAudio == false && Audio(roundTrip, mode).Microphone == false, "A silent mode has an audio source.");
         var defaults = Normalize(new Preferences());
         Require(Audio(defaults, CaptureMode.Audio) == (true, false, AudioEncodingQuality.Balanced), "Default audio-only settings changed.");
+        Require(defaults.AudioOnlyIgnoreSystemVolume, "Audio-only automatic level is not enabled by default.");
+        Require(defaults.ApplicationLanguage == "fr", "The application language default no longer preserves the French interface.");
         Require(defaults.DocumentationLanguage == "en", "English is not the default documentation language.");
+        Require(defaults.TranslationSourceLanguage == "auto" && defaults.TranslationTargetLanguage == "fr",
+            "Default screen translation languages changed.");
+        Require(defaults.CopyScreenshotsToClipboard
+                && defaults.CopyVideosToClipboard
+                && defaults.CopyGifsToClipboard
+                && defaults.CopyAudioToClipboard
+                && defaults.CopyTranslationsToClipboard,
+            "Clipboard options are not enabled by default for every capture mode.");
+        Require(defaults.ClipboardOptionsInitialized == true,
+            "Clipboard defaults were not marked as initialized.");
+        Require(defaults.PrintScreenBehavior == PrintScreenBehavior.QuickImageHoldSelection,
+            "The hybrid Print Screen workflow is not the default.");
+
+        var invalidPrintScreenBehavior = Normalize(new Preferences
+        {
+            PrintScreenBehavior = (PrintScreenBehavior)999
+        });
+        Require(invalidPrintScreenBehavior.PrintScreenBehavior == PrintScreenBehavior.QuickImageHoldSelection,
+            "An invalid Print Screen behavior did not fall back to the hybrid workflow.");
+        var legacyClipboard = Normalize(JsonSerializer.Deserialize<Preferences>(
+            """{"CopyScreenshotsToClipboard":false,"CopyVideosToClipboard":false}""")!);
+        Require(legacyClipboard.CopyScreenshotsToClipboard
+                && legacyClipboard.CopyVideosToClipboard
+                && legacyClipboard.CopyGifsToClipboard
+                && legacyClipboard.CopyAudioToClipboard
+                && legacyClipboard.CopyTranslationsToClipboard,
+            "Legacy preferences did not receive the enabled clipboard defaults.");
+        legacyClipboard.CopyAudioToClipboard = false;
+        var migratedClipboard = Normalize(JsonSerializer.Deserialize<Preferences>(JsonSerializer.Serialize(legacyClipboard))!);
+        Require(!migratedClipboard.CopyAudioToClipboard,
+            "An explicit clipboard choice was overwritten after the one-time migration.");
         var frenchDocumentation = Normalize(new Preferences { DocumentationLanguage = "FR" });
         Require(frenchDocumentation.DocumentationLanguage == "fr", "French documentation language was not preserved.");
         var invalidDocumentation = Normalize(new Preferences { DocumentationLanguage = "de" });
         Require(invalidDocumentation.DocumentationLanguage == "en", "An unsupported documentation language was not sanitized.");
+        var englishInterface = Normalize(new Preferences { ApplicationLanguage = "EN" });
+        Require(englishInterface.ApplicationLanguage == "en", "The English application language was not preserved.");
+        var invalidInterface = Normalize(new Preferences { ApplicationLanguage = "de" });
+        Require(invalidInterface.ApplicationLanguage == "fr", "An unsupported application language did not use the French fallback.");
         defaults.AudioOnlyEncodingQuality = (AudioEncodingQuality)999;
         Require(Audio(Normalize(defaults), CaptureMode.Audio).Quality == AudioEncodingQuality.Balanced, "Invalid audio profile was not sanitized.");
     }
@@ -122,15 +221,12 @@ internal static class Program
     private static void CheckRecordingFrameLayout()
     {
         var calculate = AppAssembly.GetType("CyCapture.Services.RecordingIndicatorService")!
-            .GetMethod("CalculateFrameBounds", PrivateStatic)!;
+            .GetMethod("CalculateOutlineBounds", PrivateStatic)!;
         var screen = new PixelBounds(-1920, 0, 1920, 1080);
         var capture = new PixelBounds(-1800, 100, 800, 600);
-        var bars = (IReadOnlyList<PixelBounds>)calculate.Invoke(null, [capture, screen])!;
-        Require(bars.Count == 4, "The recording frame is incomplete away from screen edges.");
-        Require(bars.Contains(new PixelBounds(-1800, 99, 800, 1)), "The top recording bar is offset or too thick.");
-        Require(bars.Contains(new PixelBounds(-1800, 700, 800, 1)), "The bottom recording bar is offset or too thick.");
-        Require(bars.Contains(new PixelBounds(-1801, 100, 1, 600)), "The left recording bar is offset or too thick.");
-        Require(bars.Contains(new PixelBounds(-1000, 100, 1, 600)), "The right recording bar is offset or too thick.");
+        var outline = (PixelBounds)calculate.Invoke(null, [capture, screen])!;
+        Require(outline == new PixelBounds(-1802, 98, 804, 604),
+            "The recording outline is offset, clipped or intrudes too far into the capture.");
     }
 
     private static void CheckAudioPacketTimeline()
@@ -149,27 +245,37 @@ internal static class Program
             [TimeSpan.FromMilliseconds(200), tenMillisecondPacket, blockAlign, averageBytesPerSecond])!;
         Require(realGap == 72_960 && realGap % blockAlign == 0,
             "A real WASAPI packet gap was not preserved on the audio timeline.");
+
+        var gain = AppAssembly.GetType("CyCapture.Services.AudioRecordingSession")!
+            .GetMethod("CalculateAutomaticGain", BindingFlags.NonPublic | BindingFlags.Static)!;
+        var boosted = (float)gain.Invoke(null, [0.1f])!;
+        Require(Math.Abs(boosted - 9.2f) < 0.01f, "Low system audio is not normalized to the target level.");
+        Require((float)gain.Invoke(null, [0f])! == 1f, "Silence must not receive artificial gain.");
+        Require((float)gain.Invoke(null, [0.95f])! == 1f, "Already loud system audio must not be amplified.");
     }
 
     private static object Property(object target, string name) => target.GetType().GetProperty(name)!.GetValue(target)!;
 
     private static void CheckUpdates()
     {
-        const string fullName = "CyCapture-1.4.11-windows-x64-portable.exe";
-        const string liteName = "CyCapture-1.4.11-windows-x64-portable-without-CyAnnota.exe";
-        const string installerName = "CyCapture-1.4.11-windows-x64-installer.exe";
+        Require(AppAssembly.GetType("CyCapture.ApplicationController")!
+                    .GetMethod("CheckForUpdatesOnStartupAsync", PrivateInstance) is not null,
+            "The startup update check is missing.");
+        const string fullName = "CyCapture-1.5.0-windows-x64-portable.exe";
+        const string liteName = "CyCapture-1.5.0-windows-x64-portable-without-CyAnnota.exe";
+        const string installerName = "CyCapture-1.5.0-windows-x64-installer.exe";
         const string fullHash = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
         const string liteHash = "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB";
         const string installerHash = "CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC";
         var json = JsonSerializer.Serialize(new
         {
-            tag_name = "v1.4.11",
-            html_url = "https://github.com/MrMybal/CyCapture/releases/tag/v1.4.11",
+            tag_name = "v1.5.0",
+            html_url = "https://github.com/MrMybal/CyCapture/releases/tag/v1.5.0",
             assets = new object[]
             {
-                new { name = fullName, browser_download_url = $"https://github.com/MrMybal/CyCapture/releases/download/v1.4.11/{fullName}", size = 123L, digest = $"sha256:{fullHash}" },
-                new { name = liteName, browser_download_url = $"https://github.com/MrMybal/CyCapture/releases/download/v1.4.11/{liteName}", size = 456L, digest = $"sha256:{liteHash}" },
-                new { name = installerName, browser_download_url = $"https://github.com/MrMybal/CyCapture/releases/download/v1.4.11/{installerName}", size = 789L, digest = $"sha256:{installerHash}" }
+                new { name = fullName, browser_download_url = $"https://github.com/MrMybal/CyCapture/releases/download/v1.5.0/{fullName}", size = 123L, digest = $"sha256:{fullHash}" },
+                new { name = liteName, browser_download_url = $"https://github.com/MrMybal/CyCapture/releases/download/v1.5.0/{liteName}", size = 456L, digest = $"sha256:{liteHash}" },
+                new { name = installerName, browser_download_url = $"https://github.com/MrMybal/CyCapture/releases/download/v1.5.0/{installerName}", size = 789L, digest = $"sha256:{installerHash}" }
             }
         });
         var parse = AppAssembly.GetType("CyCapture.Services.UpdateService")!
@@ -188,7 +294,7 @@ internal static class Program
         Require(Property(installer, "AssetName").ToString() == installerName, "The installed edition selected the wrong update asset.");
         Require(Property(installer, "Sha256").ToString() == installerHash, "The installer update digest was not preserved.");
 
-        var current = parse.Invoke(null, [json, new Version(1, 4, 11), true, false])!;
+        var current = parse.Invoke(null, [json, new Version(1, 5, 0), true, false])!;
         Require(Equals(Property(current, "IsUpdateAvailable"), false), "The current version was reported as outdated.");
 
         var unsafeJson = json.Replace("https://github.com/MrMybal/CyCapture/releases/download/", "https://example.invalid/");
@@ -280,10 +386,19 @@ internal static class Program
                 ["VideoQualityCombo"] = "Vidéo", ["VideoEncodingQualityCombo"] = "Vidéo",
                 ["AudioEncodingQualityCombo"] = "Vidéo", ["GifQualityCombo"] = "GIF",
                 ["AudioOnlyEncodingQualityCombo"] = "Audio", ["AudioOnlySystemCheck"] = "Audio",
-                ["AudioOnlyMicrophoneCheck"] = "Audio"
+                ["AudioOnlyMicrophoneCheck"] = "Audio", ["AudioOnlyIgnoreSystemVolumeCheck"] = "Audio",
+                ["TranslationSourceLanguageCombo"] = "Traduction", ["TranslationTargetLanguageCombo"] = "Traduction"
             };
             expected[file == "SettingsWindow.axaml" ? "SystemAudioCheck" : "VideoSystemAudioCheck"] = "Vidéo";
             expected[file == "SettingsWindow.axaml" ? "MicrophoneCheck" : "VideoMicrophoneCheck"] = "Vidéo";
+            if (file == "SettingsWindow.axaml")
+            {
+                expected["ClipboardCheck"] = "Image";
+                expected["VideoClipboardCheck"] = "Vidéo";
+                expected["GifClipboardCheck"] = "GIF";
+                expected["AudioClipboardCheck"] = "Audio";
+                expected["TranslationClipboardCheck"] = "Traduction";
+            }
             foreach (var entry in expected)
             {
                 var control = document.Descendants().Single(element => (string?)element.Attribute(x + "Name") == entry.Key);
@@ -291,6 +406,16 @@ internal static class Program
                     $"{file}: {entry.Key} is in the wrong tab.");
             }
         }
+
+        var settingsDocument = XDocument.Load(Path.Combine(root, "CyCapture.App", "Views", "SettingsWindow.axaml"));
+        XNamespace settingsX = "http://schemas.microsoft.com/winfx/2006/xaml";
+        Require(settingsDocument.Descendants().Any(element => (string?)element.Attribute(settingsX + "Name") == "ApplicationLanguageCombo"),
+            "The application language selector is missing.");
+        Require(settingsDocument.Descendants().Any(element => (string?)element.Attribute(settingsX + "Name") == "DocumentationLanguageCombo"),
+            "The documentation language selector is missing.");
+        Require(!settingsDocument.Descendants().Any(element =>
+                string.Equals((string?)element.Attribute("Text"), "CAPTURE RAPIDE", StringComparison.Ordinal)),
+            "Quick capture actions are still embedded in the settings window.");
     }
 
     private static void CheckWindows(string output)
@@ -298,6 +423,7 @@ internal static class Program
         AppBuilder.Configure<CyCapture.App>().UsePlatformDetect().WithInterFont().SetupWithoutStarting();
         // No desktop lifetime: no controller, tray, keyboard hook, recording or real preference writes.
         CheckQuickAnnotationToolbar();
+        CheckTranslationWindows(output);
         var processorType = AppAssembly.GetType("CyCapture.Services.PostProcessingService")!;
         var processors = Activator.CreateInstance(processorType, PrivateInstance, null, new object?[] { Path.Combine(output, "plugins"), false, null }, null)!;
         var preferences = IndependentPreferences();
@@ -306,12 +432,21 @@ internal static class Program
         CheckCyDocDistribution();
         Require(settings.FindControl<CheckBox>("SystemAudioCheck")!.IsChecked == false, "Video source initialized incorrectly.");
         Require(settings.FindControl<CheckBox>("AudioOnlySystemCheck")!.IsChecked == true, "Audio-only source initialized incorrectly.");
+        Require(settings.FindControl<CheckBox>("AudioOnlyIgnoreSystemVolumeCheck")!.IsChecked == true,
+            "Audio-only automatic level was not initialized as enabled.");
         Require(settings.FindControl<CheckBox>("FrameCheck")!.IsChecked == false && settings.FindControl<CheckBox>("GifFrameCheck")!.IsChecked == true,
             "Frame options are not independent.");
+        foreach (var clipboardControl in new[]
+                 {
+                     "ClipboardCheck", "VideoClipboardCheck", "GifClipboardCheck", "AudioClipboardCheck",
+                     "TranslationClipboardCheck"
+                 })
+            Require(settings.FindControl<CheckBox>(clipboardControl)!.IsChecked == true,
+                $"{clipboardControl} was not initialized as enabled.");
         var versionText = settings.FindControl<TextBlock>("AppVersionText")!.Text ?? string.Empty;
         var editionLabel = (string)AppAssembly.GetType("CyCapture.Services.AppBuildInfo")!
             .GetProperty("EditionLabel", PrivateStatic)!.GetValue(null)!;
-        Require(versionText.Contains("1.4.11", StringComparison.Ordinal),
+        Require(versionText.Contains("1.5.0", StringComparison.Ordinal),
             "The settings window does not show the application version.");
         Require(versionText.Contains(editionLabel, StringComparison.Ordinal),
             "The settings window does not show the compiled edition.");
@@ -321,10 +456,14 @@ internal static class Program
             "The settings window has no documentation button.");
         Require(((ComboBoxItem)settings.FindControl<ComboBox>("DocumentationLanguageCombo")!.SelectedItem!).Tag?.ToString() == "en",
             "The CyDoc language selector did not use the default English locale.");
+        Require(((ComboBoxItem)settings.FindControl<ComboBox>("ApplicationLanguageCombo")!.SelectedItem!).Tag?.ToString() == "fr",
+            "The application language selector is missing or did not use the interface locale.");
         Require(((ComboBoxItem)quick.FindControl<ComboBox>("AudioEncodingQualityCombo")!.SelectedItem!).Tag?.ToString() == "Compact", "Quick video quality mismatch.");
         Require(((ComboBoxItem)quick.FindControl<ComboBox>("AudioOnlyEncodingQualityCombo")!.SelectedItem!).Tag?.ToString() == "High", "Quick audio-only quality mismatch.");
+        Require(quick.FindControl<CheckBox>("AudioOnlyIgnoreSystemVolumeCheck")!.IsChecked == true,
+            "Quick audio-only automatic level mismatch.");
         var tabs = settings.FindControl<TabControl>("CaptureSettingsTabs")!;
-        Require(tabs.Items.Count == 4, "Four capture settings tabs were expected.");
+        Require(tabs.Items.Count == 5, "Five capture settings tabs were expected.");
         settings.WindowStartupLocation = WindowStartupLocation.Manual;
         settings.Position = new PixelPoint(-30000, -30000);
         settings.ShowInTaskbar = false;
@@ -344,9 +483,73 @@ internal static class Program
         settings.UpdateLayout();
         SaveVisual((Control)settings.Content!, Path.Combine(output, "settings-window.png"));
         var quickContent = (Control)quick.Content!;
-        RenderWindowContent(quickContent, 720, 500, Path.Combine(output, "quick-window.png"));
+        RenderWindowContent(quickContent, 860, 500, Path.Combine(output, "quick-window.png"));
         settings.Close();
         quick.Close();
+
+        var englishPreferences = IndependentPreferences();
+        englishPreferences.ApplicationLanguage = "en";
+        var englishSettings = (SettingsWindow)Activator.CreateInstance(
+            typeof(SettingsWindow),
+            PrivateInstance,
+            null,
+            new object?[] { englishPreferences, processors },
+            null)!;
+        Require(englishSettings.Title == "CyCapture · Settings", "The application language does not translate the settings window title.");
+        Require(englishSettings.GetLogicalDescendants().OfType<TextBlock>()
+                .Any(text => text.Text == "APPLICATION LANGUAGE"),
+            "The English application interface was not applied.");
+        Require(englishSettings.FindControl<TabControl>("CaptureSettingsTabs")!.Items
+                .OfType<TabItem>().Any(tab => Equals(tab.Header, "Video")),
+            "The English capture settings tabs were not applied.");
+        englishSettings.Close();
+    }
+
+    private static void CheckTranslationWindows(string output)
+    {
+        byte[] png;
+        using (var bitmap = new System.Drawing.Bitmap(800, 500))
+        using (var graphics = System.Drawing.Graphics.FromImage(bitmap))
+        using (var font = new System.Drawing.Font("Segoe UI", 28, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Pixel))
+        using (var stream = new MemoryStream())
+        {
+            graphics.Clear(System.Drawing.Color.FromArgb(20, 28, 27));
+            graphics.DrawString("Hello world", font, System.Drawing.Brushes.White, new System.Drawing.PointF(120, 180));
+            bitmap.Save(stream, System.Drawing.Imaging.ImageFormat.Png);
+            png = stream.ToArray();
+        }
+        var monitorBounds = new PixelBounds(0, 0, 800, 500);
+        var monitor = new MonitorDescriptor(0, "TEST", "Synthetic", monitorBounds, monitorBounds, 1, true);
+        var selection = new CaptureSelection(new PixelBounds(100, 150, 400, 100), monitor, SelectionKind.Region, "Synthetic", FrozenFramePng: png);
+        var result = new ScreenTranslationResult(
+            selection,
+            png,
+            "en",
+            "fr",
+            [new TranslatedTextLine(new PixelBounds(20, 20, 250, 45), "Hello world", "Bonjour le monde", 95)]);
+        var overlayType = AppAssembly.GetType("CyCapture.Views.TranslationOverlayWindow")!;
+        var overlay = (Window)Activator.CreateInstance(overlayType, PrivateInstance, null, new object?[] { result }, null)!;
+        RenderWindowContent((Control)overlay.Content!, 800, 500, Path.Combine(output, "translation-overlay.png"));
+        overlay.Close();
+
+        var modelServiceType = AppAssembly.GetType("CyCapture.Services.TranslationModelService")!;
+        var modelService = Activator.CreateInstance(modelServiceType, nonPublic: true)!;
+        var managerType = AppAssembly.GetType("CyCapture.Views.TranslationModelManagerWindow")!;
+        var manager = (Window)Activator.CreateInstance(
+            managerType,
+            PrivateInstance,
+            null,
+            new object?[] { new Preferences(), modelService },
+            null)!;
+        manager.WindowStartupLocation = WindowStartupLocation.Manual;
+        manager.Position = new PixelPoint(-30000, -30000);
+        manager.ShowInTaskbar = false;
+        manager.ShowActivated = false;
+        manager.Show();
+        SettleAnimations();
+        manager.UpdateLayout();
+        SaveVisual((Control)manager.Content!, Path.Combine(output, "translation-model-manager.png"));
+        manager.Close();
     }
 
     private static void CheckCyDocDistribution()
@@ -481,6 +684,35 @@ internal static class Program
         }
 
         overlay.Close();
+
+        var frozenFrame = new byte[] { 1, 2, 3, 4 };
+        var surfaceType = AppAssembly.GetType("CyCapture.Views.SelectionSurface")!;
+        var translationSurface = Activator.CreateInstance(
+            surfaceType,
+            PrivateInstance,
+            null,
+            new object?[]
+            {
+                screenshot,
+                frozenFrame,
+                monitor,
+                Array.Empty<SelectableRegion>(),
+                Array.Empty<SelectableWindowLayer>(),
+                CaptureSelectionMode.Region,
+                false,
+                session
+            },
+            null)!;
+        CaptureSelection? completed = null;
+        EventHandler<CaptureSelection> completedHandler = (_, selection) => completed = selection;
+        surfaceType.GetEvent("SelectionCompleted", PrivateInstance)!
+            .GetAddMethod(nonPublic: true)!
+            .Invoke(translationSurface, new object?[] { completedHandler });
+        surfaceType.GetMethod("Complete", PrivateInstance)!.Invoke(
+            translationSurface,
+            new object?[] { bounds, SelectionKind.Region, "Translation", (nint)0 });
+        Require(completed?.FrozenFramePng?.SequenceEqual(frozenFrame) == true,
+            "A translation selection did not preserve its frozen desktop frame.");
     }
 
     private static void RenderWindowContent(Control content, int width, int height, string path)

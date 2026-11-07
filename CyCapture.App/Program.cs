@@ -14,7 +14,8 @@ internal static class Program
     public static int Main(string[] args)
     {
         NativeMethods.EnablePerMonitorDpiAwareness();
-        var isSelfTest = args.Contains("--self-test", StringComparer.OrdinalIgnoreCase);
+        var isSelfTest = args.Contains("--self-test", StringComparer.OrdinalIgnoreCase)
+                         || args.Contains("--translation-self-test", StringComparer.OrdinalIgnoreCase);
         var allowMultiple = args.Contains("--allow-multiple", StringComparer.OrdinalIgnoreCase);
         if (!isSelfTest && !allowMultiple)
         {

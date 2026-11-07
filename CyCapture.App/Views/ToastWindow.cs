@@ -6,6 +6,7 @@ using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Threading;
 using CyCapture.Platform.Windows;
+using CyCapture.Services;
 
 namespace CyCapture.Views;
 
@@ -57,7 +58,7 @@ internal sealed class ToastWindow : Window
                             new TextBlock { Text = message, Foreground = new SolidColorBrush(Color.FromRgb(166, 179, 175)), FontSize = 11, TextTrimming = TextTrimming.CharacterEllipsis },
                             new TextBlock
                             {
-                                Text = "Cliquer pour ouvrir le fichier",
+                                Text = UiLocalization.Text("Cliquer pour ouvrir le fichier", "Click to open the file"),
                                 IsVisible = filePath is not null,
                                 Foreground = new SolidColorBrush(Color.FromRgb(155, 255, 40)),
                                 FontSize = 10

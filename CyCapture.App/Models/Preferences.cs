@@ -45,6 +45,7 @@ public enum PrintScreenBehavior
     CaptureVideo,
     CaptureGif,
     CaptureAudio,
+    CaptureTranslation,
     QuickImageHoldSelection
 }
 
@@ -61,7 +62,7 @@ public sealed class Preferences
     public AudioEncodingQuality AudioEncodingQuality { get; set; } = AudioEncodingQuality.Balanced;
     public GifQuality GifQuality { get; set; } = GifQuality.Balanced;
     public CaptureSelectionMode SelectionMode { get; set; } = CaptureSelectionMode.Smart;
-    public PrintScreenBehavior PrintScreenBehavior { get; set; } = PrintScreenBehavior.ShowModePicker;
+    public PrintScreenBehavior PrintScreenBehavior { get; set; } = PrintScreenBehavior.QuickImageHoldSelection;
     public int PrintScreenHoldDelayMilliseconds { get; set; } = 300;
     public bool IncludeSystemAudio { get; set; } = true;
     public bool IncludeMicrophone { get; set; }
@@ -69,15 +70,24 @@ public sealed class Preferences
     public bool? AudioOnlyIncludeSystemAudio { get; set; }
     public bool? AudioOnlyIncludeMicrophone { get; set; }
     public AudioEncodingQuality? AudioOnlyEncodingQuality { get; set; }
+    public bool AudioOnlyIgnoreSystemVolume { get; set; } = true;
     public bool CopyScreenshotsToClipboard { get; set; } = true;
-    public bool CopyVideosToClipboard { get; set; }
+    public bool CopyVideosToClipboard { get; set; } = true;
+    public bool CopyGifsToClipboard { get; set; } = true;
+    public bool CopyAudioToClipboard { get; set; } = true;
+    public bool CopyTranslationsToClipboard { get; set; } = true;
+    // Null identifies preferences saved before each capture mode had its own clipboard option.
+    public bool? ClipboardOptionsInitialized { get; set; }
     public bool EnableQuickAnnotations { get; set; } = true;
     public bool ShowRecordingFrame { get; set; } = true;
     public bool? ShowGifRecordingFrame { get; set; }
     public bool SeparateCaptureTypes { get; set; }
     public bool CreateDailyCaptureFolders { get; set; }
     public bool StartWithWindows { get; set; }
+    public string ApplicationLanguage { get; set; } = "fr";
     public string DocumentationLanguage { get; set; } = "en";
+    public string TranslationSourceLanguage { get; set; } = "auto";
+    public string TranslationTargetLanguage { get; set; } = "fr";
 
     public static string DataDirectory => Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
@@ -161,18 +171,35 @@ public sealed class Preferences
         if (!Enum.IsDefined(value.AudioOnlyEncodingQuality.Value))
             value.AudioOnlyEncodingQuality = AudioEncodingQuality.Balanced;
         value.ShowGifRecordingFrame ??= value.ShowRecordingFrame;
+        if (value.ClipboardOptionsInitialized != true)
+        {
+            value.CopyScreenshotsToClipboard = true;
+            value.CopyVideosToClipboard = true;
+            value.CopyGifsToClipboard = true;
+            value.CopyAudioToClipboard = true;
+            value.CopyTranslationsToClipboard = true;
+            value.ClipboardOptionsInitialized = true;
+        }
         value.ApplyEncodingProfiles();
         if (!Enum.IsDefined(value.GifQuality)) value.GifQuality = GifQuality.Balanced;
         if (!Enum.IsDefined(value.SelectionMode)) value.SelectionMode = CaptureSelectionMode.Smart;
         if (!Enum.IsDefined(value.PrintScreenBehavior))
-            value.PrintScreenBehavior = PrintScreenBehavior.ShowModePicker;
+            value.PrintScreenBehavior = PrintScreenBehavior.QuickImageHoldSelection;
         var clampedHoldDelay = Math.Clamp(value.PrintScreenHoldDelayMilliseconds, 100, 1_000);
         value.PrintScreenHoldDelayMilliseconds = ((clampedHoldDelay + 50) / 100) * 100;
         if (!string.IsNullOrWhiteSpace(value.OutputDirectory) && !Path.IsPathFullyQualified(value.OutputDirectory))
             value.OutputDirectory = null;
+        value.ApplicationLanguage = NormalizeLanguage(value.ApplicationLanguage, "fr");
         value.DocumentationLanguage = string.Equals(value.DocumentationLanguage, "fr", StringComparison.OrdinalIgnoreCase)
             ? "fr"
             : "en";
+        value.TranslationSourceLanguage = Services.TranslationLanguageCatalog.NormalizeSource(value.TranslationSourceLanguage);
+        value.TranslationTargetLanguage = Services.TranslationLanguageCatalog.NormalizeTarget(value.TranslationTargetLanguage);
         return value;
     }
+
+    internal static string NormalizeLanguage(string? language, string fallback = "en") =>
+        string.Equals(language, "fr", StringComparison.OrdinalIgnoreCase)
+            ? "fr"
+            : string.Equals(language, "en", StringComparison.OrdinalIgnoreCase) ? "en" : fallback;
 }

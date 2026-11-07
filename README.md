@@ -14,8 +14,8 @@
     </td>
     <td width="300" align="right" valign="top">
       <p><sub>Application license</sub><br><a href="LICENSE"><strong>GNU AGPL-3.0-only</strong></a></p>
-      <p><sub>Version</sub><br><a href="VERSION.md"><strong>1.4.11</strong></a><br><strong>BETA</strong></p>
-      <p><a href="https://github.com/MrMybal/CyCapture/releases/download/v1.4.11/CyCapture-1.4.11-windows-x64-installer.exe"><strong>Download</strong></a><br><sub>Windows x64 · installer</sub></p>
+      <p><sub>Version</sub><br><a href="VERSION.md"><strong>1.5.0</strong></a><br><strong>BETA</strong></p>
+      <p><a href="https://github.com/MrMybal/CyCapture/releases/download/v1.5.0/CyCapture-1.5.0-windows-x64-installer.exe"><strong>Download</strong></a><br><sub>Windows x64 · installer</sub></p>
     </td>
   </tr>
 </table>
@@ -25,7 +25,7 @@
 
 CyCapture is a discreet, tray-first Windows capture application that replaces the usual Print Screen workflow with image, video, GIF, and audio capture.
 
-Version **1.4.11** is currently in **beta**. See the [version notes](VERSION.md) for the current scope and known limitations.
+Version **1.5.0** is currently in **beta**. See the [version notes](VERSION.md) for the current scope and known limitations.
 
 ## About CyCapture
 
@@ -39,7 +39,8 @@ The complete illustrated guide is available in the [English documentation](https
 
 ## Features
 
-- Image, video, animated GIF, and audio-only capture modes.
+- Image, video, animated GIF, audio-only, and on-screen translation modes.
+- Fully local OCR and translation overlays with downloadable language models, including simplified and traditional Chinese.
 - Intelligent visible-window selection that respects window order and occlusion.
 - Full-screen and free-region capture across multi-monitor desktops.
 - Quick annotations on the frozen desktop: freehand drawing, frames, arrows, and text.
@@ -58,13 +59,13 @@ CyCapture currently targets **Windows x64**. Windows N and KN editions may requi
 
 ### Recommended: installer
 
-Download and run [CyCapture 1.4.11 for Windows x64](https://github.com/MrMybal/CyCapture/releases/download/v1.4.11/CyCapture-1.4.11-windows-x64-installer.exe). The installer registers the application, Start menu shortcuts, uninstallation support, and the selected optional components.
+Download and run [CyCapture 1.5.0 for Windows x64](https://github.com/MrMybal/CyCapture/releases/download/v1.5.0/CyCapture-1.5.0-windows-x64-installer.exe). The installer registers the application, Start menu shortcuts, uninstallation support, and the selected optional components.
 
 ### Portable editions
 
-- [Portable edition with CyAnnota](https://github.com/MrMybal/CyCapture/releases/download/v1.4.11/CyCapture-1.4.11-windows-x64-portable.exe)
-- [Portable edition without CyAnnota](https://github.com/MrMybal/CyCapture/releases/download/v1.4.11/CyCapture-1.4.11-windows-x64-portable-without-CyAnnota.exe)
-- [CyAnnota plugin package](https://github.com/MrMybal/CyCapture/releases/download/v1.4.11/CyCapture.Plugin.CyAnnota-0.4.4.zip)
+- [Portable edition with CyAnnota](https://github.com/MrMybal/CyCapture/releases/download/v1.5.0/CyCapture-1.5.0-windows-x64-portable.exe)
+- [Portable edition without CyAnnota](https://github.com/MrMybal/CyCapture/releases/download/v1.5.0/CyCapture-1.5.0-windows-x64-portable-without-CyAnnota.exe)
+- [CyAnnota plugin package](https://github.com/MrMybal/CyCapture/releases/download/v1.5.0/CyCapture.Plugin.CyAnnota-0.4.4.zip)
 
 Extract a portable archive to a writable directory and launch `CyCapture.exe`. The application binaries are self-contained. The offline help is distributed with the application and can also fall back to its embedded copy.
 
@@ -114,6 +115,8 @@ CyCapture is distributed under the [GNU Affero General Public License v3.0 only]
 | NAudio | 2.3.0 | MIT | Windows audio capture and processing |
 | LibVLCSharp / LibVLC | 3.10.1 / 3.0.23.1 | LGPL-2.1-or-later components | Gallery video and audio playback |
 | System.Drawing.Common | 8.0.20 | MIT | Windows image interoperability |
+| Tesseract .NET / Tesseract OCR | 5.2.0 | Apache-2.0 | Local text recognition with downloadable language data |
+| BergamotTranslatorSharp / Bergamot | 0.7.0 | MPL-2.0 | Local neural translation with downloadable Mozilla models |
 | CyDoc | 0.1.0 | MIT | Build-time export and local documentation reader; image and gallery modules only |
 | CyAnnota | 0.4.4 | AGPL-3.0-only | Optional post-edit integration in the full/plugin package |
 

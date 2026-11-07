@@ -18,11 +18,16 @@ public sealed partial class SettingsWindow : Window
     private readonly Preferences _preferences;
     private readonly PostProcessingService _postProcessing;
     private readonly UpdateService _updateService = new();
+    private readonly TranslationModelService _translationModels = new();
     private readonly CancellationTokenSource _updateCancellation = new();
     private readonly TextBlock _appVersionText;
     private readonly TextBlock _updateStatusText;
     private readonly Button _updateButton;
+    private readonly ComboBox _applicationLanguageCombo;
     private readonly ComboBox _documentationLanguageCombo;
+    private readonly ComboBox _translationSourceLanguageCombo;
+    private readonly ComboBox _translationTargetLanguageCombo;
+    private readonly TextBlock _translationModelsStatusText;
     private readonly TextBlock _outputPathText;
     private readonly ComboBox _videoQualityCombo;
     private readonly ComboBox _videoEncodingQualityCombo;
@@ -38,8 +43,12 @@ public sealed partial class SettingsWindow : Window
     private readonly CheckBox _microphoneCheck;
     private readonly CheckBox _audioOnlySystemCheck;
     private readonly CheckBox _audioOnlyMicrophoneCheck;
+    private readonly CheckBox _audioOnlyIgnoreSystemVolumeCheck;
     private readonly CheckBox _clipboardCheck;
     private readonly CheckBox _videoClipboardCheck;
+    private readonly CheckBox _gifClipboardCheck;
+    private readonly CheckBox _audioClipboardCheck;
+    private readonly CheckBox _translationClipboardCheck;
     private readonly CheckBox _quickAnnotationsCheck;
     private readonly CheckBox _frameCheck;
     private readonly CheckBox _gifFrameCheck;
@@ -64,13 +73,18 @@ public sealed partial class SettingsWindow : Window
     {
         _preferences = preferences;
         _postProcessing = postProcessing;
+        UiLocalization.Use(preferences.ApplicationLanguage);
         AvaloniaXamlLoader.Load(this);
         WindowsWindowAppearance.Attach(this);
         _appVersionText = RequireControl<TextBlock>("AppVersionText");
         _updateStatusText = RequireControl<TextBlock>("UpdateStatusText");
         _updateButton = RequireControl<Button>("UpdateButton");
+        _applicationLanguageCombo = RequireControl<ComboBox>("ApplicationLanguageCombo");
         _documentationLanguageCombo = RequireControl<ComboBox>("DocumentationLanguageCombo");
-        _appVersionText.Text = $"VERSION {AppBuildInfo.DisplayVersion} · BÊTA · {AppBuildInfo.EditionLabel}";
+        _translationSourceLanguageCombo = RequireControl<ComboBox>("TranslationSourceLanguageCombo");
+        _translationTargetLanguageCombo = RequireControl<ComboBox>("TranslationTargetLanguageCombo");
+        _translationModelsStatusText = RequireControl<TextBlock>("TranslationModelsStatusText");
+        RefreshVersionText();
         _outputPathText = RequireControl<TextBlock>("OutputPathText");
         _videoQualityCombo = RequireControl<ComboBox>("VideoQualityCombo");
         _videoEncodingQualityCombo = RequireControl<ComboBox>("VideoEncodingQualityCombo");
@@ -86,8 +100,12 @@ public sealed partial class SettingsWindow : Window
         _microphoneCheck = RequireControl<CheckBox>("MicrophoneCheck");
         _audioOnlySystemCheck = RequireControl<CheckBox>("AudioOnlySystemCheck");
         _audioOnlyMicrophoneCheck = RequireControl<CheckBox>("AudioOnlyMicrophoneCheck");
+        _audioOnlyIgnoreSystemVolumeCheck = RequireControl<CheckBox>("AudioOnlyIgnoreSystemVolumeCheck");
         _clipboardCheck = RequireControl<CheckBox>("ClipboardCheck");
         _videoClipboardCheck = RequireControl<CheckBox>("VideoClipboardCheck");
+        _gifClipboardCheck = RequireControl<CheckBox>("GifClipboardCheck");
+        _audioClipboardCheck = RequireControl<CheckBox>("AudioClipboardCheck");
+        _translationClipboardCheck = RequireControl<CheckBox>("TranslationClipboardCheck");
         _quickAnnotationsCheck = RequireControl<CheckBox>("QuickAnnotationsCheck");
         _frameCheck = RequireControl<CheckBox>("FrameCheck");
         _gifFrameCheck = RequireControl<CheckBox>("GifFrameCheck");
@@ -98,7 +116,9 @@ public sealed partial class SettingsWindow : Window
         _startupStatusText = RequireControl<TextBlock>("StartupStatusText");
         _audioOnlySourceHint = RequireControl<TextBlock>("AudioOnlySourceHint");
         _pluginsPanel = RequireControl<StackPanel>("PluginsPanel");
+        SelectByTag(_applicationLanguageCombo, preferences.ApplicationLanguage);
         SelectByTag(_documentationLanguageCombo, preferences.DocumentationLanguage);
+        PopulateTranslationLanguages();
         _outputPathText.Text = preferences.EffectiveOutputDirectory;
         SelectByTag(_videoQualityCombo, preferences.VideoQualityLevel.ToString());
         SelectByTag(_videoEncodingQualityCombo, preferences.VideoEncodingQuality.ToString());
@@ -115,8 +135,12 @@ public sealed partial class SettingsWindow : Window
         _microphoneCheck.IsChecked = preferences.IncludeMicrophone;
         _audioOnlySystemCheck.IsChecked = audioOnly.SystemAudio;
         _audioOnlyMicrophoneCheck.IsChecked = audioOnly.Microphone;
+        _audioOnlyIgnoreSystemVolumeCheck.IsChecked = preferences.AudioOnlyIgnoreSystemVolume;
         _clipboardCheck.IsChecked = preferences.CopyScreenshotsToClipboard;
         _videoClipboardCheck.IsChecked = preferences.CopyVideosToClipboard;
+        _gifClipboardCheck.IsChecked = preferences.CopyGifsToClipboard;
+        _audioClipboardCheck.IsChecked = preferences.CopyAudioToClipboard;
+        _translationClipboardCheck.IsChecked = preferences.CopyTranslationsToClipboard;
         _quickAnnotationsCheck.IsChecked = preferences.EnableQuickAnnotations;
         _frameCheck.IsChecked = preferences.ShowRecordingFrame;
         _gifFrameCheck.IsChecked = preferences.ShouldShowRecordingFrame(CaptureMode.Gif);
@@ -126,8 +150,10 @@ public sealed partial class SettingsWindow : Window
         _startupCheck.IsChecked = preferences.StartWithWindows;
         UpdateCaptureOrganizationPreview();
         UpdateModeControls();
+        UpdateTranslationModelStatus();
         _initializing = false;
         RenderPlugins();
+        UiLocalization.ApplyTo(this);
         _postProcessing.PluginsChanged += PluginsChanged;
         Closed += (_, _) =>
         {
@@ -143,14 +169,23 @@ public sealed partial class SettingsWindow : Window
         };
     }
 
-    public event EventHandler<CaptureMode>? CaptureRequested;
     public event EventHandler? DocumentationRequested;
+    public event EventHandler? InterfaceLanguageChanged;
 
-    private void ImageClick(object? sender, RoutedEventArgs args) => Request(CaptureMode.Image);
-    private void VideoClick(object? sender, RoutedEventArgs args) => Request(CaptureMode.Video);
-    private void GifClick(object? sender, RoutedEventArgs args) => Request(CaptureMode.Gif);
-    private void AudioClick(object? sender, RoutedEventArgs args) => Request(CaptureMode.Audio);
     private void DocumentationClick(object? sender, RoutedEventArgs args) => DocumentationRequested?.Invoke(this, EventArgs.Empty);
+
+    private async void ApplicationLanguageChanged(object? sender, SelectionChangedEventArgs args)
+    {
+        if (_initializing || _applicationLanguageCombo.SelectedItem is not ComboBoxItem item) return;
+        _preferences.ApplicationLanguage = Preferences.NormalizeLanguage(item.Tag?.ToString(), "fr");
+        UiLocalization.Use(_preferences.ApplicationLanguage);
+        UiLocalization.ApplyTo(this);
+        RefreshVersionText();
+        UpdateCaptureOrganizationPreview();
+        UpdateModeControls();
+        await _preferences.SaveAsync();
+        InterfaceLanguageChanged?.Invoke(this, EventArgs.Empty);
+    }
 
     private async void DocumentationLanguageChanged(object? sender, SelectionChangedEventArgs args)
     {
@@ -159,11 +194,23 @@ public sealed partial class SettingsWindow : Window
         await _preferences.SaveAsync();
     }
 
-    private void Request(CaptureMode mode)
+    private void TranslationLanguageChanged(object? sender, SelectionChangedEventArgs args)
     {
-        Hide();
-        CaptureRequested?.Invoke(this, mode);
-        Close();
+        if (_initializing) return;
+        SaveTranslationLanguagePreferences();
+        SavePreferences();
+    }
+
+    private async void ManageTranslationModelsClick(object? sender, RoutedEventArgs args)
+    {
+        SaveTranslationLanguagePreferences();
+        try { await _preferences.SaveAsync(); } catch { }
+        var manager = new TranslationModelManagerWindow(_preferences, _translationModels);
+        await manager.ShowDialog(this);
+        _initializing = true;
+        PopulateTranslationLanguages();
+        _initializing = false;
+        UpdateTranslationModelStatus();
     }
 
     private async void ChooseFolderClick(object? sender, RoutedEventArgs args)
@@ -265,6 +312,28 @@ public sealed partial class SettingsWindow : Window
         });
     }
 
+    internal void OfferUpdate(UpdateCheckResult update)
+    {
+        if (!update.IsUpdateAvailable) return;
+        _availableUpdate = update;
+        if (update.DownloadUrl is not null)
+        {
+            SetUpdateStatus(UiLocalization.Text(
+                $"CyCapture {update.LatestVersion:3} est disponible pour l’édition {AppBuildInfo.EditionLabel.ToLowerInvariant()}.",
+                $"CyCapture {update.LatestVersion:3} is available for the {UiLocalization.Translate(AppBuildInfo.EditionLabel).ToLowerInvariant()} edition."));
+            _updateButton.Content = UiLocalization.Text(
+                $"Télécharger {update.LatestVersion:3}",
+                $"Download {update.LatestVersion:3}");
+        }
+        else
+        {
+            SetUpdateStatus(UiLocalization.Text(
+                $"CyCapture {update.LatestVersion:3} est disponible, mais le binaire de cette édition est absent.",
+                $"CyCapture {update.LatestVersion:3} is available, but this edition has no matching binary."), true);
+            _updateButton.Content = UiLocalization.Text("Voir la release", "View release");
+        }
+    }
+
     private async Task RunUpdateActionAsync(Func<Task> action)
     {
         _checkingUpdate = true;
@@ -308,6 +377,12 @@ public sealed partial class SettingsWindow : Window
             : Color.FromRgb(157, 174, 170));
     }
 
+    private void RefreshVersionText()
+    {
+        var beta = UiLocalization.Text("BÊTA", "BETA");
+        _appVersionText.Text = $"VERSION {AppBuildInfo.DisplayVersion} · {beta} · {UiLocalization.Translate(AppBuildInfo.EditionLabel)}";
+    }
+
     private void SelectionPreferenceChanged(object? sender, SelectionChangedEventArgs args) => SavePreferences();
     private void CheckedPreferenceChanged(object? sender, RoutedEventArgs args) => SavePreferences();
 
@@ -343,12 +418,18 @@ public sealed partial class SettingsWindow : Window
         if (_printScreenHoldDelayCombo.SelectedItem is ComboBoxItem holdDelay
             && int.TryParse(holdDelay.Tag?.ToString(), out var holdDelayMilliseconds))
             _preferences.PrintScreenHoldDelayMilliseconds = holdDelayMilliseconds;
+        SaveTranslationLanguagePreferences();
         _preferences.IncludeSystemAudio = _systemAudioCheck.IsChecked == true;
         _preferences.IncludeMicrophone = _microphoneCheck.IsChecked == true;
         _preferences.AudioOnlyIncludeSystemAudio = _audioOnlySystemCheck.IsChecked == true;
         _preferences.AudioOnlyIncludeMicrophone = _audioOnlyMicrophoneCheck.IsChecked == true;
+        _preferences.AudioOnlyIgnoreSystemVolume = _audioOnlyIgnoreSystemVolumeCheck.IsChecked == true;
         _preferences.CopyScreenshotsToClipboard = _clipboardCheck.IsChecked == true;
         _preferences.CopyVideosToClipboard = _videoClipboardCheck.IsChecked == true;
+        _preferences.CopyGifsToClipboard = _gifClipboardCheck.IsChecked == true;
+        _preferences.CopyAudioToClipboard = _audioClipboardCheck.IsChecked == true;
+        _preferences.CopyTranslationsToClipboard = _translationClipboardCheck.IsChecked == true;
+        _preferences.ClipboardOptionsInitialized = true;
         _preferences.EnableQuickAnnotations = _quickAnnotationsCheck.IsChecked == true;
         _preferences.ShowRecordingFrame = _frameCheck.IsChecked == true;
         _preferences.ShowGifRecordingFrame = _gifFrameCheck.IsChecked == true;
@@ -364,8 +445,8 @@ public sealed partial class SettingsWindow : Window
             {
                 _preferences.StartWithWindows = startWithWindows;
                 _startupStatusText.Text = startWithWindows
-                    ? "CyCapture démarrera directement dans la zone de notification pour l’utilisateur actuel."
-                    : "Le lancement automatique de CyCapture est désactivé.";
+                    ? UiLocalization.Text("CyCapture démarrera directement dans la zone de notification pour l’utilisateur actuel.", "CyCapture will start directly in the notification area for the current user.")
+                    : UiLocalization.Text("Le lancement automatique de CyCapture est désactivé.", "Starting CyCapture with Windows is disabled.");
                 _startupStatusText.Foreground = new SolidColorBrush(Color.FromRgb(127, 141, 138));
             }
             else
@@ -373,12 +454,50 @@ public sealed partial class SettingsWindow : Window
                 _initializing = true;
                 _startupCheck.IsChecked = _preferences.StartWithWindows;
                 _initializing = false;
-                _startupStatusText.Text = $"Impossible de modifier le démarrage Windows : {startupError}";
+                _startupStatusText.Text = UiLocalization.Text(
+                    $"Impossible de modifier le démarrage Windows : {startupError}",
+                    $"Unable to change Windows startup: {startupError}");
                 _startupStatusText.Foreground = new SolidColorBrush(Color.FromRgb(255, 101, 115));
             }
         }
         _preferences.ApplyEncodingProfiles();
         await _preferences.SaveAsync();
+    }
+
+    private void PopulateTranslationLanguages()
+    {
+        _translationSourceLanguageCombo.Items.Clear();
+        _translationSourceLanguageCombo.Items.Add(new ComboBoxItem
+        {
+            Content = TranslationLanguageCatalog.DisplayName(TranslationLanguageCatalog.AutomaticCode),
+            Tag = TranslationLanguageCatalog.AutomaticCode
+        });
+        foreach (var language in TranslationLanguageCatalog.Languages)
+            _translationSourceLanguageCombo.Items.Add(new ComboBoxItem { Content = language.DisplayName, Tag = language.Code });
+        _translationTargetLanguageCombo.Items.Clear();
+        foreach (var language in TranslationLanguageCatalog.Languages)
+            _translationTargetLanguageCombo.Items.Add(new ComboBoxItem { Content = language.DisplayName, Tag = language.Code });
+        SelectByTag(_translationSourceLanguageCombo, _preferences.TranslationSourceLanguage);
+        SelectByTag(_translationTargetLanguageCombo, _preferences.TranslationTargetLanguage);
+    }
+
+    private void SaveTranslationLanguagePreferences()
+    {
+        if (_translationSourceLanguageCombo.SelectedItem is ComboBoxItem source)
+            _preferences.TranslationSourceLanguage = TranslationLanguageCatalog.NormalizeSource(source.Tag?.ToString());
+        if (_translationTargetLanguageCombo.SelectedItem is ComboBoxItem target)
+            _preferences.TranslationTargetLanguage = TranslationLanguageCatalog.NormalizeTarget(target.Tag?.ToString());
+        UpdateTranslationModelStatus();
+    }
+
+    private void UpdateTranslationModelStatus()
+    {
+        if (_translationModelsStatusText is null) return;
+        var ocrCount = _translationModels.InstalledOcrLanguages().Count;
+        var directionCount = _translationModels.InstalledDirections().Count;
+        _translationModelsStatusText.Text = UiLocalization.Text(
+            $"Modèles installés : {ocrCount} langue(s) OCR · {directionCount} direction(s) de traduction.",
+            $"Installed models: {ocrCount} OCR language(s) · {directionCount} translation direction(s).");
     }
 
     private void UpdateModeControls()
@@ -388,8 +507,8 @@ public sealed partial class SettingsWindow : Window
         var hasAudioSource = _audioOnlySystemCheck.IsChecked == true || _audioOnlyMicrophoneCheck.IsChecked == true;
         _audioOnlyEncodingQualityCombo.IsEnabled = hasAudioSource;
         _audioOnlySourceHint.Text = hasAudioSource
-            ? "Enregistrement MP3 (repli WAV si nécessaire). Impr écran arrête l’enregistrement."
-            : "Choisissez au moins une source pour pouvoir lancer une capture audio.";
+            ? UiLocalization.Text("Enregistrement MP3 (repli WAV si nécessaire). Impr écran arrête l’enregistrement.", "MP3 recording (WAV fallback when needed). Print Screen stops recording.")
+            : UiLocalization.Text("Choisissez au moins une source pour pouvoir lancer une capture audio.", "Choose at least one source before starting an audio capture.");
         _audioOnlySourceHint.Foreground = new SolidColorBrush(hasAudioSource
             ? Color.FromRgb(127, 141, 138)
             : Color.FromRgb(255, 101, 115));
@@ -398,7 +517,7 @@ public sealed partial class SettingsWindow : Window
     private void UpdateCaptureOrganizationPreview()
     {
         var example = CaptureStorage.GetDirectory(_preferences, CaptureMode.Image, DateTimeOffset.Now);
-        _captureOrganizationPreview.Text = $"Exemple pour une image : {example}";
+        _captureOrganizationPreview.Text = UiLocalization.Text($"Exemple pour une image : {example}", $"Image example: {example}");
     }
 
     private void PluginsChanged(object? sender, EventArgs args)
@@ -431,14 +550,18 @@ public sealed partial class SettingsWindow : Window
 
         var configure = new Button
         {
-            Content = plugin.Settings.Count == 0 ? "Aucun réglage" : "Configurer",
+            Content = plugin.Settings.Count == 0
+                ? UiLocalization.Text("Aucun réglage", "No settings")
+                : UiLocalization.Text("Configurer", "Configure"),
             IsEnabled = plugin.Settings.Count > 0,
             Padding = new Thickness(12, 6)
         };
         configure.Click += (_, _) =>
         {
             configuration.IsVisible = !configuration.IsVisible;
-            configure.Content = configuration.IsVisible ? "Masquer" : "Configurer";
+            configure.Content = configuration.IsVisible
+                ? UiLocalization.Text("Masquer", "Hide")
+                : UiLocalization.Text("Configurer", "Configure");
         };
 
         return new Border

@@ -33,9 +33,24 @@
       </Border>
 
       <Border Padding="14" CornerRadius="12" Background="#111817" BorderBrush="#314139" BorderThickness="1">
+        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
+          <StackPanel Spacing="5">
+            <TextBlock Text="LANGUE DE L’APPLICATION" FontSize="10" FontWeight="Bold" Foreground="#9BFF28" LetterSpacing="1.4" />
+            <TextBlock Text="Choisissez la langue de l’interface de CyCapture. Ce réglage est indépendant de la documentation."
+                       TextWrapping="Wrap" Foreground="#9DAEAA" FontSize="11" />
+          </StackPanel>
+          <ComboBox x:Name="ApplicationLanguageCombo" Grid.Column="1" Width="116"
+                    SelectionChanged="ApplicationLanguageChanged" VerticalAlignment="Center">
+            <ComboBoxItem Content="English" Tag="en" />
+            <ComboBoxItem Content="Français" Tag="fr" />
+          </ComboBox>
+        </Grid>
+      </Border>
+
+      <Border Padding="14" CornerRadius="12" Background="#111817" BorderBrush="#314139" BorderThickness="1">
         <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="10">
           <StackPanel Spacing="5">
-            <TextBlock Text="DOCUMENTATION" FontSize="10" FontWeight="Bold" Foreground="#9BFF28" LetterSpacing="1.4" />
+            <TextBlock Text="LANGUE DE LA DOCUMENTATION" FontSize="10" FontWeight="Bold" Foreground="#9BFF28" LetterSpacing="1.4" />
             <TextBlock Text="Guide CyDoc local en anglais et français, avec recherche, médias, schémas et dépannage."
                        TextWrapping="Wrap" Foreground="#9DAEAA" FontSize="11" />
           </StackPanel>
@@ -48,19 +63,6 @@
                   Content="Documentation / Aide" Click="DocumentationClick"
                   Padding="16,9" VerticalAlignment="Center" />
         </Grid>
-      </Border>
-
-      <Border Padding="16" CornerRadius="12" Background="#111817" BorderBrush="#263331" BorderThickness="1">
-        <StackPanel Spacing="12">
-          <TextBlock Text="CAPTURE RAPIDE" FontSize="10" FontWeight="Bold" Foreground="#9BFF28" LetterSpacing="1.4" />
-          <TextBlock Text="Lancez immédiatement un mode ici. Pendant une vidéo, un GIF ou un audio, Impr écran arrête l’enregistrement." TextWrapping="Wrap" Foreground="#B4C0BD" />
-          <Grid ColumnDefinitions="*,*,*,*" ColumnSpacing="8">
-            <Button Grid.Column="0" Content="▣  Image" Click="ImageClick" Height="42" />
-            <Button Grid.Column="1" Content="●  Vidéo" Click="VideoClick" Height="42" />
-            <Button Grid.Column="2" Content="GIF" Click="GifClick" Height="42" />
-            <Button Grid.Column="3" Content="♪  Audio" Click="AudioClick" Height="42" />
-          </Grid>
-        </StackPanel>
       </Border>
 
       <StackPanel Spacing="8">
@@ -157,6 +159,7 @@
                 </StackPanel>
                 <TextBlock Text="Le profil règle la fluidité et la dimension maximale de l’animation. Les options vidéo et audio ne s’appliquent pas au GIF."
                            TextWrapping="Wrap" Foreground="#7F8D8A" FontSize="11" />
+                <CheckBox x:Name="GifClipboardCheck" Content="Copier les GIF dans le presse-papiers comme fichiers" IsCheckedChanged="CheckedPreferenceChanged" />
                 <CheckBox x:Name="GifFrameCheck" Content="Afficher le cadre rouge pendant le GIF" IsCheckedChanged="CheckedPreferenceChanged" />
               </StackPanel>
             </Border>
@@ -170,6 +173,11 @@
                            TextWrapping="Wrap" Foreground="#7F8D8A" FontSize="11" />
                 <CheckBox x:Name="AudioOnlySystemCheck" Content="Enregistrer le son du système" IsCheckedChanged="CheckedPreferenceChanged" />
                 <CheckBox x:Name="AudioOnlyMicrophoneCheck" Content="Enregistrer le microphone" IsCheckedChanged="CheckedPreferenceChanged" />
+                <CheckBox x:Name="AudioOnlyIgnoreSystemVolumeCheck"
+                          Content="Ignorer le volume Windows et ajuster automatiquement le niveau enregistré"
+                          IsCheckedChanged="CheckedPreferenceChanged" />
+                <TextBlock Text="Cette option amplifie uniquement la piste système dans le fichier final, sans modifier le volume réellement entendu. Une source Windows totalement muette ne produit aucun signal."
+                           TextWrapping="Wrap" Foreground="#7F8D8A" FontSize="11" />
                 <StackPanel Spacing="6">
                   <TextBlock Text="ENCODAGE DU FICHIER AUDIO" FontSize="10" FontWeight="Bold" Foreground="#B4C0BD" />
                   <ComboBox x:Name="AudioOnlyEncodingQualityCombo" SelectionChanged="SelectionPreferenceChanged">
@@ -178,7 +186,31 @@
                     <ComboBoxItem Content="Haute qualité · 192 kbit/s stéréo" Tag="High" />
                   </ComboBox>
                 </StackPanel>
+                <CheckBox x:Name="AudioClipboardCheck" Content="Copier les captures audio dans le presse-papiers comme fichiers" IsCheckedChanged="CheckedPreferenceChanged" />
                 <TextBlock x:Name="AudioOnlySourceHint" TextWrapping="Wrap" Foreground="#7F8D8A" FontSize="11" />
+              </StackPanel>
+            </Border>
+          </TabItem>
+          <TabItem Header="Traduction" FontSize="14" Foreground="#B4C0BD">
+            <Border Padding="14" CornerRadius="12" Background="#111817" BorderBrush="#263331" BorderThickness="1">
+              <StackPanel Spacing="14">
+                <TextBlock Text="TRADUCTION SUR L’ÉCRAN · HORS LIGNE" FontSize="12" FontWeight="Bold" Foreground="#FFD84A" LetterSpacing="1.1" />
+                <TextBlock Text="Sélectionnez une zone, CyCapture reconnaît le texte puis affiche la traduction directement par-dessus l’image figée. Aucun texte ni aucune image n’est envoyé vers un service en ligne."
+                           TextWrapping="Wrap" Foreground="#7F8D8A" FontSize="11" />
+                <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
+                  <StackPanel Spacing="6">
+                    <TextBlock Text="LANGUE DU TEXTE" FontSize="10" FontWeight="Bold" Foreground="#B4C0BD" />
+                    <ComboBox x:Name="TranslationSourceLanguageCombo" SelectionChanged="TranslationLanguageChanged" />
+                  </StackPanel>
+                  <StackPanel Grid.Column="1" Spacing="6">
+                    <TextBlock Text="TRADUIRE VERS" FontSize="10" FontWeight="Bold" Foreground="#B4C0BD" />
+                    <ComboBox x:Name="TranslationTargetLanguageCombo" SelectionChanged="TranslationLanguageChanged" />
+                  </StackPanel>
+                </Grid>
+                <Button Content="Gérer et télécharger les modèles de langues…"
+                        Click="ManageTranslationModelsClick" HorizontalAlignment="Left" Padding="16,8" />
+                <CheckBox x:Name="TranslationClipboardCheck" Content="Copier automatiquement le texte traduit dans le presse-papiers" IsCheckedChanged="CheckedPreferenceChanged" />
+                <TextBlock x:Name="TranslationModelsStatusText" TextWrapping="Wrap" Foreground="#7F8D8A" FontSize="11" />
               </StackPanel>
             </Border>
           </TabItem>
@@ -188,11 +220,12 @@
       <StackPanel Spacing="8">
         <TextBlock Text="COMPORTEMENT DE LA TOUCHE IMPR ÉCRAN" FontSize="10" FontWeight="Bold" Foreground="#9BFF28" LetterSpacing="1.4" />
         <ComboBox x:Name="PrintScreenBehaviorCombo" SelectionChanged="SelectionPreferenceChanged">
-          <ComboBoxItem Content="Afficher le choix Image / Vidéo / GIF / Audio" Tag="ShowModePicker" />
+          <ComboBoxItem Content="Afficher le choix Image / Vidéo / GIF / Audio / Traduction" Tag="ShowModePicker" />
           <ComboBoxItem Content="Capture d’image directe" Tag="CaptureImage" />
           <ComboBoxItem Content="Capture vidéo directe" Tag="CaptureVideo" />
           <ComboBoxItem Content="Capture GIF directe" Tag="CaptureGif" />
           <ComboBoxItem Content="Capture audio directe" Tag="CaptureAudio" />
+          <ComboBoxItem Content="Traduction directe d’une zone" Tag="CaptureTranslation" />
           <ComboBoxItem Content="Appui court : sélection image · maintien réglable : modes" Tag="QuickImageHoldSelection" />
         </ComboBox>
         <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
@@ -210,7 +243,7 @@
             <ComboBoxItem Content="1 seconde" Tag="1000" />
           </ComboBox>
         </Grid>
-        <TextBlock Text="Les modes directs sautent la palette. Dans le mode hybride, un appui court ouvre la sélection intelligente d’image ; un maintien pendant le délai choisi ouvre la palette Image / Vidéo / GIF / Audio." TextWrapping="Wrap" Foreground="#7F8D8A" FontSize="11" />
+        <TextBlock Text="Les modes directs sautent la palette. Dans le mode hybride, un appui court ouvre la sélection intelligente d’image ; un maintien pendant le délai choisi ouvre la palette Image / Vidéo / GIF / Audio / Traduction." TextWrapping="Wrap" Foreground="#7F8D8A" FontSize="11" />
       </StackPanel>
 
       <StackPanel Spacing="8">
@@ -242,7 +275,7 @@
         <StackPanel Spacing="12">
           <TextBlock Text="RÉGLAGES COMMUNS" FontSize="10" FontWeight="Bold" Foreground="#9BFF28" LetterSpacing="1.4" />
           <StackPanel Spacing="6">
-            <TextBlock Text="SÉLECTION PAR DÉFAUT · IMAGE / VIDÉO / GIF" FontSize="10" FontWeight="Bold" Foreground="#B4C0BD" />
+            <TextBlock Text="SÉLECTION PAR DÉFAUT · IMAGE / VIDÉO / GIF / TRADUCTION" FontSize="10" FontWeight="Bold" Foreground="#B4C0BD" />
             <ComboBox x:Name="SelectionModeCombo" SelectionChanged="SelectionPreferenceChanged">
               <ComboBoxItem Content="Intelligente" Tag="Smart" />
               <ComboBoxItem Content="Fenêtre" Tag="Window" />

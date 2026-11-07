@@ -14,8 +14,8 @@
     </td>
     <td width="300" align="right" valign="top">
       <p><sub>Licence de l’application</sub><br><a href="LICENSE"><strong>GNU AGPL-3.0-only</strong></a></p>
-      <p><sub>Version</sub><br><a href="VERSION.fr.md"><strong>1.4.11</strong></a><br><strong>BÊTA</strong></p>
-      <p><a href="https://github.com/MrMybal/CyCapture/releases/download/v1.4.11/CyCapture-1.4.11-windows-x64-installer.exe"><strong>Télécharger</strong></a><br><sub>Windows x64 · installateur</sub></p>
+      <p><sub>Version</sub><br><a href="VERSION.fr.md"><strong>1.5.0</strong></a><br><strong>BÊTA</strong></p>
+      <p><a href="https://github.com/MrMybal/CyCapture/releases/download/v1.5.0/CyCapture-1.5.0-windows-x64-installer.exe"><strong>Télécharger</strong></a><br><sub>Windows x64 · installateur</sub></p>
     </td>
   </tr>
 </table>
@@ -25,7 +25,7 @@
 
 CyCapture est une application de capture Windows discrète, pensée pour fonctionner depuis la zone de notification et remplacer le flux de travail habituel de la touche Impr écran par la capture d’image, de vidéo, de GIF et d’audio.
 
-La version **1.4.11** est actuellement en **bêta**. Consultez les [notes de version](VERSION.fr.md) pour connaître le périmètre actuel et les limites connues.
+La version **1.5.0** est actuellement en **bêta**. Consultez les [notes de version](VERSION.fr.md) pour connaître le périmètre actuel et les limites connues.
 
 ## À propos de CyCapture
 
@@ -39,7 +39,8 @@ Le guide illustré complet est disponible dans la [documentation française](htt
 
 ## Fonctionnalités
 
-- Modes de capture d’image, de vidéo, de GIF animé et d’audio seul.
+- Modes de capture d’image, de vidéo, de GIF animé, d’audio seul et de traduction à l’écran.
+- OCR et traduction entièrement locaux avec superposition et modèles de langues téléchargeables, dont le chinois simplifié et traditionnel.
 - Sélection intelligente des fenêtres visibles tenant compte de leur ordre et de leur occlusion.
 - Capture d’écran entier et de zone libre sur les bureaux à plusieurs moniteurs.
 - Annotations rapides sur le bureau figé : dessin libre, cadres, flèches et texte.
@@ -58,13 +59,13 @@ CyCapture cible actuellement **Windows x64**. Les éditions Windows N et KN peuv
 
 ### Recommandé : installateur
 
-Téléchargez puis exécutez [CyCapture 1.4.11 pour Windows x64](https://github.com/MrMybal/CyCapture/releases/download/v1.4.11/CyCapture-1.4.11-windows-x64-installer.exe). L’installateur enregistre l’application, les raccourcis du menu Démarrer, la désinstallation et les composants facultatifs sélectionnés.
+Téléchargez puis exécutez [CyCapture 1.5.0 pour Windows x64](https://github.com/MrMybal/CyCapture/releases/download/v1.5.0/CyCapture-1.5.0-windows-x64-installer.exe). L’installateur enregistre l’application, les raccourcis du menu Démarrer, la désinstallation et les composants facultatifs sélectionnés.
 
 ### Éditions portables
 
-- [Édition portable avec CyAnnota](https://github.com/MrMybal/CyCapture/releases/download/v1.4.11/CyCapture-1.4.11-windows-x64-portable.exe)
-- [Édition portable sans CyAnnota](https://github.com/MrMybal/CyCapture/releases/download/v1.4.11/CyCapture-1.4.11-windows-x64-portable-without-CyAnnota.exe)
-- [Paquet du plugin CyAnnota](https://github.com/MrMybal/CyCapture/releases/download/v1.4.11/CyCapture.Plugin.CyAnnota-0.4.4.zip)
+- [Édition portable avec CyAnnota](https://github.com/MrMybal/CyCapture/releases/download/v1.5.0/CyCapture-1.5.0-windows-x64-portable.exe)
+- [Édition portable sans CyAnnota](https://github.com/MrMybal/CyCapture/releases/download/v1.5.0/CyCapture-1.5.0-windows-x64-portable-without-CyAnnota.exe)
+- [Paquet du plugin CyAnnota](https://github.com/MrMybal/CyCapture/releases/download/v1.5.0/CyCapture.Plugin.CyAnnota-0.4.4.zip)
 
 Extrayez une archive portable dans un dossier accessible en écriture, puis lancez `CyCapture.exe`. Les binaires de l’application sont autonomes. L’aide hors ligne est distribuée avec l’application et peut également utiliser sa copie embarquée de secours.
 
@@ -114,6 +115,8 @@ CyCapture est distribué sous la [GNU Affero General Public License v3.0 uniquem
 | NAudio | 2.3.0 | MIT | Capture et traitement audio sous Windows |
 | LibVLCSharp / LibVLC | 3.10.1 / 3.0.23.1 | Composants LGPL-2.1-or-later | Lecture vidéo et audio dans la galerie |
 | System.Drawing.Common | 8.0.20 | MIT | Interopérabilité des images sous Windows |
+| Tesseract .NET / Tesseract OCR | 5.2.0 | Apache-2.0 | Reconnaissance locale du texte avec données de langues téléchargeables |
+| BergamotTranslatorSharp / Bergamot | 0.7.0 | MPL-2.0 | Traduction neuronale locale avec modèles Mozilla téléchargeables |
 | CyDoc | 0.1.0 | MIT | Export lors de la compilation et lecteur local ; modules image et galerie uniquement |
 | CyAnnota | 0.4.4 | AGPL-3.0-only | Post-édition facultative dans les paquets complet et plugin |
 

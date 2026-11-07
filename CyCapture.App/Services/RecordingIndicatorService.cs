@@ -12,8 +12,7 @@ internal sealed class RecordingIndicatorService
         Hide();
         var bounds = selection.Bounds;
         var screen = selection.Monitor.Bounds;
-        foreach (var frameBounds in CalculateFrameBounds(bounds, screen))
-            Add(frameBounds, selection.Monitor.Scale, false);
+        Add(CalculateOutlineBounds(bounds, screen), selection.Monitor.Scale, false);
 
         const int hudWidth = 144;
         const int hudHeight = 34;
@@ -22,22 +21,22 @@ internal sealed class RecordingIndicatorService
             hud = new PixelBounds(Math.Clamp(bounds.X, screen.X, screen.Right - hudWidth), bounds.Y - hudHeight - 7, hudWidth, hudHeight);
         else if (bounds.Bottom + hudHeight + 8 <= screen.Bottom)
             hud = new PixelBounds(Math.Clamp(bounds.X, screen.X, screen.Right - hudWidth), bounds.Bottom + 7, hudWidth, hudHeight);
-        if (hud is not null) Add(hud, selection.Monitor.Scale, true);
+        hud ??= new PixelBounds(
+            Math.Clamp(bounds.X + 8, screen.X, screen.Right - hudWidth),
+            Math.Clamp(bounds.Y + 8, screen.Y, screen.Bottom - hudHeight),
+            hudWidth,
+            hudHeight);
+        Add(hud, selection.Monitor.Scale, true);
     }
 
-    private static IReadOnlyList<PixelBounds> CalculateFrameBounds(PixelBounds bounds, PixelBounds screen)
+    private static PixelBounds CalculateOutlineBounds(PixelBounds bounds, PixelBounds screen)
     {
-        const int thickness = 1;
-        var result = new List<PixelBounds>(4);
-        if (bounds.Y - thickness >= screen.Y)
-            result.Add(new PixelBounds(bounds.X, bounds.Y - thickness, bounds.Width, thickness));
-        if (bounds.Bottom + thickness <= screen.Bottom)
-            result.Add(new PixelBounds(bounds.X, bounds.Bottom, bounds.Width, thickness));
-        if (bounds.X - thickness >= screen.X)
-            result.Add(new PixelBounds(bounds.X - thickness, bounds.Y, thickness, bounds.Height));
-        if (bounds.Right + thickness <= screen.Right)
-            result.Add(new PixelBounds(bounds.Right, bounds.Y, thickness, bounds.Height));
-        return result;
+        const int outsideMargin = 2;
+        var left = Math.Max(screen.X, bounds.X - outsideMargin);
+        var top = Math.Max(screen.Y, bounds.Y - outsideMargin);
+        var right = Math.Min(screen.Right, bounds.Right + outsideMargin);
+        var bottom = Math.Min(screen.Bottom, bounds.Bottom + outsideMargin);
+        return new PixelBounds(left, top, Math.Max(1, right - left), Math.Max(1, bottom - top));
     }
 
     internal void UpdateElapsed(TimeSpan elapsed)

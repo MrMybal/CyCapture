@@ -72,6 +72,7 @@ public sealed partial class GalleryWindow : Window
     {
         _preferences = preferences;
         _history = history;
+        UiLocalization.Use(preferences.ApplicationLanguage);
         AvaloniaXamlLoader.Load(this);
         WindowsWindowAppearance.Attach(this);
         _galleryStatusText = RequireControl<TextBlock>("GalleryStatusText");
@@ -99,12 +100,13 @@ public sealed partial class GalleryWindow : Window
         Opened += async (_, _) => await RefreshGalleryAsync();
         Closed += (_, _) => DisposeResources();
         UpdateDateFilterButtons();
+        UiLocalization.ApplyTo(this);
     }
 
     internal async Task RefreshGalleryAsync()
     {
         var revision = ++_refreshRevision;
-        _galleryStatusText.Text = "CHARGEMENT DES CAPTURES…";
+        _galleryStatusText.Text = UiLocalization.Text("CHARGEMENT DES CAPTURES…", "LOADING CAPTURES…");
         _outputPathText.Text = _preferences.EffectiveOutputDirectory;
         var entries = await _history.ReadAvailableAsync(_preferences.EffectiveOutputDirectory);
         if (revision != _refreshRevision || !IsVisible) return;
@@ -132,12 +134,12 @@ public sealed partial class GalleryWindow : Window
 
         _emptyGalleryPanel.IsVisible = _visibleEntries.Count == 0;
         _emptyGalleryText.Text = _allEntries.Count == 0
-            ? "Vos prochaines images, vidéos, GIF et captures audio apparaîtront ici."
+            ? UiLocalization.Text("Vos prochaines images, vidéos, GIF et captures audio apparaîtront ici.", "Your next images, videos, GIFs and audio captures will appear here.")
             : _dateFilter switch
             {
-                DateFilter.Today => "Aucune capture enregistrée aujourd’hui.",
-                DateFilter.Yesterday => "Aucune capture enregistrée hier.",
-                _ => "Aucune capture disponible."
+                DateFilter.Today => UiLocalization.Text("Aucune capture enregistrée aujourd’hui.", "No capture recorded today."),
+                DateFilter.Yesterday => UiLocalization.Text("Aucune capture enregistrée hier.", "No capture recorded yesterday."),
+                _ => UiLocalization.Text("Aucune capture disponible.", "No capture available.")
             };
         _galleryStatusText.Text = BuildStatusText();
         UpdateDateFilterButtons();
@@ -147,25 +149,35 @@ public sealed partial class GalleryWindow : Window
     {
         if (_dateFilter == DateFilter.All)
         {
-            return _visibleEntries.Count switch
+            return UiLocalization.IsFrench ? _visibleEntries.Count switch
             {
                 0 => "AUCUNE CAPTURE",
                 1 => "1 CAPTURE AU TOTAL",
                 _ => $"{_visibleEntries.Count} CAPTURES AU TOTAL"
+            } : _visibleEntries.Count switch
+            {
+                0 => "NO CAPTURES",
+                1 => "1 CAPTURE IN TOTAL",
+                _ => $"{_visibleEntries.Count} CAPTURES IN TOTAL"
             };
         }
 
         var period = _dateFilter switch
         {
-            DateFilter.Today => "AUJOURD’HUI",
-            DateFilter.Yesterday => "HIER",
+            DateFilter.Today => UiLocalization.Text("AUJOURD’HUI", "TODAY"),
+            DateFilter.Yesterday => UiLocalization.Text("HIER", "YESTERDAY"),
             _ => string.Empty
         };
-        return _visibleEntries.Count switch
+        return UiLocalization.IsFrench ? _visibleEntries.Count switch
         {
             0 => $"AUCUNE CAPTURE {period}",
             1 => $"1 CAPTURE {period} · {_allEntries.Count} AU TOTAL",
             _ => $"{_visibleEntries.Count} CAPTURES {period} · {_allEntries.Count} AU TOTAL"
+        } : _visibleEntries.Count switch
+        {
+            0 => $"NO CAPTURES {period}",
+            1 => $"1 CAPTURE {period} · {_allEntries.Count} IN TOTAL",
+            _ => $"{_visibleEntries.Count} CAPTURES {period} · {_allEntries.Count} IN TOTAL"
         };
     }
 
@@ -205,10 +217,10 @@ public sealed partial class GalleryWindow : Window
         {
             Content = entry.Mode switch
             {
-                CaptureMode.Video => "▶  Lire",
-                CaptureMode.Gif => "▶  Lire le GIF",
-                CaptureMode.Audio => "▶  Écouter",
-                _ => "⛶  Agrandir"
+                CaptureMode.Video => UiLocalization.Text("▶  Lire", "▶  Play"),
+                CaptureMode.Gif => UiLocalization.Text("▶  Lire le GIF", "▶  Play GIF"),
+                CaptureMode.Audio => UiLocalization.Text("▶  Écouter", "▶  Listen"),
+                _ => UiLocalization.Text("⛶  Agrandir", "⛶  Enlarge")
             },
             HorizontalAlignment = HorizontalAlignment.Stretch,
             HorizontalContentAlignment = HorizontalAlignment.Center
@@ -219,14 +231,14 @@ public sealed partial class GalleryWindow : Window
             OpenViewer(entry);
         };
 
-        var copyButton = new Button { Content = "Copier", HorizontalAlignment = HorizontalAlignment.Stretch };
+        var copyButton = new Button { Content = UiLocalization.Text("Copier", "Copy"), HorizontalAlignment = HorizontalAlignment.Stretch };
         copyButton.Click += (_, args) =>
         {
             args.Handled = true;
             CopyEntry(entry);
         };
 
-        var revealButton = new Button { Content = "Dossier", HorizontalAlignment = HorizontalAlignment.Stretch };
+        var revealButton = new Button { Content = UiLocalization.Text("Dossier", "Folder"), HorizontalAlignment = HorizontalAlignment.Stretch };
         revealButton.Click += (_, args) =>
         {
             args.Handled = true;
@@ -340,7 +352,7 @@ public sealed partial class GalleryWindow : Window
     {
         if (!File.Exists(entry.Path))
         {
-            _galleryStatusText.Text = "FICHIER INTROUVABLE";
+            _galleryStatusText.Text = UiLocalization.Text("FICHIER INTROUVABLE", "FILE NOT FOUND");
             return;
         }
 
@@ -377,15 +389,15 @@ public sealed partial class GalleryWindow : Window
             if (entry.Mode == CaptureMode.Gif) _activeMedia.AddOption(":input-repeat=-1");
             if (_mediaPlayer!.Play(_activeMedia))
             {
-                _playPauseButton.Content = "Pause";
+                _playPauseButton.Content = UiLocalization.Text("Pause", "Pause");
                 _playbackTimer.Start();
             }
             else
-                ShowViewerError("La lecture de ce fichier n’a pas pu démarrer.");
+                ShowViewerError(UiLocalization.Text("La lecture de ce fichier n’a pas pu démarrer.", "This file could not start playing."));
         }
         catch (Exception error)
         {
-            ShowViewerError($"Lecture impossible : {error.Message}");
+            ShowViewerError(UiLocalization.Text($"Lecture impossible : {error.Message}", $"Playback failed: {error.Message}"));
         }
     }
 
@@ -397,11 +409,11 @@ public sealed partial class GalleryWindow : Window
         _mediaPlayer = new VlcMediaPlayer(_libVlc);
         _mediaPlayer.EndReached += (_, _) => Dispatcher.UIThread.Post(() =>
         {
-            _playPauseButton.Content = "Lire";
+            _playPauseButton.Content = UiLocalization.Text("Lire", "Play");
             UpdatePlaybackPosition();
         });
         _mediaPlayer.EncounteredError += (_, _) => Dispatcher.UIThread.Post(() =>
-            ShowViewerError("Le moteur multimédia ne parvient pas à lire ce fichier."));
+            ShowViewerError(UiLocalization.Text("Le moteur multimédia ne parvient pas à lire ce fichier.", "The media engine cannot play this file.")));
         _viewerVideoView.MediaPlayer = _mediaPlayer;
     }
 
@@ -425,7 +437,7 @@ public sealed partial class GalleryWindow : Window
         _playbackSlider.Value = length > 0 ? time * 1000d / length : 0;
         _updatingPlaybackSlider = false;
         _playbackTimeText.Text = $"{FormatDuration(time)} / {FormatDuration(length)}";
-        _playPauseButton.Content = _mediaPlayer.IsPlaying ? "Pause" : "Lire";
+        _playPauseButton.Content = _mediaPlayer.IsPlaying ? "Pause" : UiLocalization.Text("Lire", "Play");
     }
 
     private void StopActiveMedia()
@@ -462,13 +474,15 @@ public sealed partial class GalleryWindow : Window
                 WindowsClipboard.CopyImageAndFile(entry.Path);
             else
                 WindowsClipboard.CopyFile(entry.Path);
-            var message = $"COPIÉ DANS LE PRESSE-PAPIERS · {Path.GetFileName(entry.Path)}";
+            var message = UiLocalization.Text(
+                $"COPIÉ DANS LE PRESSE-PAPIERS · {Path.GetFileName(entry.Path)}",
+                $"COPIED TO CLIPBOARD · {Path.GetFileName(entry.Path)}");
             _galleryStatusText.Text = message;
             if (_viewerOverlay.IsVisible) _viewerDetailsText.Text = message;
         }
         catch (Exception error)
         {
-            var message = $"COPIE IMPOSSIBLE · {error.Message}";
+            var message = UiLocalization.Text($"COPIE IMPOSSIBLE · {error.Message}", $"COPY FAILED · {error.Message}");
             _galleryStatusText.Text = message;
             if (_viewerOverlay.IsVisible) _viewerDetailsText.Text = message;
         }
@@ -601,7 +615,7 @@ public sealed partial class GalleryWindow : Window
 
     private static string ModeLabel(CaptureMode mode) => mode switch
     {
-        CaptureMode.Video => "VIDÉO",
+        CaptureMode.Video => UiLocalization.Text("VIDÉO", "VIDEO"),
         CaptureMode.Gif => "GIF",
         CaptureMode.Audio => "AUDIO",
         _ => "IMAGE"
@@ -609,9 +623,9 @@ public sealed partial class GalleryWindow : Window
 
     private static string FormatSize(long bytes) => bytes switch
     {
-        >= 1_048_576 => $"{bytes / 1_048_576d:0.0} Mo",
-        >= 1_024 => $"{bytes / 1_024d:0.0} Ko",
-        _ => $"{bytes} o"
+        >= 1_048_576 => $"{bytes / 1_048_576d:0.0} {(UiLocalization.IsFrench ? "Mo" : "MB")}",
+        >= 1_024 => $"{bytes / 1_024d:0.0} {(UiLocalization.IsFrench ? "Ko" : "KB")}",
+        _ => $"{bytes} {(UiLocalization.IsFrench ? "o" : "B")}"
     };
 
     private static string FormatDuration(long milliseconds)

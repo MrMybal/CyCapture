@@ -3,7 +3,7 @@
         x:Class="CyCapture.Views.QuickCaptureWindow"
         Title="CyCapture · Capture rapide"
         FontSize="13"
-        Width="720" SizeToContent="Height"
+        Width="860" SizeToContent="Height"
         CanResize="False"
         ShowInTaskbar="False"
         Topmost="True"
@@ -20,7 +20,7 @@
         <TextBlock Grid.Column="1" Text="Choisissez un mode" Foreground="#90A09E" FontSize="11" />
         <Button Grid.Column="2" Content="×" Click="CloseClick" Margin="10,-6,-5,-6" Padding="10,4" Background="Transparent" />
       </Grid>
-      <Grid Grid.Row="1" ColumnDefinitions="*,*,*,*" ColumnSpacing="10">
+      <Grid Grid.Row="1" ColumnDefinitions="*,*,*,*,*" ColumnSpacing="10">
         <Button Grid.Column="0" Click="ImageClick" Classes="capture-mode">
           <StackPanel HorizontalAlignment="Center" Spacing="5">
             <TextBlock Text="▣" FontSize="24" Foreground="#9BFF28" HorizontalAlignment="Center" />
@@ -47,6 +47,13 @@
             <TextBlock Text="♪" FontSize="24" FontWeight="Black" Foreground="#C58CFF" HorizontalAlignment="Center" />
             <TextBlock Text="AUDIO" FontWeight="Bold" FontSize="15" HorizontalAlignment="Center" />
             <TextBlock Text="MP3 · système/micro" FontSize="10" Foreground="#90A09E" />
+          </StackPanel>
+        </Button>
+        <Button Grid.Column="4" Click="TranslateClick" Classes="capture-mode">
+          <StackPanel HorizontalAlignment="Center" Spacing="5">
+            <TextBlock Text="文" FontSize="22" FontWeight="Black" Foreground="#FFD84A" HorizontalAlignment="Center" />
+            <TextBlock Text="TRADUIRE" FontWeight="Bold" FontSize="15" HorizontalAlignment="Center" />
+            <TextBlock Text="OCR · hors ligne" FontSize="10" Foreground="#90A09E" />
           </StackPanel>
         </Button>
       </Grid>
@@ -131,11 +138,31 @@
                   <CheckBox x:Name="AudioOnlySystemCheck" Content="Enregistrer le son du système" Margin="0,0,16,0" />
                   <CheckBox x:Name="AudioOnlyMicrophoneCheck" Content="Enregistrer le microphone" />
                 </WrapPanel>
+                <CheckBox x:Name="AudioOnlyIgnoreSystemVolumeCheck"
+                          Content="Niveau automatique · ignorer le volume Windows" />
+              </StackPanel>
+            </TabItem>
+            <TabItem Header="Traduction" FontSize="14" Foreground="#B4C0BD">
+              <StackPanel Margin="0,8,0,0" Spacing="8">
+                <Grid ColumnDefinitions="*,*,Auto" ColumnSpacing="10">
+                  <StackPanel Spacing="5">
+                    <TextBlock Text="LANGUE DU TEXTE" FontSize="9" FontWeight="Bold" Foreground="#FFD84A" />
+                    <ComboBox x:Name="TranslationSourceLanguageCombo" />
+                  </StackPanel>
+                  <StackPanel Grid.Column="1" Spacing="5">
+                    <TextBlock Text="TRADUIRE VERS" FontSize="9" FontWeight="Bold" Foreground="#FFD84A" />
+                    <ComboBox x:Name="TranslationTargetLanguageCombo" />
+                  </StackPanel>
+                  <Button Grid.Column="2" Content="Gérer les modèles…" Click="ManageTranslationModelsClick"
+                          VerticalAlignment="Bottom" Padding="12,7" />
+                </Grid>
+                <TextBlock Text="Les modèles manquants sont téléchargés au premier usage, puis l’OCR et la traduction fonctionnent entièrement hors ligne."
+                           TextWrapping="Wrap" Foreground="#90A09E" FontSize="10" />
               </StackPanel>
             </TabItem>
           </TabControl>
           <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
-            <TextBlock Text="SÉLECTION · IMAGE / VIDÉO / GIF" FontSize="9" FontWeight="Bold" Foreground="#90A09E" VerticalAlignment="Center" />
+            <TextBlock Text="SÉLECTION · IMAGE / VIDÉO / GIF / TRADUCTION" FontSize="9" FontWeight="Bold" Foreground="#90A09E" VerticalAlignment="Center" />
             <ComboBox x:Name="SelectionModeCombo" Grid.Column="1">
               <ComboBoxItem Content="Intelligente" Tag="Smart" />
               <ComboBoxItem Content="Fenêtre" Tag="Window" />

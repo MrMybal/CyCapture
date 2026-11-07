@@ -10,6 +10,25 @@ internal static class WindowsClipboard
     internal static void CopyImageAndFile(string path)
         => SetClipboard(path, includeImage: true);
 
+    internal static void CopyText(string text)
+    {
+        Exception? lastError = null;
+        for (var attempt = 0; attempt < 4; attempt++)
+        {
+            try
+            {
+                System.Windows.Clipboard.SetText(text ?? string.Empty);
+                return;
+            }
+            catch (Exception error)
+            {
+                lastError = error;
+                Thread.Sleep(35 * (attempt + 1));
+            }
+        }
+        throw new InvalidOperationException("Le presse-papiers Windows est occupé.", lastError);
+    }
+
     private static void SetClipboard(string path, bool includeImage)
     {
         var fullPath = Path.GetFullPath(path);

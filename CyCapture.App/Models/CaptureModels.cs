@@ -108,4 +108,7 @@ public sealed record CaptureArtifact(
     DateTimeOffset StartedAt,
     DateTimeOffset FinishedAt);
 
-public sealed record CaptureRequest(CaptureMode Mode, CaptureSelectionMode SelectionMode);
+public sealed record CaptureRequest(
+    CaptureMode Mode,
+    CaptureSelectionMode SelectionMode,
+    bool TranslateSelection = false);
