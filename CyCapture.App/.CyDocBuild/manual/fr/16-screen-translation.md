@@ -13,7 +13,9 @@ Choisissez **Traduction** dans la palette rapide ou **Traduire une zone** dans l
 
 CyCapture fige l’écran sélectionné, reconnaît le texte localement, le traduit localement puis dessine des cadres lisibles par-dessus les lignes originales. Le fond n’est jamais effacé ni modifié.
 
+```diagram
 {"type":"flow","title":"Traduction locale de l’écran","nodes":[{"id":"select","label":"Sélectionner","x":0,"y":50},{"id":"ocr","label":"OCR local","x":220,"y":50},{"id":"translate","label":"Traduction locale","x":450,"y":50},{"id":"overlay","label":"Superposition sur l’écran figé","x":710,"y":50}],"edges":[{"from":"select","to":"ocr"},{"from":"ocr","to":"translate"},{"from":"translate","to":"overlay"}]}
+```
 
 ## Langues et modèles {#models}
 
@@ -30,4 +32,6 @@ Les modèles sont téléchargés une seule fois dans les données locales de CyC
 - Le réglage **Copier automatiquement le texte traduit dans le presse-papiers** effectue cette copie dès la fin de la traduction. Il est coché par défaut.
 - La traduction est une superposition temporaire : aucun fichier de capture n’est créé.
 
+```callout
 {"type":"tip","title":"OCR chinois","body":"Pour une reconnaissance plus fiable, choisissez explicitement Chinois simplifié ou Chinois traditionnel lorsque vous connaissez l’écriture utilisée."}
+```

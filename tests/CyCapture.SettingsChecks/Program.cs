@@ -261,21 +261,21 @@ internal static class Program
         Require(AppAssembly.GetType("CyCapture.ApplicationController")!
                     .GetMethod("CheckForUpdatesOnStartupAsync", PrivateInstance) is not null,
             "The startup update check is missing.");
-        const string fullName = "CyCapture-1.5.0-windows-x64-portable.exe";
-        const string liteName = "CyCapture-1.5.0-windows-x64-portable-without-CyAnnota.exe";
-        const string installerName = "CyCapture-1.5.0-windows-x64-installer.exe";
+        const string fullName = "CyCapture-1.5.1-windows-x64-portable.exe";
+        const string liteName = "CyCapture-1.5.1-windows-x64-portable-without-CyAnnota.exe";
+        const string installerName = "CyCapture-1.5.1-windows-x64-installer.exe";
         const string fullHash = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
         const string liteHash = "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB";
         const string installerHash = "CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC";
         var json = JsonSerializer.Serialize(new
         {
-            tag_name = "v1.5.0",
-            html_url = "https://github.com/MrMybal/CyCapture/releases/tag/v1.5.0",
+            tag_name = "v1.5.1",
+            html_url = "https://github.com/MrMybal/CyCapture/releases/tag/v1.5.1",
             assets = new object[]
             {
-                new { name = fullName, browser_download_url = $"https://github.com/MrMybal/CyCapture/releases/download/v1.5.0/{fullName}", size = 123L, digest = $"sha256:{fullHash}" },
-                new { name = liteName, browser_download_url = $"https://github.com/MrMybal/CyCapture/releases/download/v1.5.0/{liteName}", size = 456L, digest = $"sha256:{liteHash}" },
-                new { name = installerName, browser_download_url = $"https://github.com/MrMybal/CyCapture/releases/download/v1.5.0/{installerName}", size = 789L, digest = $"sha256:{installerHash}" }
+                new { name = fullName, browser_download_url = $"https://github.com/MrMybal/CyCapture/releases/download/v1.5.1/{fullName}", size = 123L, digest = $"sha256:{fullHash}" },
+                new { name = liteName, browser_download_url = $"https://github.com/MrMybal/CyCapture/releases/download/v1.5.1/{liteName}", size = 456L, digest = $"sha256:{liteHash}" },
+                new { name = installerName, browser_download_url = $"https://github.com/MrMybal/CyCapture/releases/download/v1.5.1/{installerName}", size = 789L, digest = $"sha256:{installerHash}" }
             }
         });
         var parse = AppAssembly.GetType("CyCapture.Services.UpdateService")!
@@ -294,7 +294,7 @@ internal static class Program
         Require(Property(installer, "AssetName").ToString() == installerName, "The installed edition selected the wrong update asset.");
         Require(Property(installer, "Sha256").ToString() == installerHash, "The installer update digest was not preserved.");
 
-        var current = parse.Invoke(null, [json, new Version(1, 5, 0), true, false])!;
+        var current = parse.Invoke(null, [json, new Version(1, 5, 1), true, false])!;
         Require(Equals(Property(current, "IsUpdateAvailable"), false), "The current version was reported as outdated.");
 
         var unsafeJson = json.Replace("https://github.com/MrMybal/CyCapture/releases/download/", "https://example.invalid/");
@@ -446,7 +446,7 @@ internal static class Program
         var versionText = settings.FindControl<TextBlock>("AppVersionText")!.Text ?? string.Empty;
         var editionLabel = (string)AppAssembly.GetType("CyCapture.Services.AppBuildInfo")!
             .GetProperty("EditionLabel", PrivateStatic)!.GetValue(null)!;
-        Require(versionText.Contains("1.5.0", StringComparison.Ordinal),
+        Require(versionText.Contains("1.5.1", StringComparison.Ordinal),
             "The settings window does not show the application version.");
         Require(versionText.Contains(editionLabel, StringComparison.Ordinal),
             "The settings window does not show the compiled edition.");

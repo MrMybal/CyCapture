@@ -13,7 +13,9 @@ Choose **Translation** from the quick palette or **Translate an area** from the 
 
 CyCapture freezes the selected screen, recognizes the text locally, translates it locally, and draws readable translation boxes over the original lines. The background is never erased or altered.
 
+```diagram
 {"type":"flow","title":"Offline screen translation","nodes":[{"id":"select","label":"Select area","x":0,"y":50},{"id":"ocr","label":"Local OCR","x":220,"y":50},{"id":"translate","label":"Local translation","x":450,"y":50},{"id":"overlay","label":"Overlay on frozen screen","x":710,"y":50}],"edges":[{"from":"select","to":"ocr"},{"from":"ocr","to":"translate"},{"from":"translate","to":"overlay"}]}
+```
 
 ## Languages and models {#models}
 
@@ -30,4 +32,6 @@ Models are downloaded once into the local CyCapture data directory and reused of
 - The **Automatically copy translated text to the clipboard** setting performs that copy as soon as translation completes. It is enabled by default.
 - Hovering remains focused on the original screen: the translation is a temporary overlay and no capture file is created.
 
+```callout
 {"type":"tip","title":"Chinese OCR","body":"For the most reliable recognition, explicitly select Chinese (simplified) or Chinese (traditional) when you know the script."}
+```

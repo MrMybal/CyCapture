@@ -1,13 +1,14 @@
-# CyCapture 1.5.0
+# CyCapture 1.5.1
 
 **Stade :** Bêta<br>
 **Plateforme :** Windows x64<br>
-**Version publiée :** [v1.5.0](https://github.com/MrMybal/CyCapture/releases/tag/v1.5.0)
+**Version publiée :** [v1.5.1](https://github.com/MrMybal/CyCapture/releases/tag/v1.5.1)
 
 CyCapture est en développement bêta actif. L’application peut être utilisée pour les captures quotidiennes, mais le comportement de capture et les paquets doivent encore être validés sur chaque configuration Windows cible.
 
 ## Principales modifications de cette version
 
+- Correction du rendu du schéma de traduction à l’écran et de l’encadré OCR chinois dans le lecteur CyDoc embarqué et en ligne.
 - Ajout de l’OCR et de la traduction à l’écran entièrement locaux, avec une superposition dessinée sur le bureau figé sans effacer le fond d’origine.
 - Ajout des modèles OCR et Bergamot téléchargeables, de la détection automatique, du choix explicite du chinois simplifié ou traditionnel et du passage local par l’anglais lorsqu’il est nécessaire.
 - Ajout d’un gestionnaire de modèles de langues et du mode Traduction dans la palette rapide, le tray, les réglages et le comportement direct d’Impr écran.
@@ -29,7 +30,7 @@ Signalez les problèmes reproductibles dans le [suivi des problèmes](https://gi
 
 ## Téléchargements
 
-- [Installateur Windows x64](https://github.com/MrMybal/CyCapture/releases/download/v1.5.0/CyCapture-1.5.0-windows-x64-installer.exe)
-- [Version portable avec CyAnnota](https://github.com/MrMybal/CyCapture/releases/download/v1.5.0/CyCapture-1.5.0-windows-x64-portable.exe)
-- [Version portable sans CyAnnota](https://github.com/MrMybal/CyCapture/releases/download/v1.5.0/CyCapture-1.5.0-windows-x64-portable-without-CyAnnota.exe)
-- [Paquet du plugin CyAnnota](https://github.com/MrMybal/CyCapture/releases/download/v1.5.0/CyCapture.Plugin.CyAnnota-0.4.4.zip)
+- [Installateur Windows x64](https://github.com/MrMybal/CyCapture/releases/download/v1.5.1/CyCapture-1.5.1-windows-x64-installer.exe)
+- [Version portable avec CyAnnota](https://github.com/MrMybal/CyCapture/releases/download/v1.5.1/CyCapture-1.5.1-windows-x64-portable.exe)
+- [Version portable sans CyAnnota](https://github.com/MrMybal/CyCapture/releases/download/v1.5.1/CyCapture-1.5.1-windows-x64-portable-without-CyAnnota.exe)
+- [Paquet du plugin CyAnnota](https://github.com/MrMybal/CyCapture/releases/download/v1.5.1/CyCapture.Plugin.CyAnnota-0.4.4.zip)

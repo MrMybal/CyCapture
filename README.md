@@ -14,8 +14,8 @@
     </td>
     <td width="300" align="right" valign="top">
       <p><sub>Application license</sub><br><a href="LICENSE"><strong>GNU AGPL-3.0-only</strong></a></p>
-      <p><sub>Version</sub><br><a href="VERSION.md"><strong>1.5.0</strong></a><br><strong>BETA</strong></p>
-      <p><a href="https://github.com/MrMybal/CyCapture/releases/download/v1.5.0/CyCapture-1.5.0-windows-x64-installer.exe"><strong>Download</strong></a><br><sub>Windows x64 · installer</sub></p>
+      <p><sub>Version</sub><br><a href="VERSION.md"><strong>1.5.1</strong></a><br><strong>BETA</strong></p>
+      <p><a href="https://github.com/MrMybal/CyCapture/releases/download/v1.5.1/CyCapture-1.5.1-windows-x64-installer.exe"><strong>Download</strong></a><br><sub>Windows x64 · installer</sub></p>
     </td>
   </tr>
 </table>
@@ -25,7 +25,7 @@
 
 CyCapture is a discreet, tray-first Windows capture application that replaces the usual Print Screen workflow with image, video, GIF, and audio capture.
 
-Version **1.5.0** is currently in **beta**. See the [version notes](VERSION.md) for the current scope and known limitations.
+Version **1.5.1** is currently in **beta**. See the [version notes](VERSION.md) for the current scope and known limitations.
 
 ## About CyCapture
 
@@ -59,13 +59,13 @@ CyCapture currently targets **Windows x64**. Windows N and KN editions may requi
 
 ### Recommended: installer
 
-Download and run [CyCapture 1.5.0 for Windows x64](https://github.com/MrMybal/CyCapture/releases/download/v1.5.0/CyCapture-1.5.0-windows-x64-installer.exe). The installer registers the application, Start menu shortcuts, uninstallation support, and the selected optional components.
+Download and run [CyCapture 1.5.1 for Windows x64](https://github.com/MrMybal/CyCapture/releases/download/v1.5.1/CyCapture-1.5.1-windows-x64-installer.exe). The installer registers the application, Start menu shortcuts, uninstallation support, and the selected optional components.
 
 ### Portable editions
 
-- [Portable edition with CyAnnota](https://github.com/MrMybal/CyCapture/releases/download/v1.5.0/CyCapture-1.5.0-windows-x64-portable.exe)
-- [Portable edition without CyAnnota](https://github.com/MrMybal/CyCapture/releases/download/v1.5.0/CyCapture-1.5.0-windows-x64-portable-without-CyAnnota.exe)
-- [CyAnnota plugin package](https://github.com/MrMybal/CyCapture/releases/download/v1.5.0/CyCapture.Plugin.CyAnnota-0.4.4.zip)
+- [Portable edition with CyAnnota](https://github.com/MrMybal/CyCapture/releases/download/v1.5.1/CyCapture-1.5.1-windows-x64-portable.exe)
+- [Portable edition without CyAnnota](https://github.com/MrMybal/CyCapture/releases/download/v1.5.1/CyCapture-1.5.1-windows-x64-portable-without-CyAnnota.exe)
+- [CyAnnota plugin package](https://github.com/MrMybal/CyCapture/releases/download/v1.5.1/CyCapture.Plugin.CyAnnota-0.4.4.zip)
 
 Extract a portable archive to a writable directory and launch `CyCapture.exe`. The application binaries are self-contained. The offline help is distributed with the application and can also fall back to its embedded copy.
 
