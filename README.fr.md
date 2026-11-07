@@ -1,26 +1,21 @@
-<table width="100%" border="1" cellspacing="0" cellpadding="10">
+<table class="readme-header" width="100%">
   <tr>
-    <td width="33%" valign="top">
-      <strong>Liens</strong><br><br>
+    <td width="300" align="left" valign="top">
       <a href="https://mrmybal.github.io/CyCapture/Documentation.html#/fr/getting-started">Documentation</a><br>
       <a href="https://github.com/MrMybal/CyCapture">Dépôt</a><br>
       <a href="https://github.com/MrMybal/CyCapture/issues">Problèmes</a><br><br>
-      <strong>Langue</strong><br><br>
-      <a href="README.md">English</a> · <strong>Français</strong>
+      <sub>README</sub><br>
+      <a href="README.md">English</a> · <a href="README.fr.md">Français</a>
     </td>
-    <td width="34%" align="center" valign="middle">
+    <td width="400" align="center" valign="middle">
       <a href="https://mrmybal.github.io/CyCapture/Documentation.html#/fr/getting-started">
-        <img src="CyCapture.App/Assets/CyCaptureLogo.png" alt="Logo CyCapture" width="180">
+        <img src="CyCapture.App/Assets/CyCaptureLogo.png" alt="CyCapture" width="128">
       </a>
     </td>
-    <td width="33%" valign="top">
-      <strong>Licence de l’application</strong><br>
-      <a href="LICENSE">GNU AGPL-3.0-only</a><br><br>
-      <strong>Version</strong><br>
-      <a href="VERSION.fr.md">1.4.11</a><br>
-      <strong>BÊTA</strong><br><br>
-      <strong>Téléchargement</strong><br>
-      <a href="https://github.com/MrMybal/CyCapture/releases/download/v1.4.11/CyCapture-1.4.11-windows-x64-installer.exe">Installateur Windows x64</a>
+    <td width="300" align="right" valign="top">
+      <p><sub>Licence de l’application</sub><br><a href="LICENSE"><strong>GNU AGPL-3.0-only</strong></a></p>
+      <p><sub>Version</sub><br><a href="VERSION.fr.md"><strong>1.4.11</strong></a><br><strong>BÊTA</strong></p>
+      <p><a href="https://github.com/MrMybal/CyCapture/releases/download/v1.4.11/CyCapture-1.4.11-windows-x64-installer.exe"><strong>Télécharger</strong></a><br><sub>Windows x64 · installateur</sub></p>
     </td>
   </tr>
 </table>

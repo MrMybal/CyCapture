@@ -1,26 +1,21 @@
-<table width="100%" border="1" cellspacing="0" cellpadding="10">
+<table class="readme-header" width="100%">
   <tr>
-    <td width="33%" valign="top">
-      <strong>Links</strong><br><br>
+    <td width="300" align="left" valign="top">
       <a href="https://mrmybal.github.io/CyCapture/Documentation.html#/en/getting-started">Documentation</a><br>
       <a href="https://github.com/MrMybal/CyCapture">Repository</a><br>
       <a href="https://github.com/MrMybal/CyCapture/issues">Issues</a><br><br>
-      <strong>Language</strong><br><br>
-      <strong>English</strong> · <a href="README.fr.md">Français</a>
+      <sub>README</sub><br>
+      <a href="README.md">English</a> · <a href="README.fr.md">Français</a>
     </td>
-    <td width="34%" align="center" valign="middle">
+    <td width="400" align="center" valign="middle">
       <a href="https://mrmybal.github.io/CyCapture/Documentation.html#/en/getting-started">
-        <img src="CyCapture.App/Assets/CyCaptureLogo.png" alt="CyCapture logo" width="180">
+        <img src="CyCapture.App/Assets/CyCaptureLogo.png" alt="CyCapture" width="128">
       </a>
     </td>
-    <td width="33%" valign="top">
-      <strong>Application license</strong><br>
-      <a href="LICENSE">GNU AGPL-3.0-only</a><br><br>
-      <strong>Version</strong><br>
-      <a href="VERSION.md">1.4.11</a><br>
-      <strong>BETA</strong><br><br>
-      <strong>Download</strong><br>
-      <a href="https://github.com/MrMybal/CyCapture/releases/download/v1.4.11/CyCapture-1.4.11-windows-x64-installer.exe">Windows x64 installer</a>
+    <td width="300" align="right" valign="top">
+      <p><sub>Application license</sub><br><a href="LICENSE"><strong>GNU AGPL-3.0-only</strong></a></p>
+      <p><sub>Version</sub><br><a href="VERSION.md"><strong>1.4.11</strong></a><br><strong>BETA</strong></p>
+      <p><a href="https://github.com/MrMybal/CyCapture/releases/download/v1.4.11/CyCapture-1.4.11-windows-x64-installer.exe"><strong>Download</strong></a><br><sub>Windows x64 · installer</sub></p>
     </td>
   </tr>
 </table>
