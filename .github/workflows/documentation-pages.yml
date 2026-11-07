@@ -59,6 +59,9 @@ jobs:
       - name: Verify links, translations and local resources
         run: node scripts/verify-documentation.mjs CyCapture.App/Documentation CyCapture.App/.CyDocBuild/cydoc.config.json
 
+      - name: Version GitHub Pages asset URLs
+        run: node scripts/version-pages-export.mjs CyCapture.App/Documentation/Documentation.html "$GITHUB_SHA"
+
       - name: Configure GitHub Pages
         uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
         with:
