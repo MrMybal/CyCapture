@@ -1,5 +1,3 @@
-# CyCapture
-
 <table width="100%" border="1" cellspacing="0" cellpadding="10">
   <tr>
     <td width="33%" valign="top">
