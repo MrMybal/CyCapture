@@ -219,14 +219,15 @@
 
       <StackPanel Spacing="8">
         <TextBlock Text="COMPORTEMENT DE LA TOUCHE IMPR ÉCRAN" FontSize="10" FontWeight="Bold" Foreground="#9BFF28" LetterSpacing="1.4" />
-        <ComboBox x:Name="PrintScreenBehaviorCombo" SelectionChanged="SelectionPreferenceChanged">
-          <ComboBoxItem Content="Afficher le choix Image / Vidéo / GIF / Audio / Traduction" Tag="ShowModePicker" />
+        <ComboBox x:Name="PrintScreenBehaviorCombo" SelectedIndex="0" SelectionChanged="SelectionPreferenceChanged">
+          <ComboBoxItem Content="Appui court : sélection intelligente d’image · maintien : choix des modes" Tag="QuickImageHoldSelection" />
+          <ComboBoxItem Content="Afficher le choix Image / Vidéo / GIF / Audio / Texte / Traduction" Tag="ShowModePicker" />
           <ComboBoxItem Content="Capture d’image directe" Tag="CaptureImage" />
           <ComboBoxItem Content="Capture vidéo directe" Tag="CaptureVideo" />
           <ComboBoxItem Content="Capture GIF directe" Tag="CaptureGif" />
           <ComboBoxItem Content="Capture audio directe" Tag="CaptureAudio" />
+          <ComboBoxItem Content="Copier le texte d’une zone" Tag="CaptureText" />
           <ComboBoxItem Content="Traduction directe d’une zone" Tag="CaptureTranslation" />
-          <ComboBoxItem Content="Appui court : sélection image · maintien réglable : modes" Tag="QuickImageHoldSelection" />
         </ComboBox>
         <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
           <TextBlock Text="Délai du maintien" VerticalAlignment="Center" Foreground="#B4C0BD" />
@@ -243,7 +244,7 @@
             <ComboBoxItem Content="1 seconde" Tag="1000" />
           </ComboBox>
         </Grid>
-        <TextBlock Text="Les modes directs sautent la palette. Dans le mode hybride, un appui court ouvre la sélection intelligente d’image ; un maintien pendant le délai choisi ouvre la palette Image / Vidéo / GIF / Audio / Traduction." TextWrapping="Wrap" Foreground="#7F8D8A" FontSize="11" />
+        <TextBlock Text="Les modes directs sautent la palette. Dans le mode hybride, un appui court ouvre la sélection intelligente d’image ; un maintien pendant le délai choisi ouvre la palette Image / Vidéo / GIF / Audio / Texte / Traduction." TextWrapping="Wrap" Foreground="#7F8D8A" FontSize="11" />
       </StackPanel>
 
       <StackPanel Spacing="8">

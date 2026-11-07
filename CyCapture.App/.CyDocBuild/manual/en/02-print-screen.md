@@ -10,8 +10,8 @@ revision: 2
 
 ## Available behaviors {#behaviors}
 
-- **Show mode picker:** always display Image, Video, GIF, Audio and Translation near the pointer.
-- **Direct Image, Video, GIF, Audio or Translation:** skip the palette and start that workflow immediately.
+- **Show mode picker:** always display Image, Video, GIF, Audio, Text and Translation near the pointer.
+- **Direct Image, Video, GIF, Audio, Text or Translation:** skip the palette and start that workflow immediately.
 - **Hybrid:** a quick press opens [[Smart selection]] for an image; holding opens the mode palette.
 
 ```diagram

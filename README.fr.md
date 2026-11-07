@@ -14,8 +14,8 @@
     </td>
     <td width="300" align="right" valign="top">
       <p><sub>Licence de l’application</sub><br><a href="LICENSE"><strong>GNU AGPL-3.0-only</strong></a></p>
-      <p><sub>Version</sub><br><a href="VERSION.fr.md"><strong>1.5.1</strong></a><br><strong>BÊTA</strong></p>
-      <p><a href="https://github.com/MrMybal/CyCapture/releases/download/v1.5.1/CyCapture-1.5.1-windows-x64-installer.exe"><strong>Télécharger</strong></a><br><sub>Windows x64 · installateur</sub></p>
+      <p><sub>Version</sub><br><a href="VERSION.fr.md"><strong>1.5.2</strong></a><br><strong>BÊTA</strong></p>
+      <p><a href="https://github.com/MrMybal/CyCapture/releases/download/v1.5.2/CyCapture-1.5.2-windows-x64-installer.exe"><strong>Télécharger</strong></a><br><sub>Windows x64 · installateur</sub></p>
     </td>
   </tr>
 </table>
@@ -25,7 +25,7 @@
 
 CyCapture est une application de capture Windows discrète, pensée pour fonctionner depuis la zone de notification et remplacer le flux de travail habituel de la touche Impr écran par la capture d’image, de vidéo, de GIF et d’audio.
 
-La version **1.5.1** est actuellement en **bêta**. Consultez les [notes de version](VERSION.fr.md) pour connaître le périmètre actuel et les limites connues.
+La version **1.5.2** est actuellement en **bêta**. Consultez les [notes de version](VERSION.fr.md) pour connaître le périmètre actuel et les limites connues.
 
 ## À propos de CyCapture
 
@@ -39,7 +39,7 @@ Le guide illustré complet est disponible dans la [documentation française](htt
 
 ## Fonctionnalités
 
-- Modes de capture d’image, de vidéo, de GIF animé, d’audio seul et de traduction à l’écran.
+- Modes de capture d’image, de vidéo, de GIF animé, d’audio seul, de copie de texte par OCR et de traduction à l’écran.
 - OCR et traduction entièrement locaux avec superposition et modèles de langues téléchargeables, dont le chinois simplifié et traditionnel.
 - Sélection intelligente des fenêtres visibles tenant compte de leur ordre et de leur occlusion.
 - Capture d’écran entier et de zone libre sur les bureaux à plusieurs moniteurs.
@@ -59,13 +59,13 @@ CyCapture cible actuellement **Windows x64**. Les éditions Windows N et KN peuv
 
 ### Recommandé : installateur
 
-Téléchargez puis exécutez [CyCapture 1.5.1 pour Windows x64](https://github.com/MrMybal/CyCapture/releases/download/v1.5.1/CyCapture-1.5.1-windows-x64-installer.exe). L’installateur enregistre l’application, les raccourcis du menu Démarrer, la désinstallation et les composants facultatifs sélectionnés.
+Téléchargez puis exécutez [CyCapture 1.5.2 pour Windows x64](https://github.com/MrMybal/CyCapture/releases/download/v1.5.2/CyCapture-1.5.2-windows-x64-installer.exe). L’installateur enregistre l’application, les raccourcis du menu Démarrer, la désinstallation et les composants facultatifs sélectionnés.
 
 ### Éditions portables
 
-- [Édition portable avec CyAnnota](https://github.com/MrMybal/CyCapture/releases/download/v1.5.1/CyCapture-1.5.1-windows-x64-portable.exe)
-- [Édition portable sans CyAnnota](https://github.com/MrMybal/CyCapture/releases/download/v1.5.1/CyCapture-1.5.1-windows-x64-portable-without-CyAnnota.exe)
-- [Paquet du plugin CyAnnota](https://github.com/MrMybal/CyCapture/releases/download/v1.5.1/CyCapture.Plugin.CyAnnota-0.4.4.zip)
+- [Édition portable avec CyAnnota](https://github.com/MrMybal/CyCapture/releases/download/v1.5.2/CyCapture-1.5.2-windows-x64-portable.exe)
+- [Édition portable sans CyAnnota](https://github.com/MrMybal/CyCapture/releases/download/v1.5.2/CyCapture-1.5.2-windows-x64-portable-without-CyAnnota.exe)
+- [Paquet du plugin CyAnnota](https://github.com/MrMybal/CyCapture/releases/download/v1.5.2/CyCapture.Plugin.CyAnnota-0.4.4.zip)
 
 Extrayez une archive portable dans un dossier accessible en écriture, puis lancez `CyCapture.exe`. Les binaires de l’application sont autonomes. L’aide hors ligne est distribuée avec l’application et peut également utiliser sa copie embarquée de secours.
 

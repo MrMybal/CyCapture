@@ -10,8 +10,8 @@ sourceRevision: 2
 
 ## Comportements disponibles {#behaviors}
 
-- **Afficher le choix :** montre toujours Image, Vidéo, GIF, Audio et Traduction près du pointeur.
-- **Image, Vidéo, GIF, Audio ou Traduction directe :** ignore la palette et lance immédiatement ce parcours.
+- **Afficher le choix :** montre toujours Image, Vidéo, GIF, Audio, Texte et Traduction près du pointeur.
+- **Image, Vidéo, GIF, Audio, Texte ou Traduction directe :** ignore la palette et lance immédiatement ce parcours.
 - **Hybride :** un appui court ouvre la [[Sélection intelligente]] d’image ; un maintien ouvre la palette.
 
 ```diagram

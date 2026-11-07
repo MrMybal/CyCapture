@@ -1,11 +1,17 @@
 ---
 id: screen-translation
-title: Translate text on screen
-description: Select text anywhere on the desktop and display its offline translation over the frozen image.
+title: Copy or translate text on screen
+description: Recognize text in a selected area, copy it, or display its offline translation over the frozen image.
 section: Capture modes
 order: 75
-revision: 2
+revision: 3
 ---
+
+## Copy text from an area {#copy-text}
+
+Choose **Text** from the quick palette or **Copy text from an area** from the tray menu. Select a visible window, screen, smart element, or free region. CyCapture recognizes the text locally and places the detected lines directly in the clipboard without creating an image file.
+
+The processing window appears in the center of the selected area, on the same monitor. It closes automatically when recognition finishes.
 
 ## Translate an area {#translate-area}
 
@@ -19,7 +25,7 @@ CyCapture freezes the selected screen, recognizes the text locally, translates i
 
 ## Languages and models {#models}
 
-Open **Settings > Translation** to choose the source and target languages. Automatic source detection initially prepares English, simplified and traditional Chinese, Japanese, and Korean OCR. Selecting a specific source language downloads only its OCR data.
+Open **Settings > Translation** to choose the OCR source language and the translation target. Automatic source detection initially prepares English, simplified and traditional Chinese, Japanese, and Korean OCR. Selecting a specific source language downloads only its OCR data. The source-language choice is shared by Text and Translation modes.
 
 Use **Manage and download language models** to prepare any supported source languages in advance. Translation directions use Mozilla Bergamot models. If no direct direction exists, CyCapture can use English as a local pivot, for example Chinese → English → French.
 

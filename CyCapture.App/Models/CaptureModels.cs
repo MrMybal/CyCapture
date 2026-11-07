@@ -111,4 +111,5 @@ public sealed record CaptureArtifact(
 public sealed record CaptureRequest(
     CaptureMode Mode,
     CaptureSelectionMode SelectionMode,
-    bool TranslateSelection = false);
+    bool TranslateSelection = false,
+    bool CopyTextSelection = false);

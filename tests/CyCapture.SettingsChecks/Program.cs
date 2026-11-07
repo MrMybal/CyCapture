@@ -95,6 +95,17 @@ internal static class Program
         var preferences = new Preferences { TranslationSourceLanguage = "zh", TranslationTargetLanguage = "fr" };
         var ocrServiceType = AppAssembly.GetType("CyCapture.Services.OcrTranslationService")!;
         var ocrService = Activator.CreateInstance(ocrServiceType, PrivateInstance, null, new[] { service }, null)!;
+        var recognizeAsync = ocrServiceType.GetMethod("RecognizeAsync", PrivateInstance)!;
+        var recognitionTask = (Task)recognizeAsync.Invoke(
+            ocrService,
+            new object?[] { selection, preferences, null, CancellationToken.None })!;
+        recognitionTask.GetAwaiter().GetResult();
+        var recognizedLines = ((IEnumerable<OcrTextLine>)recognitionTask.GetType()
+            .GetProperty("Result")!.GetValue(recognitionTask)!).ToArray();
+        Require(recognizedLines.Length > 0 && recognizedLines.Any(line => !string.IsNullOrWhiteSpace(line.Text)),
+            "The text-copy OCR mode did not recognize the synthetic Chinese screenshot.");
+        Console.WriteLine($"PASS: text-copy OCR data ({string.Join(' ', recognizedLines.Select(line => line.Text))}).");
+
         var translateAsync = ocrServiceType.GetMethod("TranslateAsync", PrivateInstance)!;
         var endToEndTask = (Task)translateAsync.Invoke(
             ocrService,
@@ -155,6 +166,25 @@ internal static class Program
             "Clipboard defaults were not marked as initialized.");
         Require(defaults.PrintScreenBehavior == PrintScreenBehavior.QuickImageHoldSelection,
             "The hybrid Print Screen workflow is not the default.");
+        Require(defaults.PrintScreenBehaviorSchemaVersion == 1,
+            "The Print Screen behavior migration was not marked as completed.");
+
+        var legacyHybridBehavior = Normalize(JsonSerializer.Deserialize<Preferences>(
+            """{"PrintScreenBehavior":5}""")!);
+        Require(legacyHybridBehavior.PrintScreenBehavior == PrintScreenBehavior.QuickImageHoldSelection,
+            "The legacy hybrid Print Screen value was interpreted as direct translation.");
+        Require(legacyHybridBehavior.PrintScreenBehaviorSchemaVersion == 1,
+            "The legacy Print Screen behavior was not migrated exactly once.");
+
+        var currentHybridBehavior = Normalize(JsonSerializer.Deserialize<Preferences>(
+            """{"PrintScreenBehavior":6}""")!);
+        Require(currentHybridBehavior.PrintScreenBehavior == PrintScreenBehavior.QuickImageHoldSelection,
+            "The current hybrid Print Screen value changed during migration.");
+
+        var explicitTranslationBehavior = Normalize(JsonSerializer.Deserialize<Preferences>(
+            """{"PrintScreenBehavior":5,"PrintScreenBehaviorSchemaVersion":1}""")!);
+        Require(explicitTranslationBehavior.PrintScreenBehavior == PrintScreenBehavior.CaptureTranslation,
+            "An explicit direct translation choice was overwritten after migration.");
 
         var invalidPrintScreenBehavior = Normalize(new Preferences
         {
@@ -380,6 +410,7 @@ internal static class Program
         {
             var document = XDocument.Load(Path.Combine(root, "CyCapture.App", "Views", file));
             XNamespace x = "http://schemas.microsoft.com/winfx/2006/xaml";
+            var textProcessingTab = file == "SettingsWindow.axaml" ? "Traduction" : "Texte & traduction";
             var expected = new Dictionary<string, string>
             {
                 ["ImageFormatCombo"] = "Image", ["ImageEncodingQualityCombo"] = "Image",
@@ -387,7 +418,7 @@ internal static class Program
                 ["AudioEncodingQualityCombo"] = "Vidéo", ["GifQualityCombo"] = "GIF",
                 ["AudioOnlyEncodingQualityCombo"] = "Audio", ["AudioOnlySystemCheck"] = "Audio",
                 ["AudioOnlyMicrophoneCheck"] = "Audio", ["AudioOnlyIgnoreSystemVolumeCheck"] = "Audio",
-                ["TranslationSourceLanguageCombo"] = "Traduction", ["TranslationTargetLanguageCombo"] = "Traduction"
+                ["TranslationSourceLanguageCombo"] = textProcessingTab, ["TranslationTargetLanguageCombo"] = textProcessingTab
             };
             expected[file == "SettingsWindow.axaml" ? "SystemAudioCheck" : "VideoSystemAudioCheck"] = "Vidéo";
             expected[file == "SettingsWindow.axaml" ? "MicrophoneCheck" : "VideoMicrophoneCheck"] = "Vidéo";
@@ -409,6 +440,23 @@ internal static class Program
 
         var settingsDocument = XDocument.Load(Path.Combine(root, "CyCapture.App", "Views", "SettingsWindow.axaml"));
         XNamespace settingsX = "http://schemas.microsoft.com/winfx/2006/xaml";
+        var printScreenBehaviorCombo = settingsDocument.Descendants()
+            .Single(element => (string?)element.Attribute(settingsX + "Name") == "PrintScreenBehaviorCombo");
+        var printScreenBehaviorItems = printScreenBehaviorCombo.Elements().ToArray();
+        var printScreenBehaviorTags = printScreenBehaviorItems
+            .Select(element => (string?)element.Attribute("Tag"))
+            .ToHashSet(StringComparer.Ordinal);
+        Require((string?)printScreenBehaviorCombo.Attribute("SelectedIndex") == "0"
+                && (string?)printScreenBehaviorItems.First().Attribute("Tag") == "QuickImageHoldSelection",
+            "The hybrid Print Screen workflow is not the UI fallback selection.");
+        Require(printScreenBehaviorTags.Contains("CaptureText")
+                && printScreenBehaviorTags.Contains("CaptureTranslation")
+                && printScreenBehaviorTags.Contains("QuickImageHoldSelection"),
+            "The Print Screen behavior list is missing Text, Translation or the hybrid default.");
+
+        var quickDocument = XDocument.Load(Path.Combine(root, "CyCapture.App", "Views", "QuickCaptureWindow.axaml"));
+        Require(quickDocument.Descendants().Any(element => (string?)element.Attribute("Click") == "CopyTextClick"),
+            "The quick palette is missing the text-copy OCR mode.");
         Require(settingsDocument.Descendants().Any(element => (string?)element.Attribute(settingsX + "Name") == "ApplicationLanguageCombo"),
             "The application language selector is missing.");
         Require(settingsDocument.Descendants().Any(element => (string?)element.Attribute(settingsX + "Name") == "DocumentationLanguageCombo"),
@@ -446,7 +494,7 @@ internal static class Program
         var versionText = settings.FindControl<TextBlock>("AppVersionText")!.Text ?? string.Empty;
         var editionLabel = (string)AppAssembly.GetType("CyCapture.Services.AppBuildInfo")!
             .GetProperty("EditionLabel", PrivateStatic)!.GetValue(null)!;
-        Require(versionText.Contains("1.5.1", StringComparison.Ordinal),
+        Require(versionText.Contains("1.5.2", StringComparison.Ordinal),
             "The settings window does not show the application version.");
         Require(versionText.Contains(editionLabel, StringComparison.Ordinal),
             "The settings window does not show the compiled edition.");
@@ -521,6 +569,26 @@ internal static class Program
         var monitorBounds = new PixelBounds(0, 0, 800, 500);
         var monitor = new MonitorDescriptor(0, "TEST", "Synthetic", monitorBounds, monitorBounds, 1, true);
         var selection = new CaptureSelection(new PixelBounds(100, 150, 400, 100), monitor, SelectionKind.Region, "Synthetic", FrozenFramePng: png);
+        var progressType = AppAssembly.GetType("CyCapture.Views.TranslationProgressWindow")!;
+        var calculatePosition = progressType.GetMethod("CalculatePosition", PrivateStatic)!;
+        var progressPosition = (PixelPoint)calculatePosition.Invoke(null, new object?[] { selection, 410d, 155d })!;
+        Require(progressPosition == new PixelPoint(95, 123),
+            $"The text-processing progress window is not centered on the selection ({progressPosition}).");
+        using (var progressCancellation = new CancellationTokenSource())
+        {
+            var progressWindow = (Window)Activator.CreateInstance(
+                progressType,
+                PrivateInstance,
+                null,
+                new object?[] { progressCancellation, selection, false },
+                null)!;
+            RenderWindowContent(
+                (Control)progressWindow.Content!,
+                410,
+                155,
+                Path.Combine(output, "text-copy-progress.png"));
+            progressWindow.Close();
+        }
         var result = new ScreenTranslationResult(
             selection,
             png,

@@ -40,17 +40,20 @@ public enum AudioEncodingQuality
 
 public enum PrintScreenBehavior
 {
-    ShowModePicker,
-    CaptureImage,
-    CaptureVideo,
-    CaptureGif,
-    CaptureAudio,
-    CaptureTranslation,
-    QuickImageHoldSelection
+    ShowModePicker = 0,
+    CaptureImage = 1,
+    CaptureVideo = 2,
+    CaptureGif = 3,
+    CaptureAudio = 4,
+    CaptureTranslation = 5,
+    QuickImageHoldSelection = 6,
+    CaptureText = 7
 }
 
 public sealed class Preferences
 {
+    private const int CurrentPrintScreenBehaviorSchemaVersion = 1;
+
     public string? OutputDirectory { get; set; }
     public string ImageFormat { get; set; } = "png";
     public int JpegQuality { get; set; } = 70;
@@ -63,6 +66,7 @@ public sealed class Preferences
     public GifQuality GifQuality { get; set; } = GifQuality.Balanced;
     public CaptureSelectionMode SelectionMode { get; set; } = CaptureSelectionMode.Smart;
     public PrintScreenBehavior PrintScreenBehavior { get; set; } = PrintScreenBehavior.QuickImageHoldSelection;
+    public int? PrintScreenBehaviorSchemaVersion { get; set; }
     public int PrintScreenHoldDelayMilliseconds { get; set; } = 300;
     public bool IncludeSystemAudio { get; set; } = true;
     public bool IncludeMicrophone { get; set; }
@@ -183,6 +187,16 @@ public sealed class Preferences
         value.ApplyEncodingProfiles();
         if (!Enum.IsDefined(value.GifQuality)) value.GifQuality = GifQuality.Balanced;
         if (!Enum.IsDefined(value.SelectionMode)) value.SelectionMode = CaptureSelectionMode.Smart;
+        // Before screen translation was added, the numeric value 5 represented the hybrid
+        // Print Screen workflow. Version 1.5 temporarily interpreted that saved value as
+        // CaptureTranslation. Migrate unversioned preferences once, while preserving an
+        // explicitly selected translation mode in files written with the new schema.
+        if (value.PrintScreenBehaviorSchemaVersion.GetValueOrDefault() < CurrentPrintScreenBehaviorSchemaVersion)
+        {
+            if (value.PrintScreenBehavior == PrintScreenBehavior.CaptureTranslation)
+                value.PrintScreenBehavior = PrintScreenBehavior.QuickImageHoldSelection;
+            value.PrintScreenBehaviorSchemaVersion = CurrentPrintScreenBehaviorSchemaVersion;
+        }
         if (!Enum.IsDefined(value.PrintScreenBehavior))
             value.PrintScreenBehavior = PrintScreenBehavior.QuickImageHoldSelection;
         var clampedHoldDelay = Math.Clamp(value.PrintScreenHoldDelayMilliseconds, 100, 1_000);

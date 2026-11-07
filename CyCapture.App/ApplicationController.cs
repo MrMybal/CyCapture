@@ -165,6 +165,7 @@ internal sealed class ApplicationController
                 new NativeMenuItem { Header = UiLocalization.Translate("Démarrer une capture vidéo"), Command = new ActionCommand(() => StartDirectCapture(CaptureMode.Video)) },
                 new NativeMenuItem { Header = UiLocalization.Translate("Créer un GIF"), Command = new ActionCommand(() => StartDirectCapture(CaptureMode.Gif)) },
                 new NativeMenuItem { Header = UiLocalization.Translate("Démarrer une capture audio"), Command = new ActionCommand(() => StartDirectCapture(CaptureMode.Audio)) },
+                new NativeMenuItem { Header = UiLocalization.Text("Copier le texte d’une zone", "Copy text from an area"), Command = new ActionCommand(() => _ = BeginCopyTextAsync()) },
                 new NativeMenuItem { Header = UiLocalization.Text("Traduire une zone", "Translate an area"), Command = new ActionCommand(() => _ = BeginTranslationAsync()) },
                 new NativeMenuItemSeparator(),
                 _recordingMenuItem,
@@ -178,7 +179,7 @@ internal sealed class ApplicationController
                 new NativeMenuItem { Header = UiLocalization.Translate("Quitter CyCapture"), Command = new ActionCommand(Quit) }
             }
         };
-        var pluginInsertIndex = 7;
+        var pluginInsertIndex = 8;
         var quickAccessPlugins = _postProcessing.GetPlugins()
             .Where(plugin => !string.IsNullOrWhiteSpace(plugin.QuickAccessLabel))
             .ToList();
@@ -250,6 +251,9 @@ internal sealed class ApplicationController
             case PrintScreenBehavior.CaptureAudio:
                 await BeginCaptureAsync(CaptureMode.Audio);
                 break;
+            case PrintScreenBehavior.CaptureText:
+                await BeginCopyTextAsync();
+                break;
             case PrintScreenBehavior.CaptureTranslation:
                 await BeginTranslationAsync();
                 break;
@@ -319,13 +323,21 @@ internal sealed class ApplicationController
 
     private async void QuickCaptureRequested(object? sender, CaptureRequest request)
     {
-        if (request.TranslateSelection)
+        if (request.CopyTextSelection)
+            await BeginCopyTextAsync(request.SelectionMode);
+        else if (request.TranslateSelection)
             await BeginTranslationAsync(request.SelectionMode);
         else
             await BeginCaptureAsync(request.Mode, request.SelectionMode);
     }
 
-    private async Task BeginTranslationAsync(CaptureSelectionMode? selectionMode = null)
+    private Task BeginTranslationAsync(CaptureSelectionMode? selectionMode = null) =>
+        BeginTextProcessingAsync(translate: true, selectionMode);
+
+    private Task BeginCopyTextAsync(CaptureSelectionMode? selectionMode = null) =>
+        BeginTextProcessingAsync(translate: false, selectionMode);
+
+    private async Task BeginTextProcessingAsync(bool translate, CaptureSelectionMode? selectionMode = null)
     {
         if (_captureFlowActive || _recording.IsActive || _recording.IsFinishing) return;
         _captureFlowActive = true;
@@ -340,35 +352,64 @@ internal sealed class ApplicationController
             if (selection is null) return;
 
             using var cancellation = CancellationTokenSource.CreateLinkedTokenSource(_shutdown.Token);
-            _translationProgress = new TranslationProgressWindow(cancellation) { Icon = _idleIcon };
+            _translationProgress = new TranslationProgressWindow(cancellation, selection, translate) { Icon = _idleIcon };
             var reporter = new Progress<TranslationProgress>(value => _translationProgress?.Report(value));
             _translationProgress.Show();
-            ScreenTranslationResult result;
             try
             {
-                result = await _translation.TranslateAsync(selection, _preferences, reporter, cancellation.Token);
+                if (translate)
+                {
+                    var result = await _translation.TranslateAsync(selection, _preferences, reporter, cancellation.Token);
+                    cancellation.Token.ThrowIfCancellationRequested();
+                    if (_preferences.CopyTranslationsToClipboard && !string.IsNullOrWhiteSpace(result.PlainText))
+                    {
+                        try { WindowsClipboard.CopyText(result.PlainText); }
+                        catch { /* La traduction reste visible même si une application verrouille le presse-papiers. */ }
+                    }
+                    _translationWindow = new TranslationOverlayWindow(result) { Icon = _idleIcon };
+                    _translationWindow.Closed += (_, _) => _translationWindow = null;
+                    _translationWindow.Show();
+                }
+                else
+                {
+                    var lines = await _translation.RecognizeAsync(selection, _preferences, reporter, cancellation.Token);
+                    cancellation.Token.ThrowIfCancellationRequested();
+                    var text = string.Join(Environment.NewLine, lines.Select(line => line.Text));
+                    try
+                    {
+                        WindowsClipboard.CopyText(text);
+                    }
+                    catch (Exception error)
+                    {
+                        throw new InvalidOperationException(UiLocalization.Text(
+                            "Le texte a été reconnu, mais le presse-papiers est indisponible.",
+                            "The text was recognized, but the clipboard is unavailable."), error);
+                    }
+                    ShowToast(
+                        UiLocalization.Text("Texte copié", "Text copied"),
+                        UiLocalization.Text(
+                            $"{lines.Count} ligne(s) copiée(s) dans le presse-papiers.",
+                            $"{lines.Count} line(s) copied to the clipboard."),
+                        false);
+                }
             }
             finally
             {
                 _translationProgress?.CompleteAndClose();
                 _translationProgress = null;
             }
-            cancellation.Token.ThrowIfCancellationRequested();
-            if (_preferences.CopyTranslationsToClipboard && !string.IsNullOrWhiteSpace(result.PlainText))
-            {
-                try { WindowsClipboard.CopyText(result.PlainText); }
-                catch { /* La traduction reste visible même si une application verrouille le presse-papiers. */ }
-            }
-            _translationWindow = new TranslationOverlayWindow(result) { Icon = _idleIcon };
-            _translationWindow.Closed += (_, _) => _translationWindow = null;
-            _translationWindow.Show();
         }
         catch (OperationCanceledException)
         {
         }
         catch (Exception error)
         {
-            ShowToast(UiLocalization.Text("Traduction impossible", "Translation failed"), error.Message, true);
+            ShowToast(
+                translate
+                    ? UiLocalization.Text("Traduction impossible", "Translation failed")
+                    : UiLocalization.Text("Copie du texte impossible", "Text copy failed"),
+                error.Message,
+                true);
         }
         finally
         {

@@ -1,11 +1,17 @@
 ---
 id: screen-translation
-title: Traduire du texte à l’écran
-description: Sélectionnez du texte sur le bureau et affichez sa traduction hors ligne par-dessus l’image figée.
+title: Copier ou traduire du texte à l’écran
+description: Reconnaissez le texte d’une zone, copiez-le ou affichez sa traduction hors ligne par-dessus l’image figée.
 section: Modes de capture
 order: 75
-sourceRevision: 2
+sourceRevision: 3
 ---
+
+## Copier le texte d’une zone {#copy-text}
+
+Choisissez **Texte** dans la palette rapide ou **Copier le texte d’une zone** dans le menu du tray. Sélectionnez une fenêtre visible, un écran, un élément intelligent ou une zone libre. CyCapture reconnaît localement les lignes et les place directement dans le presse-papiers, sans créer de fichier image.
+
+La fenêtre de traitement apparaît au centre de la zone sélectionnée, sur le même écran. Elle se ferme automatiquement lorsque la reconnaissance est terminée.
 
 ## Traduire une zone {#translate-area}
 
@@ -19,7 +25,7 @@ CyCapture fige l’écran sélectionné, reconnaît le texte localement, le trad
 
 ## Langues et modèles {#models}
 
-Ouvrez **Réglages > Traduction** pour choisir les langues source et cible. La détection automatique prépare initialement l’OCR anglais, chinois simplifié et traditionnel, japonais et coréen. Le choix d’une langue source précise ne télécharge que ses données OCR.
+Ouvrez **Réglages > Traduction** pour choisir la langue source de l’OCR et la langue cible de la traduction. La détection automatique prépare initialement l’OCR anglais, chinois simplifié et traditionnel, japonais et coréen. Le choix d’une langue source précise ne télécharge que ses données OCR. La langue source est commune aux modes Texte et Traduction.
 
 Utilisez **Gérer et télécharger les modèles de langues** pour préparer à l’avance autant de langues sources que nécessaire. Les directions de traduction utilisent les modèles Mozilla Bergamot. Lorsqu’aucune direction directe n’existe, CyCapture peut utiliser l’anglais comme pivot local, par exemple chinois → anglais → français.
 

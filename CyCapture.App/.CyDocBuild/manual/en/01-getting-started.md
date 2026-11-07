@@ -10,7 +10,7 @@ revision: 2
 CyCapture is a tray-first capture tool. It stays in the Windows notification area and appears only when you need it.
 
 ```steps
-{"items":[{"title":"Press Print Screen","body":"Open the mode palette unless a direct behavior is configured."},{"title":"Choose a mode","body":"Select Image, Video, GIF, Audio or Translation."},{"title":"Select","body":"Visual and Translation modes open the selection overlay. Audio starts immediately."},{"title":"Finish","body":"Images save immediately, Translation appears over the frozen screen, and Print Screen stops Video, GIF or Audio."}]}
+{"items":[{"title":"Press Print Screen","body":"Open the mode palette unless a direct behavior is configured."},{"title":"Choose a mode","body":"Select Image, Video, GIF, Audio, Text or Translation."},{"title":"Select","body":"Visual, Text and Translation modes open the selection overlay. Audio starts immediately."},{"title":"Finish","body":"Images save immediately, Text is copied, Translation appears over the frozen screen, and Print Screen stops Video, GIF or Audio."}]}
 ```
 
 ## First capture {#first-capture}

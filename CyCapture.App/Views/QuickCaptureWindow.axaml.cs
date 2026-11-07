@@ -103,7 +103,10 @@ public sealed partial class QuickCaptureWindow : Window
         Activate();
     }
 
-    private async Task SelectAsync(CaptureMode mode, bool translateSelection = false)
+    private async Task SelectAsync(
+        CaptureMode mode,
+        bool translateSelection = false,
+        bool copyTextSelection = false)
     {
         if (_modeChosen) return;
         _modeChosen = true;
@@ -146,7 +149,11 @@ public sealed partial class QuickCaptureWindow : Window
             // A capture must still start when preferences cannot be persisted.
         }
         Hide();
-        CaptureRequested?.Invoke(this, new CaptureRequest(mode, _preferences.SelectionMode, translateSelection));
+        CaptureRequested?.Invoke(this, new CaptureRequest(
+            mode,
+            _preferences.SelectionMode,
+            translateSelection,
+            copyTextSelection));
         Close();
     }
 
@@ -154,6 +161,12 @@ public sealed partial class QuickCaptureWindow : Window
     private async void VideoClick(object? sender, RoutedEventArgs args) => await SelectAsync(CaptureMode.Video);
     private async void GifClick(object? sender, RoutedEventArgs args) => await SelectAsync(CaptureMode.Gif);
     private async void AudioClick(object? sender, RoutedEventArgs args) => await SelectAsync(CaptureMode.Audio);
+    private async void CopyTextClick(object? sender, RoutedEventArgs args)
+    {
+        if (_modeChosen) return;
+        SaveTranslationLanguages();
+        await SelectAsync(CaptureMode.Image, copyTextSelection: true);
+    }
     private async void TranslateClick(object? sender, RoutedEventArgs args)
     {
         if (_modeChosen) return;

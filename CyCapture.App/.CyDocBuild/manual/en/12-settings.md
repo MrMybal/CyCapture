@@ -14,7 +14,7 @@ revision: 3
 
 ## Settings by mode {#per-mode}
 
-Image, Video, GIF, Audio and Translation have separate tabs and independent profiles. Video audio does not modify Audio-only recording, and Video/GIF recording frames are independent. Translation settings choose source/target languages and open the local model manager. The quick palette exposes the most useful controls before capture.
+Image, Video, GIF and Audio have separate tabs and independent profiles. Video audio does not modify Audio-only recording, and Video/GIF recording frames are independent. Text and Translation share the OCR source-language setting; Translation also uses the target language. The local model manager prepares both workflows. The quick palette exposes the most useful controls before capture.
 
 Each mode also has its own clipboard option. Image pixels, finished Video/GIF/Audio files, and translated text are copied automatically by default; disable only the modes you do not want copied.
 

@@ -123,6 +123,7 @@ internal sealed class SelfTestService
                 || RecordingService.GetAudioProfile(AudioEncodingQuality.Compact).Channels != ScreenRecorderLib.AudioChannels.Mono
                 || !Enum.IsDefined(PrintScreenBehavior.QuickImageHoldSelection)
                 || !Enum.IsDefined(PrintScreenBehavior.CaptureAudio)
+                || !Enum.IsDefined(PrintScreenBehavior.CaptureText)
                 || !Enum.IsDefined(PrintScreenBehavior.CaptureTranslation)
                 || preferences.PrintScreenHoldDelayMilliseconds is < 100 or > 1_000)
                 throw new InvalidOperationException("Les profils d’encodage compacts ne sont pas appliqués.");

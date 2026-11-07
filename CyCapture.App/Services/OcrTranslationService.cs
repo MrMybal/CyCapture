@@ -21,25 +21,9 @@ internal sealed class OcrTranslationService
         IProgress<TranslationProgress>? progress,
         CancellationToken cancellationToken)
     {
-        if (selection.FrozenFramePng is not { Length: > 0 } frozenFrame)
-            throw new InvalidOperationException(UiLocalization.Text(
-                "L’image figée de la sélection n’est plus disponible.",
-                "The frozen selection image is no longer available."));
-
+        var lines = await RecognizeAsync(selection, preferences, progress, cancellationToken);
         var requestedSource = TranslationLanguageCatalog.NormalizeSource(preferences.TranslationSourceLanguage);
         var target = TranslationLanguageCatalog.NormalizeTarget(preferences.TranslationTargetLanguage);
-        var engineLanguages = await _models.EnsureOcrAsync(requestedSource, progress, cancellationToken);
-        progress?.Report(new TranslationProgress(UiLocalization.Text(
-            "Reconnaissance du texte dans la zone…",
-            "Recognizing text in the selected area…")));
-        var lines = await Task.Run(
-            () => Recognize(frozenFrame, selection.LocalBounds, engineLanguages, cancellationToken),
-            cancellationToken);
-        if (lines.Count == 0)
-            throw new InvalidOperationException(UiLocalization.Text(
-                "Aucun texte lisible n’a été trouvé dans cette zone.",
-                "No readable text was found in this area."));
-
         var source = requestedSource == TranslationLanguageCatalog.AutomaticCode
             ? TranslationLanguageCatalog.DetectFromText(string.Join(' ', lines.Select(line => line.Text)), target == "en" ? "fr" : "en")
             : requestedSource;
@@ -47,7 +31,7 @@ internal sealed class OcrTranslationService
         {
             return new ScreenTranslationResult(
                 selection,
-                frozenFrame,
+                selection.FrozenFramePng!,
                 source,
                 target,
                 lines.Select(line => new TranslatedTextLine(line.Bounds, line.Text, line.Text, line.Confidence)).ToArray());
@@ -63,7 +47,33 @@ internal sealed class OcrTranslationService
             line.Text,
             string.IsNullOrWhiteSpace(text) ? line.Text : text.Trim(),
             line.Confidence)).ToArray();
-        return new ScreenTranslationResult(selection, frozenFrame, source, target, resultLines);
+        return new ScreenTranslationResult(selection, selection.FrozenFramePng!, source, target, resultLines);
+    }
+
+    internal async Task<IReadOnlyList<OcrTextLine>> RecognizeAsync(
+        CaptureSelection selection,
+        Preferences preferences,
+        IProgress<TranslationProgress>? progress,
+        CancellationToken cancellationToken)
+    {
+        if (selection.FrozenFramePng is not { Length: > 0 } frozenFrame)
+            throw new InvalidOperationException(UiLocalization.Text(
+                "L’image figée de la sélection n’est plus disponible.",
+                "The frozen selection image is no longer available."));
+
+        var requestedSource = TranslationLanguageCatalog.NormalizeSource(preferences.TranslationSourceLanguage);
+        var engineLanguages = await _models.EnsureOcrAsync(requestedSource, progress, cancellationToken);
+        progress?.Report(new TranslationProgress(UiLocalization.Text(
+            "Reconnaissance du texte dans la zone…",
+            "Recognizing text in the selected area…")));
+        var lines = await Task.Run(
+            () => Recognize(frozenFrame, selection.LocalBounds, engineLanguages, cancellationToken),
+            cancellationToken);
+        if (lines.Count == 0)
+            throw new InvalidOperationException(UiLocalization.Text(
+                "Aucun texte lisible n’a été trouvé dans cette zone.",
+                "No readable text was found in this area."));
+        return lines;
     }
 
     private static IReadOnlyList<OcrTextLine> Recognize(

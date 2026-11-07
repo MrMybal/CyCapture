@@ -17,7 +17,7 @@ CyCapture est distribué sous la **GNU Affero General Public License v3.0 unique
 | --- | --- | --- |
 | NAudio 2.3.0 | Capture WASAPI et encodage MP3 Media Foundation | MIT |
 | LibVLCSharp 3.10.1 / LibVLC 3.0.23.1 | Lecture Vidéo, GIF animé et Audio dans la Galerie | LGPL-2.1-or-later pour les composants concernés |
-| Tesseract .NET / Tesseract OCR 5.2.0 | OCR local pour la traduction à l’écran | Apache-2.0 |
+| Tesseract .NET / Tesseract OCR 5.2.0 | OCR local pour la copie de texte et la traduction à l’écran | Apache-2.0 |
 | BergamotTranslatorSharp / Bergamot 0.7.0 | Traduction neuronale locale | MPL-2.0 |
 | CyDoc 0.1.0 | Lecteur local de documentation bilingue | MIT |
 | CyAnnota 0.4.4 | Post-édition facultative dans les éditions Windows complètes | AGPL-3.0-only |
